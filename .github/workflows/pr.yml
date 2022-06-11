@@ -1,11 +1,9 @@
-name: Release main
+name: Pull request
 
 on:
-  push:
+  pull_request:
     branches: [ "main" ]
 
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
-  release:
-    uses: ./.github/workflows/release.yml
