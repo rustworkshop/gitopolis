@@ -6,6 +6,9 @@ use clap::{Parser, Subcommand};
 struct Args {
 	#[clap(subcommand)]
 	command: Option<Commands>,
+
+	#[clap(short, long)]
+	working_folder: Option<String>,
 }
 
 #[derive(Subcommand)]
