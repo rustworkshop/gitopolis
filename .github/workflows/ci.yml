@@ -1,4 +1,4 @@
-name: Build & test
+name: _ci
 
 on:
   workflow_call:

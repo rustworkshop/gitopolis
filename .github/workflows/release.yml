@@ -1,4 +1,5 @@
 # https://github.com/rust-build/rust-build.action
+name: _release
 
 on:
   workflow_call:
