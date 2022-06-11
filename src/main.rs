@@ -14,7 +14,7 @@ struct Args {
 #[derive(Subcommand)]
 enum Commands {
 	/// add one or more git repos to manage
-	Add { value: Vec<String> },
+	Add { repo_folder: Vec<String> },
 }
 
 fn main() {
@@ -30,8 +30,8 @@ fn main() {
 	}
 
 	match &args.command {
-		Some(Commands::Add { value }) => {
-			println!("add command received with arg {:?}", value);
+		Some(Commands::Add { repo_folder }) => {
+			println!("add command received with arg {:?}", repo_folder);
 		}
 		None =>{
 			println!("nada");
