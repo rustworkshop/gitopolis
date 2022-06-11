@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 
 /// gitopolis, a cli tool for managnig multiple git repositories - https://github.com/timabell/gitopolis/#readme
 #[derive(Parser)]
-#[clap(author, version)]
+#[clap(author, version, subcommand_required = true)]
 struct Args {
 	#[clap(subcommand)]
 	command: Option<Commands>,
