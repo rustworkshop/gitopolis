@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 
-/// gitopolis, a cli tool for managnig multiple git repositories - https://github.com/timabell/gitopolis/#readme
+/// gitopolis, a cli tool for managnig multiple git repositories - https://github.com/timabell/gitopolis
 #[derive(Parser)]
 #[clap(author, version, subcommand_required = true)]
 struct Args {
