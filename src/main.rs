@@ -30,8 +30,13 @@ fn main() {
 	}
 }
 
-fn add_folders(repo_folders: &Vec<String>){
+struct Repo {
+	folder: String
+}
+
+fn add_folders(repo_folders: &Vec<String>) {
 	for repo_folder in repo_folders {
-		println!("Adding {} ...", repo_folder)
+		let repo = Repo { folder: repo_folder.to_owned() };
+		println!("Adding {} ...", repo.folder);
 	}
 }
