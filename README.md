@@ -1,5 +1,7 @@
 # Gitopolis
 
+[![Rust](https://github.com/timabell/gitopolis/actions/workflows/rust.yml/badge.svg)](https://github.com/timabell/gitopolis/actions/workflows/rust.yml)
+
 Manage multiple git repositories, like [gita](https://github.com/nosarthur/gita) but written in [Rust](https://www.rust-lang.org/) so you don't need python etc to run it.
 
 It's intended to not know too much about git and just delegate everything to the `git` command which assumed to be available on the path.
