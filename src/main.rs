@@ -14,7 +14,10 @@ struct Args {
 #[derive(Subcommand)]
 enum Commands {
 	/// add one or more git repos to manage
-	Add { repo_folder: Vec<String> },
+	Add {
+		#[clap(required = true)]
+		repo_folder: Vec<String>
+	},
 }
 
 fn main() {
