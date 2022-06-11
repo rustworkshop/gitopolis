@@ -6,9 +6,6 @@ use clap::{Parser, Subcommand};
 struct Args {
 	#[clap(subcommand)]
 	command: Option<Commands>,
-
-	#[clap(short, long)]
-	working_folder: Option<String>,
 }
 
 #[derive(Subcommand)]
@@ -23,26 +20,12 @@ enum Commands {
 fn main() {
 	let args = Args::parse();
 
-	let working_folder = get_working_folder_from_arg(&args.working_folder);
-	println!("Working folder: {}", working_folder);
-
 	match &args.command {
 		Some(Commands::Add { repo_folder }) => {
 			println!("add command received with arg {:?}", repo_folder);
 		}
 		None =>{
 			println!("nada");
-		}
-	}
-}
-
-fn get_working_folder_from_arg(arg: &Option<String>) -> String {
-	return match arg {
-		Some(path) => {
-			path.to_string()
-		}
-		None => {
-			String::from(".")
 		}
 	}
 }
