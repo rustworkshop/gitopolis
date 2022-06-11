@@ -14,7 +14,7 @@ struct Args {
 #[derive(Subcommand)]
 enum Commands {
 	/// add one or more git repos to manage
-	Add { value: Option<String> },
+	Add { value: Vec<String> },
 }
 
 fn main() {
