@@ -20,6 +20,15 @@ enum Commands {
 fn main() {
 	let args = Args::parse();
 
+	match &args.working_folder {
+		Some(path) => {
+			println!("Working folder set to {}", path);
+		}
+		None => {
+			 println!("Working in current folder");
+		}
+	}
+
 	match &args.command {
 		Some(Commands::Add { value }) => {
 			println!("add command received with arg {:?}", value);
