@@ -13,7 +13,7 @@ enum Commands {
 	/// add one or more git repos to manage
 	Add {
 		#[clap(required = true)]
-		repo_folder: Vec<String>
+		repo_folders: Vec<String>
 	},
 }
 
@@ -21,11 +21,17 @@ fn main() {
 	let args = Args::parse();
 
 	match &args.command {
-		Some(Commands::Add { repo_folder }) => {
-			println!("add command received with arg {:?}", repo_folder);
+		Some(Commands::Add { repo_folders }) => {
+			add_folders(repo_folders)
 		}
 		None =>{
 			println!("nada");
 		}
+	}
+}
+
+fn add_folders(repo_folders: &Vec<String>){
+	for repo_folder in repo_folders {
+		println!("Adding {} ...", repo_folder)
 	}
 }
