@@ -13,7 +13,7 @@ enum Commands {
 	/// add one or more git repos to manage
 	Add {
 		#[clap(required = true)]
-		repo_folders: Vec<String>
+		repo_folders: Vec<String>,
 	},
 }
 
@@ -21,22 +21,22 @@ fn main() {
 	let args = Args::parse();
 
 	match &args.command {
-		Some(Commands::Add { repo_folders }) => {
-			add_folders(repo_folders)
-		}
-		None =>{
+		Some(Commands::Add { repo_folders }) => add_folders(repo_folders),
+		None => {
 			println!("nada");
 		}
 	}
 }
 
 struct Repo {
-	folder: String
+	folder: String,
 }
 
 fn add_folders(repo_folders: &Vec<String>) {
 	for repo_folder in repo_folders {
-		let repo = Repo { folder: repo_folder.to_owned() };
+		let repo = Repo {
+			folder: repo_folder.to_owned(),
+		};
 		println!("Adding {} ...", repo.folder);
 	}
 }
