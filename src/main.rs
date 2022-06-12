@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use serde_derive::{Serialize, Deserialize};
 use toml;
+use std::fs;
 
 /// gitopolis, a cli tool for managnig multiple git repositories - https://github.com/timabell/gitopolis
 #[derive(Parser)]
@@ -61,5 +62,7 @@ fn save(repos: &Vec<Repo>) {
 	println!("Saving {} repos...", repos.len());
 	let state_toml = toml::to_string(repos)
 		.expect("Failed to generate toml for repo list");
-	println!("{}", state_toml);
+	let state_filename = ".gitopolis.toml";
+	fs::write(state_filename, state_toml)
+		.expect(&format!("Failed to write {}", state_filename));
 }
