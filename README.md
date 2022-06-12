@@ -77,6 +77,24 @@ Command used to show status is currently hard-coded, we could make that configur
 		* group list # list groups and the repos in them
 ```
 
+## Config format
+
+The repo list + groupings are stored in a toml file in the current folder called `.gitopolis.toml` that looks like this:
+
+```
+[[repos]]
+path = "schema-explorer"
+remotes = { origin = "https://github.com/timabell/schema-explorer.git" }
+groups = ["tim"]
+
+[[repos]]
+path = "tims-dotmatrix"
+remotes = { origin = "https://github.com/timabell/dotmatrix" }
+groups = ["tim", "dotfiles"]
+```
+
+The double-square-bracket is the [array of tables toml markup](https://toml.io/en/v1.0.0#array-of-tables)
+
 ## Setting sync
 
 In the manner of dotfiles, you can symlink, check-in and/or sync the config that gitopolis uses so that you can version control it and use it across multiple machines.
