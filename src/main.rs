@@ -1,7 +1,8 @@
 use clap::{Parser, Subcommand};
-use serde_derive::{Serialize, Deserialize};
-use toml;
+use serde_derive::Serialize;
+use std::collections::BTreeMap;
 use std::fs;
+use toml;
 
 /// gitopolis, a cli tool for managnig multiple git repositories - https://github.com/timabell/gitopolis
 #[derive(Parser)]
@@ -56,13 +57,25 @@ fn add_folders(repo_folders: &Vec<String>) {
 		repos.push(repo);
 	}
 	save(&*repos); // &* to pass as *immutable* (dereference+reference) https://stackoverflow.com/questions/41366896/how-to-make-a-rust-mutable-reference-immutable/41367094#41367094
+	println!("Done.");
 }
 
 fn save(repos: &Vec<Repo>) {
-	println!("Saving {} repos...", repos.len());
-	let state_toml = toml::to_string(repos)
-		.expect("Failed to generate toml for repo list");
+	let vec_of_maps: Vec<_> = repos
+		.iter()
+		.map(|r| {
+			let mut repo_config = BTreeMap::new();
+			repo_config.insert("path", r.path.to_owned());
+			repo_config
+		})
+		.collect();
+
+	let mut named_container = BTreeMap::new();
+	named_container.insert("repos", vec_of_maps);
+
+	let state_toml =
+		toml::to_string(&named_container).expect("Failed to generate toml for repo list");
+
 	let state_filename = ".gitopolis.toml";
-	fs::write(state_filename, state_toml)
-		.expect(&format!("Failed to write {}", state_filename));
+	fs::write(state_filename, state_toml).expect(&format!("Failed to write {}", state_filename));
 }
