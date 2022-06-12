@@ -60,7 +60,7 @@ Command used to show status is currently hard-coded, we could make that configur
 
 `help` / `--help` / `-h` which prints usage.
 
-```md
+```
 * gitopolis  # prints usage info
 	* help / --help / -h (default) - print usage
 	* add <folder(s)...>  # add one or more git repos to manage
@@ -93,7 +93,7 @@ remotes = { origin = "https://github.com/timabell/dotmatrix" }
 groups = ["tim", "dotfiles"]
 ```
 
-The double-square-bracket is the [array of tables toml markup](https://toml.io/en/v1.0.0#array-of-tables)
+The double-square-bracket is the [array of tables toml markup](https://toml.io/en/v1.0.0#array-of-tables).
 
 ## Setting sync
 
