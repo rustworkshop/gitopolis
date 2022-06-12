@@ -18,7 +18,7 @@ To be decided
 
 ## Usage
 
-```
+```sh
 mkdir ~/repos/
 cd ~/repos/
 git clone https://github.com/timabell/gitopolis.git
@@ -60,7 +60,7 @@ Command used to show status is currently hard-coded, we could make that configur
 
 `help` / `--help` / `-h` which prints usage.
 
-```
+```md
 * gitopolis  # prints usage info
 	* help / --help / -h (default) - print usage
 	* add <folder(s)...>  # add one or more git repos to manage
@@ -81,7 +81,7 @@ Command used to show status is currently hard-coded, we could make that configur
 
 The repo list + groupings are stored in a toml file in the current folder called `.gitopolis.toml` that looks like this:
 
-```
+```toml
 [[repos]]
 path = "schema-explorer"
 remotes = { origin = "https://github.com/timabell/schema-explorer.git" }
