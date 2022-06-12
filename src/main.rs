@@ -31,14 +31,14 @@ fn main() {
 	}
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 struct Repo {
 	path: String,
 	remotes: Vec<Remote>,
 	groups: Vec<String>,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 struct Remote {
 	name: String,
 	url: String,
