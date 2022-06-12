@@ -65,7 +65,7 @@ Command used to show status is currently hard-coded, we could make that configur
 	* help / --help / -h (default) - print usage
 	* add <folder(s)...>  # add one or more git repos to manage
 	* remove <folder(s)...>  # remove one or more git repos from repo management
-	* exec <command> <args...>  # execute any shell command in the repo (including git commands)
+	* exec -- <command> <args...>  # execute any shell command in the repo (including git commands)
 	* list  # list all managed repos and their state
 	* clone  # clone any repositories that are managed but don't exist locally
 	* group  # prints subcommnd help
@@ -76,6 +76,8 @@ Command used to show status is currently hard-coded, we could make that configur
 		* group <group_name> list # list groups & their repos and their state
 		* group list # list groups and the repos in them
 ```
+
+Currently need `--` after exec to avoid git args being interpreted by the rust arg parser. Hope to fix that and just consume everything after exec. 
 
 ## Config format
 

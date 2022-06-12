@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs;
+use std::process::Command;
 use toml;
 
 const STATE_FILENAME: &str = ".gitopolis.toml";
@@ -22,6 +23,9 @@ enum Commands {
 		repo_folders: Vec<String>,
 	},
 	List,
+	Exec {
+		exec_args: Vec<String>,
+	},
 }
 
 fn main() {
@@ -30,10 +34,33 @@ fn main() {
 	match &args.command {
 		Some(Commands::Add { repo_folders }) => add_folders(repo_folders),
 		Some(Commands::List) => list(),
+		Some(Commands::Exec { exec_args }) => exec(exec_args),
 		None => {
 			println!("nada");
 		}
 	}
+}
+
+fn exec(exec_args: &Vec<String>) {
+	let args_copy: &mut Vec<String> = &mut exec_args.to_owned();
+	let args = args_copy.split_off(1);
+	let cmd = &args_copy[0]; // only cmd remaining after split_off above
+	for repo in load() {
+		repo_exec(&repo.path, &cmd, &args);
+	}
+}
+
+fn repo_exec(path: &str, cmd: &str, args: &Vec<String>) {
+	println!("🌲 {}> {} {:?}", path, cmd, args);
+	let output = Command::new(cmd)
+		.args(args)
+		.current_dir(path)
+		.output()
+		.expect(&format!("Error running exec {}", cmd));
+
+	let stdout = String::from_utf8(output.stdout).expect("Error converting stdout to string");
+	println!("{}", stdout);
+	println!();
 }
 
 fn list() {
