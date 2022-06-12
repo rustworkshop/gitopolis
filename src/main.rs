@@ -1,4 +1,6 @@
 use clap::{Parser, Subcommand};
+use serde_derive::{Serialize, Deserialize};
+use toml;
 
 /// gitopolis, a cli tool for managnig multiple git repositories - https://github.com/timabell/gitopolis
 #[derive(Parser)]
@@ -28,6 +30,7 @@ fn main() {
 	}
 }
 
+#[derive(Serialize)]
 struct Repo {
 	folder: String,
 }
@@ -45,5 +48,8 @@ fn add_folders(repo_folders: &Vec<String>) {
 }
 
 fn save(repos: &Vec<Repo>) {
-	println!("Saving {} repos...", repos.len())
+	println!("Saving {} repos...", repos.len());
+	let state_toml = toml::to_string(repos)
+		.expect("Failed to generate toml for repo list");
+	println!("{}", state_toml);
 }
