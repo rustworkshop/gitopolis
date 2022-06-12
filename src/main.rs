@@ -98,9 +98,7 @@ fn load() -> Vec<Repo> {
 	if !std::path::Path::new(STATE_FILENAME).exists() {
 		return Vec::new();
 	}
-	let state_toml = fs::read_to_string(STATE_FILENAME).expect(
-		"Failed to read {}, make sure you add at least one repo before trying to list them",
-	);
+	let state_toml = fs::read_to_string(STATE_FILENAME).expect("Failed to read state file {}");
 	let named_container: BTreeMap<String, Vec<BTreeMap<String, String>>> =
 		toml::from_str(&state_toml).expect(&format!("Failed to parse {}", STATE_FILENAME));
 	let vec_of_maps = named_container["repos"].to_owned();
