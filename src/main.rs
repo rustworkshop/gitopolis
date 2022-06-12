@@ -33,10 +33,17 @@ struct Repo {
 }
 
 fn add_folders(repo_folders: &Vec<String>) {
+	let repos: &mut Vec<Repo> = &mut Vec::new();
 	for repo_folder in repo_folders {
 		let repo = Repo {
 			folder: repo_folder.to_owned(),
 		};
 		println!("Adding {} ...", repo.folder);
+		repos.push(repo);
 	}
+	save(&*repos); // &* to pass as *immutable* (dereference+reference) https://stackoverflow.com/questions/41366896/how-to-make-a-rust-mutable-reference-immutable/41367094#41367094
+}
+
+fn save(repos: &Vec<Repo>) {
+	println!("Saving {} repos...", repos.len())
 }
