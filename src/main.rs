@@ -103,17 +103,8 @@ fn add_folders(repo_folders: &Vec<String>) {
 }
 
 fn save(repos: &Vec<Repo>) {
-	let vec_of_maps: Vec<_> = repos
-		.iter()
-		.map(|r| {
-			let mut repo_config = BTreeMap::new();
-			repo_config.insert("path", r.path.to_owned());
-			repo_config
-		})
-		.collect();
-
 	let mut named_container = BTreeMap::new();
-	named_container.insert("repos", vec_of_maps);
+	named_container.insert("repos", repos);
 
 	let state_toml =
 		toml::to_string(&named_container).expect("Failed to generate toml for repo list");
