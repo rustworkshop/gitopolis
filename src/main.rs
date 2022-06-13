@@ -26,6 +26,12 @@ enum Commands {
 	Exec {
 		exec_args: Vec<String>,
 	},
+	Tag {
+		#[clap(required = true)]
+		tag_name: String,
+		#[clap(required = true)]
+		repo_folders: Vec<String>,
+	},
 }
 
 fn main() {
@@ -35,10 +41,30 @@ fn main() {
 		Some(Commands::Add { repo_folders }) => add_folders(repo_folders),
 		Some(Commands::List) => list(),
 		Some(Commands::Exec { exec_args }) => exec(exec_args),
+		Some(Commands::Tag {
+			tag_name,
+			repo_folders,
+		}) => tag_folders(tag_name, repo_folders),
 		None => {
 			println!("nada");
 		}
 	}
+}
+
+fn tag_folders(tag_name: &str, repo_folders: &Vec<String>) {
+	let mut repos = load();
+	for repo_folder in repo_folders {
+		let repo = find_repo(repo_folder, &mut repos).expect("not found");
+		repo.tags.push(tag_name.to_string());
+	}
+	save(&repos);
+}
+
+fn find_repo<'a>(folder_name: &str, repos: &'a mut Vec<Repo>) -> Option<&'a mut Repo> {
+	if let Some(ix) = repos.iter().position(|r| r.path == *folder_name) {
+		return Some(&mut repos[ix]);
+	}
+	None
 }
 
 fn exec(exec_args: &Vec<String>) {
@@ -77,8 +103,8 @@ fn list() {
 #[derive(Debug, Deserialize, Serialize)]
 struct Repo {
 	path: String,
+	tags: Vec<String>,
 	// remotes: Vec<Remote>,
-	// groups: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -92,8 +118,8 @@ fn add_folders(repo_folders: &Vec<String>) {
 	for repo_folder in repo_folders {
 		let repo = Repo {
 			path: repo_folder.to_owned(),
+			tags: Vec::new(),
 			// remotes: Vec::new(),
-			// groups: Vec::new(),
 		};
 		println!("Adding {} ...", repo.path);
 		repos.push(repo);
