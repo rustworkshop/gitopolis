@@ -54,7 +54,7 @@ fn main() {
 fn tag_folders(tag_name: &str, repo_folders: &Vec<String>) {
 	let mut repos = load();
 	for repo_folder in repo_folders {
-		let repo = find_repo(repo_folder, &mut repos).expect("not found");
+		let repo = find_repo(repo_folder, &mut repos).expect(&format!("Repo '{}' not found",repo_folder));
 		repo.tags.push(tag_name.to_string());
 	}
 	save(&repos);
