@@ -117,14 +117,12 @@ fn load() -> Vec<Repo> {
 		return Vec::new();
 	}
 	let state_toml = fs::read_to_string(STATE_FILENAME).expect("Failed to read state file {}");
-	let named_container: BTreeMap<String, Vec<BTreeMap<String, String>>> =
+
+	let mut named_container: BTreeMap<&str, Vec<Repo>> =
 		toml::from_str(&state_toml).expect(&format!("Failed to parse {}", STATE_FILENAME));
-	let vec_of_maps = named_container["repos"].to_owned();
-	let repos = vec_of_maps
-		.iter()
-		.map(|r| Repo {
-			path: r["path"].to_owned(),
-		})
-		.collect();
+
+	let repos = named_container
+		.remove("repos") // [re]move this rather than taking a ref so that ownership moves with it (borrow checker)
+		.expect(&format!("Corrupted state file {}", STATE_FILENAME));
 	return repos;
 }
