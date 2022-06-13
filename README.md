@@ -1,6 +1,6 @@
 # Gitopolis
 
-[![Rust](https://github.com/timabell/gitopolis/actions/workflows/rust.yml/badge.svg)](https://github.com/timabell/gitopolis/actions/workflows/rust.yml)
+[![Rust](https://github.com/timabell/gitopolis/actions/workflows/rust.yml/badge.svg)](https://github.com/timabell/gitopolis/.github/workflows/main.yml)
 
 Manage multiple git repositories, like [gita](https://github.com/nosarthur/gita) but written in [Rust](https://www.rust-lang.org/) so you don't need python etc to run it.
 
