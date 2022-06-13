@@ -22,6 +22,10 @@ enum Commands {
 		#[clap(required = true)]
 		repo_folders: Vec<String>,
 	},
+	Remove {
+		#[clap(required = true)]
+		repo_folders: Vec<String>,
+	},
 	List,
 	Exec {
 		exec_args: Vec<String>,
@@ -38,7 +42,8 @@ fn main() {
 	let args = Args::parse();
 
 	match &args.command {
-		Some(Commands::Add { repo_folders }) => add_folders(repo_folders),
+		Some(Commands::Add { repo_folders }) => add_repos(repo_folders),
+		Some(Commands::Remove { repo_folders }) => remove_repos(repo_folders),
 		Some(Commands::List) => list(),
 		Some(Commands::Exec { exec_args }) => exec(exec_args),
 		Some(Commands::Tag {
@@ -54,17 +59,22 @@ fn main() {
 fn tag_folders(tag_name: &str, repo_folders: &Vec<String>) {
 	let mut repos = load();
 	for repo_folder in repo_folders {
-		let repo = find_repo(repo_folder, &mut repos).expect(&format!("Repo '{}' not found",repo_folder));
+		let repo =
+			find_repo(repo_folder, &mut repos).expect(&format!("Repo '{}' not found", repo_folder));
 		repo.tags.push(tag_name.to_string());
 	}
 	save(&repos);
 }
 
 fn find_repo<'a>(folder_name: &str, repos: &'a mut Vec<Repo>) -> Option<&'a mut Repo> {
-	if let Some(ix) = repos.iter().position(|r| r.path == *folder_name) {
+	if let Some(ix) = repo_index(folder_name, &repos) {
 		return Some(&mut repos[ix]);
 	}
 	None
+}
+
+fn repo_index(folder_name: &str, repos: &Vec<Repo>) -> Option<usize> {
+	repos.iter().position(|r| r.path == *folder_name)
 }
 
 fn exec(exec_args: &Vec<String>) {
@@ -113,7 +123,7 @@ struct Remote {
 	url: String,
 }
 
-fn add_folders(repo_folders: &Vec<String>) {
+fn add_repos(repo_folders: &Vec<String>) {
 	let repos: &mut Vec<Repo> = &mut Vec::new();
 	for repo_folder in repo_folders {
 		let repo = Repo {
@@ -126,6 +136,16 @@ fn add_folders(repo_folders: &Vec<String>) {
 	}
 	save(&*repos); // &* to pass as *immutable* (dereference+reference) https://stackoverflow.com/questions/41366896/how-to-make-a-rust-mutable-reference-immutable/41367094#41367094
 	println!("Done.");
+}
+
+fn remove_repos(repo_folders: &Vec<String>) {
+	let mut repos = load();
+	for repo_folder in repo_folders {
+		let ix =
+			repo_index(repo_folder, &repos).expect(&format!("Repo '{}' not found", repo_folder));
+		repos.remove(ix);
+	}
+	save(&repos);
 }
 
 fn save(repos: &Vec<Repo>) {
