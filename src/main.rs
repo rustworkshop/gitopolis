@@ -31,6 +31,9 @@ enum Commands {
 		exec_args: Vec<String>,
 	},
 	Tag {
+		/// Remove this tag from these repo_folders
+		#[clap(short, long)]
+		remove: bool,
 		#[clap(required = true)]
 		tag_name: String,
 		#[clap(required = true)]
@@ -49,19 +52,26 @@ fn main() {
 		Some(Commands::Tag {
 			tag_name,
 			repo_folders,
-		}) => tag_folders(tag_name, repo_folders),
+			remove,
+		}) => tag_folders(tag_name, repo_folders, &remove),
 		None => {
 			println!("nada");
 		}
 	}
 }
 
-fn tag_folders(tag_name: &str, repo_folders: &Vec<String>) {
+fn tag_folders(tag_name: &str, repo_folders: &Vec<String>, remove: &bool) {
 	let mut repos = load();
 	for repo_folder in repo_folders {
 		let repo =
 			find_repo(repo_folder, &mut repos).expect(&format!("Repo '{}' not found", repo_folder));
-		repo.tags.push(tag_name.to_string());
+		if *remove {
+			if let Some(ix) = repo.tags.iter().position(|t| t == tag_name) {
+				repo.tags.remove(ix);
+			}
+		} else {
+			repo.tags.push(tag_name.to_string());
+		}
 	}
 	save(&repos);
 }
