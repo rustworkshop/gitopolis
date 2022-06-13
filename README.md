@@ -12,10 +12,6 @@ Think a [metropolis](https://en.wikipedia.org/wiki/Metropolis) of git repos.
 
 It's a lot to type as a name, but it's nice and unique, and if you use it a lot I suggest you create a shell alias to something shorter.
 
-## License
-
-To be decided
-
 ## Usage
 
 ```sh
