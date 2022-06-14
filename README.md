@@ -45,8 +45,6 @@ gitopolis list -t tim
 ```
 It currently assumes that it can just grab the url for `origin`, we could add support for multiple origins and different naems later.
 
-Command used to show status is currently hard-coded, we could make that configurable later.
-
 ### Command hierarchy
 
 ```
