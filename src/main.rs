@@ -61,8 +61,9 @@ fn main() {
 fn tag_folders(tag_name: &str, repo_folders: &Vec<String>, remove: &bool) {
 	let mut repos = load();
 	for repo_folder in repo_folders {
-		let repo =
-			find_repo(repo_folder, &mut repos).expect(&format!("Repo '{}' not found", repo_folder));
+		let repo = repos
+			.find_repo(repo_folder)
+			.expect(&format!("Repo '{}' not found", repo_folder));
 		if *remove {
 			if let Some(ix) = repo.tags.iter().position(|t| t == tag_name) {
 				repo.tags.remove(ix);
@@ -111,7 +112,7 @@ fn add_repos(repo_folders: &Vec<String>) {
 	let mut repos: Vec<Repo> = load();
 	for repo_folder in repo_folders {
 		println!("Adding {} ...", repo_folder);
-		if let Some(_) = repo_index(repo_folder, &repos) {
+		if let Some(_) = repos.repo_index(repo_folder) {
 			println!("{} already added, ignoring.", repo_folder);
 			continue;
 		}
@@ -129,8 +130,9 @@ fn add_repos(repo_folders: &Vec<String>) {
 fn remove_repos(repo_folders: &Vec<String>) {
 	let mut repos = load();
 	for repo_folder in repo_folders {
-		let ix =
-			repo_index(repo_folder, &repos).expect(&format!("Repo '{}' not found", repo_folder));
+		let ix = repos
+			.repo_index(repo_folder)
+			.expect(&format!("Repo '{}' not found", repo_folder));
 		repos.remove(ix);
 	}
 	save(repos);

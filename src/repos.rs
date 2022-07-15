@@ -18,15 +18,15 @@ pub struct Remote {
 	pub url: String,
 }
 
-// todo: convert to methods
-
-pub fn find_repo<'a>(folder_name: &str, repos: &'a mut Vec<Repo>) -> Option<&'a mut Repo> {
-	if let Some(ix) = repo_index(folder_name, &repos) {
-		return Some(&mut repos[ix]);
+impl Repos {
+	pub fn find_repo(&self, folder_name: &str) -> Option<&mut Repo> {
+		if let Some(ix) = self.repo_index(folder_name) {
+			return Some(&mut self.repos[ix]);
+		}
+		None
 	}
-	None
-}
 
-pub fn repo_index(folder_name: &str, repos: &Vec<Repo>) -> Option<usize> {
-	repos.iter().position(|r| r.path == *folder_name)
+	pub fn repo_index(&self, folder_name: &str) -> Option<usize> {
+		self.repos.iter().position(|r| r.path == *folder_name)
+	}
 }
