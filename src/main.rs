@@ -1,12 +1,9 @@
 use clap::{Parser, Subcommand};
-use std::collections::BTreeMap;
-use std::fs;
 use std::process::Command;
-use toml;
 mod repos;
 use repos::*;
-
-const STATE_FILENAME: &str = ".gitopolis.toml";
+mod storage;
+use storage::*;
 
 /// gitopolis, a cli tool for managnig multiple git repositories - https://github.com/timabell/gitopolis
 #[derive(Parser)]
@@ -137,27 +134,4 @@ fn remove_repos(repo_folders: &Vec<String>) {
 		repos.remove(ix);
 	}
 	save(repos);
-}
-
-fn save(repos: Vec<Repo>) {
-	let repos_struct = Repos { repos };
-
-	let state_toml = toml::to_string(&repos_struct).expect("Failed to generate toml for repo list");
-
-	fs::write(STATE_FILENAME, state_toml).expect(&format!("Failed to write {}", STATE_FILENAME));
-}
-
-fn load() -> Vec<Repo> {
-	if !std::path::Path::new(STATE_FILENAME).exists() {
-		return Vec::new();
-	}
-	let state_toml = fs::read_to_string(STATE_FILENAME).expect("Failed to read state file {}");
-
-	let mut named_container: BTreeMap<&str, Vec<Repo>> =
-		toml::from_str(&state_toml).expect(&format!("Failed to parse {}", STATE_FILENAME));
-
-	let repos = named_container
-		.remove("repos") // [re]move this rather than taking a ref so that ownership moves with it (borrow checker)
-		.expect(&format!("Corrupted state file {}", STATE_FILENAME));
-	return repos;
 }
