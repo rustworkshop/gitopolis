@@ -73,7 +73,7 @@ fn tag_folders(tag_name: &str, repo_folders: &Vec<String>, remove: &bool) {
 			repo.tags.push(tag_name.to_string());
 		}
 	}
-	save(&repos);
+	save(repos);
 }
 
 fn find_repo<'a>(folder_name: &str, repos: &'a mut Vec<Repo>) -> Option<&'a mut Repo> {
@@ -120,6 +120,11 @@ fn list() {
 	}
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct Repos {
+	repos: Vec<Repo>,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 struct Repo {
 	path: String,
@@ -134,7 +139,7 @@ struct Remote {
 }
 
 fn add_repos(repo_folders: &Vec<String>) {
-	let repos: &mut Vec<Repo> = &mut load();
+	let mut repos: Vec<Repo> = load();
 	for repo_folder in repo_folders {
 		println!("Adding {} ...", repo_folder);
 		if let Some(_) = repo_index(repo_folder, &repos) {
@@ -148,7 +153,7 @@ fn add_repos(repo_folders: &Vec<String>) {
 		};
 		repos.push(repo);
 	}
-	save(&*repos); // &* to pass as *immutable* (dereference+reference) https://stackoverflow.com/questions/41366896/how-to-make-a-rust-mutable-reference-immutable/41367094#41367094
+	save(repos);
 	println!("Done.");
 }
 
@@ -159,15 +164,13 @@ fn remove_repos(repo_folders: &Vec<String>) {
 			repo_index(repo_folder, &repos).expect(&format!("Repo '{}' not found", repo_folder));
 		repos.remove(ix);
 	}
-	save(&repos);
+	save(repos);
 }
 
-fn save(repos: &Vec<Repo>) {
-	let mut named_container = BTreeMap::new();
-	named_container.insert("repos", repos);
+fn save(repos: Vec<Repo>) {
+	let repos_struct = Repos { repos };
 
-	let state_toml =
-		toml::to_string(&named_container).expect("Failed to generate toml for repo list");
+	let state_toml = toml::to_string(&repos_struct).expect("Failed to generate toml for repo list");
 
 	fs::write(STATE_FILENAME, state_toml).expect(&format!("Failed to write {}", STATE_FILENAME));
 }
