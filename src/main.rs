@@ -1,9 +1,10 @@
 use clap::{Parser, Subcommand};
-use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs;
 use std::process::Command;
 use toml;
+mod repos;
+use repos::*;
 
 const STATE_FILENAME: &str = ".gitopolis.toml";
 
@@ -118,24 +119,6 @@ fn list() {
 	for repo in repos {
 		println!("{}", repo.path);
 	}
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Repos {
-	repos: Vec<Repo>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct Repo {
-	path: String,
-	tags: Vec<String>,
-	// remotes: Vec<Remote>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct Remote {
-	name: String,
-	url: String,
 }
 
 fn add_repos(repo_folders: &Vec<String>) {
