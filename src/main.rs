@@ -77,17 +77,6 @@ fn tag_folders(tag_name: &str, repo_folders: &Vec<String>, remove: &bool) {
 	save(repos);
 }
 
-fn find_repo<'a>(folder_name: &str, repos: &'a mut Vec<Repo>) -> Option<&'a mut Repo> {
-	if let Some(ix) = repo_index(folder_name, &repos) {
-		return Some(&mut repos[ix]);
-	}
-	None
-}
-
-fn repo_index(folder_name: &str, repos: &Vec<Repo>) -> Option<usize> {
-	repos.iter().position(|r| r.path == *folder_name)
-}
-
 fn exec(exec_args: &Vec<String>) {
 	let args_copy: &mut Vec<String> = &mut exec_args.to_owned();
 	let args = args_copy.split_off(1);
