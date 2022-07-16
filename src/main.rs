@@ -51,21 +51,31 @@ fn main() {
 	let mut repos = load();
 
 	match &args.command {
-		Some(Commands::Add { repo_folders }) => repos.add(repo_folders),
-		Some(Commands::Remove { repo_folders }) => repos.remove(repo_folders),
+		Some(Commands::Add { repo_folders }) => {
+			repos.add(repo_folders);
+			save(repos)
+		}
+		Some(Commands::Remove { repo_folders }) => {
+			repos.remove(repo_folders);
+			save(repos)
+		}
 		Some(Commands::List) => list(&repos),
-		Some(Commands::Exec { exec_args }) => exec(exec_args, &repos),
+		Some(Commands::Exec { exec_args }) => {
+			exec(exec_args, &repos);
+			save(repos)
+		}
 		Some(Commands::Tag {
 			tag_name,
 			repo_folders,
 			remove,
-		}) => tag_folders(tag_name, repo_folders, &remove, &mut repos),
+		}) => {
+			tag_folders(tag_name, repo_folders, &remove, &mut repos);
+			save(repos)
+		}
 		None => {
 			println!("nada");
 		}
 	}
-	// todo: only save if dirty
-	save(repos);
 }
 
 fn tag_folders(tag_name: &str, repo_folders: &Vec<String>, remove: &bool, repos: &mut Repos) {
