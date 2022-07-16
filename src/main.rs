@@ -41,25 +41,27 @@ enum Commands {
 
 fn main() {
 	let args = Args::parse();
+	let mut repos = load();
 
 	match &args.command {
-		Some(Commands::Add { repo_folders }) => add_repos(repo_folders),
-		Some(Commands::Remove { repo_folders }) => remove_repos(repo_folders),
-		Some(Commands::List) => list(),
-		Some(Commands::Exec { exec_args }) => exec(exec_args),
+		Some(Commands::Add { repo_folders }) => add_repos(repo_folders, &mut repos),
+		Some(Commands::Remove { repo_folders }) => remove_repos(repo_folders, &mut repos),
+		Some(Commands::List) => list(&repos),
+		Some(Commands::Exec { exec_args }) => exec(exec_args, &repos),
 		Some(Commands::Tag {
 			tag_name,
 			repo_folders,
 			remove,
-		}) => tag_folders(tag_name, repo_folders, &remove),
+		}) => tag_folders(tag_name, repo_folders, &remove, &mut repos),
 		None => {
 			println!("nada");
 		}
 	}
+	// todo: only save if dirty
+	save(repos);
 }
 
-fn tag_folders(tag_name: &str, repo_folders: &Vec<String>, remove: &bool) {
-	let mut repos = load();
+fn tag_folders(tag_name: &str, repo_folders: &Vec<String>, remove: &bool, repos: &mut Repos) {
 	for repo_folder in repo_folders {
 		let repo = repos
 			.find_repo(repo_folder)
@@ -72,14 +74,13 @@ fn tag_folders(tag_name: &str, repo_folders: &Vec<String>, remove: &bool) {
 			repo.tags.push(tag_name.to_string());
 		}
 	}
-	save(repos);
 }
 
-fn exec(exec_args: &Vec<String>) {
+fn exec(exec_args: &Vec<String>, repos: &Repos) {
 	let args_copy: &mut Vec<String> = &mut exec_args.to_owned();
 	let args = args_copy.split_off(1);
 	let cmd = &args_copy[0]; // only cmd remaining after split_off above
-	for repo in load().repos {
+	for repo in &repos.repos {
 		repo_exec(&repo.path, &cmd, &args);
 	}
 }
@@ -97,19 +98,17 @@ fn repo_exec(path: &str, cmd: &str, args: &Vec<String>) {
 	println!();
 }
 
-fn list() {
-	let repos = load();
+fn list(repos: &Repos) {
 	if repos.repos.len() == 0 {
 		println!("No repos");
 		std::process::exit(2);
 	}
-	for repo in repos.repos {
+	for repo in &repos.repos {
 		println!("{}", repo.path);
 	}
 }
 
-fn add_repos(repo_folders: &Vec<String>) {
-	let mut repos = load();
+fn add_repos(repo_folders: &Vec<String>, repos: &mut Repos) {
 	for repo_folder in repo_folders {
 		println!("Adding {} ...", repo_folder);
 		if let Some(_) = repos.repo_index(repo_folder) {
@@ -123,17 +122,14 @@ fn add_repos(repo_folders: &Vec<String>) {
 		};
 		repos.push(repo);
 	}
-	save(repos);
 	println!("Done.");
 }
 
-fn remove_repos(repo_folders: &Vec<String>) {
-	let mut repos = load();
+fn remove_repos(repo_folders: &Vec<String>, repos: &mut Repos) {
 	for repo_folder in repo_folders {
 		let ix = repos
 			.repo_index(repo_folder)
 			.expect(&format!("Repo '{}' not found", repo_folder));
 		repos.remove(ix);
 	}
-	save(repos);
 }
