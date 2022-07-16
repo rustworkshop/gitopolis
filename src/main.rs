@@ -3,7 +3,7 @@ use std::process::Command;
 mod repos;
 use repos::*;
 mod storage;
-use log::{info, LevelFilter};
+use log::LevelFilter;
 use std::io::Write;
 use storage::*;
 
@@ -51,7 +51,7 @@ fn main() {
 	let mut repos = load();
 
 	match &args.command {
-		Some(Commands::Add { repo_folders }) => add_repos(repo_folders, &mut repos),
+		Some(Commands::Add { repo_folders }) => repos.add(repo_folders),
 		Some(Commands::Remove { repo_folders }) => remove_repos(repo_folders, &mut repos),
 		Some(Commands::List) => list(&repos),
 		Some(Commands::Exec { exec_args }) => exec(exec_args, &repos),
@@ -112,22 +112,6 @@ fn list(repos: &Repos) {
 	}
 	for repo in &repos.repos {
 		println!("{}", repo.path);
-	}
-}
-
-fn add_repos(repo_folders: &Vec<String>, repos: &mut Repos) {
-	for repo_folder in repo_folders {
-		if let Some(_) = repos.repo_index(repo_folder) {
-			info!("{} already added, ignoring.", repo_folder);
-			continue;
-		}
-		let repo = Repo {
-			path: repo_folder.to_owned(),
-			tags: Vec::new(),
-			// remotes: Vec::new(),
-		};
-		repos.push(repo);
-		info!("Added {}", repo_folder);
 	}
 }
 
