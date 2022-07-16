@@ -79,7 +79,7 @@ fn exec(exec_args: &Vec<String>) {
 	let args_copy: &mut Vec<String> = &mut exec_args.to_owned();
 	let args = args_copy.split_off(1);
 	let cmd = &args_copy[0]; // only cmd remaining after split_off above
-	for repo in load() {
+	for repo in load().repos {
 		repo_exec(&repo.path, &cmd, &args);
 	}
 }
@@ -98,18 +98,18 @@ fn repo_exec(path: &str, cmd: &str, args: &Vec<String>) {
 }
 
 fn list() {
-	let repos: Vec<Repo> = load();
-	if repos.len() == 0 {
+	let repos = load();
+	if repos.repos.len() == 0 {
 		println!("No repos");
 		std::process::exit(2);
 	}
-	for repo in repos {
+	for repo in repos.repos {
 		println!("{}", repo.path);
 	}
 }
 
 fn add_repos(repo_folders: &Vec<String>) {
-	let mut repos: Vec<Repo> = load();
+	let mut repos = load();
 	for repo_folder in repo_folders {
 		println!("Adding {} ...", repo_folder);
 		if let Some(_) = repos.repo_index(repo_folder) {

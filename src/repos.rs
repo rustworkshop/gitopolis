@@ -2,7 +2,20 @@ use serde_derive::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Repos {
+	// todo: make inner repos private if possible
 	pub repos: Vec<Repo>,
+}
+
+impl Repos {
+	pub fn new() -> Repos {
+		Repos { repos: Vec::new() }
+	}
+	pub fn push(&mut self, repo: Repo) {
+		self.repos.push(repo)
+	}
+	pub fn remove(&mut self, index: usize) {
+		self.repos.remove(index);
+	}
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -19,7 +32,7 @@ pub struct Remote {
 }
 
 impl Repos {
-	pub fn find_repo(&self, folder_name: &str) -> Option<&mut Repo> {
+	pub fn find_repo(&mut self, folder_name: &str) -> Option<&mut Repo> {
 		if let Some(ix) = self.repo_index(folder_name) {
 			return Some(&mut self.repos[ix]);
 		}
