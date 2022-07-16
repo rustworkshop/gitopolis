@@ -1,13 +1,14 @@
-use clap::{Parser, Subcommand};
-mod repos;
-use repos::*;
 mod exec;
+mod list;
+mod repos;
 mod storage;
-use exec::*;
-
+use clap::{Parser, Subcommand};
+use exec::exec;
+use list::list;
 use log::LevelFilter;
+use repos::*;
 use std::io::Write;
-use storage::*;
+use storage::{load, save};
 
 /// gitopolis, a cli tool for managnig multiple git repositories - https://github.com/timabell/gitopolis
 #[derive(Parser)]
@@ -81,15 +82,5 @@ fn main() {
 		None => {
 			panic!("no command") // this doesn't happen because help shows instead
 		}
-	}
-}
-
-fn list(repos: &Repos) {
-	if repos.repos.len() == 0 {
-		println!("No repos");
-		std::process::exit(2);
-	}
-	for repo in &repos.repos {
-		println!("{}", repo.path);
 	}
 }
