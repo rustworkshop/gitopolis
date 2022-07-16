@@ -60,4 +60,25 @@ impl Repos {
 			self.repos.remove(ix);
 		}
 	}
+
+	pub fn add_tag(&mut self, tag_name: &str, repo_folders: &Vec<String>) {
+		self.tag(tag_name, repo_folders, false)
+	}
+	pub fn remove_tag(&mut self, tag_name: &str, repo_folders: &Vec<String>) {
+		self.tag(tag_name, repo_folders, true)
+	}
+	fn tag(&mut self, tag_name: &str, repo_folders: &Vec<String>, remove: bool) {
+		for repo_folder in repo_folders {
+			let repo = self
+				.find_repo(repo_folder)
+				.expect(&format!("Repo '{}' not found", repo_folder));
+			if remove {
+				if let Some(ix) = repo.tags.iter().position(|t| t == tag_name) {
+					repo.tags.remove(ix);
+				}
+			} else {
+				repo.tags.push(tag_name.to_string());
+			}
+		}
+	}
 }

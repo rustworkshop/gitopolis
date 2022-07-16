@@ -69,26 +69,15 @@ fn main() {
 			repo_folders,
 			remove,
 		}) => {
-			tag_folders(tag_name, repo_folders, *remove, &mut repos);
+			if *remove {
+				repos.remove_tag(tag_name, repo_folders);
+			} else {
+				repos.add_tag(tag_name, repo_folders);
+			}
 			save(repos)
 		}
 		None => {
 			panic!("no command") // this doesn't happen because help shows instead
-		}
-	}
-}
-
-fn tag_folders(tag_name: &str, repo_folders: &Vec<String>, remove: bool, repos: &mut Repos) {
-	for repo_folder in repo_folders {
-		let repo = repos
-			.find_repo(repo_folder)
-			.expect(&format!("Repo '{}' not found", repo_folder));
-		if remove {
-			if let Some(ix) = repo.tags.iter().position(|t| t == tag_name) {
-				repo.tags.remove(ix);
-			}
-		} else {
-			repo.tags.push(tag_name.to_string());
 		}
 	}
 }
