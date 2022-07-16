@@ -69,7 +69,7 @@ fn main() {
 			repo_folders,
 			remove,
 		}) => {
-			tag_folders(tag_name, repo_folders, &remove, &mut repos);
+			tag_folders(tag_name, repo_folders, *remove, &mut repos);
 			save(repos)
 		}
 		None => {
@@ -78,12 +78,12 @@ fn main() {
 	}
 }
 
-fn tag_folders(tag_name: &str, repo_folders: &Vec<String>, remove: &bool, repos: &mut Repos) {
+fn tag_folders(tag_name: &str, repo_folders: &Vec<String>, remove: bool, repos: &mut Repos) {
 	for repo_folder in repo_folders {
 		let repo = repos
 			.find_repo(repo_folder)
 			.expect(&format!("Repo '{}' not found", repo_folder));
-		if *remove {
+		if remove {
 			if let Some(ix) = repo.tags.iter().position(|t| t == tag_name) {
 				repo.tags.remove(ix);
 			}
