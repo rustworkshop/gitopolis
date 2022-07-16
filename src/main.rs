@@ -61,7 +61,7 @@ fn main() {
 		}
 		Some(Commands::List) => list(&repos),
 		Some(Commands::Exec { exec_args }) => {
-			exec(exec_args, &repos);
+			exec(exec_args.to_owned(), &repos);
 			save(repos)
 		}
 		Some(Commands::Tag {
@@ -82,10 +82,9 @@ fn main() {
 	}
 }
 
-fn exec(exec_args: &Vec<String>, repos: &Repos) {
-	let args_copy: &mut Vec<String> = &mut exec_args.to_owned();
-	let args = args_copy.split_off(1);
-	let cmd = &args_copy[0]; // only cmd remaining after split_off above
+fn exec(mut exec_args: Vec<String>, repos: &Repos) {
+	let args = exec_args.split_off(1);
+	let cmd = &exec_args[0]; // only cmd remaining after split_off above
 	for repo in &repos.repos {
 		repo_exec(&repo.path, &cmd, &args);
 	}
