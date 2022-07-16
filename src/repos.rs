@@ -7,12 +7,6 @@ pub struct Repos {
 	pub repos: Vec<Repo>,
 }
 
-impl Repos {
-	pub fn new() -> Repos {
-		Repos { repos: Vec::new() }
-	}
-}
-
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Repo {
 	pub path: String,
@@ -27,6 +21,10 @@ pub struct Remote {
 }
 
 impl Repos {
+	pub fn new() -> Repos {
+		Repos { repos: Vec::new() }
+	}
+
 	pub fn find_repo(&mut self, folder_name: &str) -> Option<&mut Repo> {
 		if let Some(ix) = self.repo_index(folder_name) {
 			return Some(&mut self.repos[ix]);
