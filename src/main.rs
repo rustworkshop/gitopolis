@@ -73,7 +73,7 @@ fn main() {
 			save(repos)
 		}
 		None => {
-			println!("nada");
+			panic!("no command") // this doesn't happen because help shows instead
 		}
 	}
 }
