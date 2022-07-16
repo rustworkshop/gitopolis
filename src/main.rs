@@ -3,7 +3,7 @@ use std::process::Command;
 mod repos;
 use repos::*;
 mod storage;
-use log::info;
+use log::{info, LevelFilter};
 use std::io::Write;
 use storage::*;
 
@@ -42,11 +42,10 @@ enum Commands {
 }
 
 fn main() {
-	// turn off log decorations https://docs.rs/env_logger/0.9.0/env_logger/#using-a-custom-format
 	env_logger::builder()
-		.format(|buf, record| writeln!(buf, "{}", record.args()))
+		.format(|buf, record| writeln!(buf, "{}", record.args())) // turn off log decorations https://docs.rs/env_logger/0.9.0/env_logger/#using-a-custom-format
+		.filter(None, LevelFilter::Info) // turn on log output
 		.init();
-	info!("logger test");
 
 	let args = Args::parse();
 	let mut repos = load();
@@ -118,9 +117,8 @@ fn list(repos: &Repos) {
 
 fn add_repos(repo_folders: &Vec<String>, repos: &mut Repos) {
 	for repo_folder in repo_folders {
-		println!("Adding {} ...", repo_folder);
 		if let Some(_) = repos.repo_index(repo_folder) {
-			println!("{} already added, ignoring.", repo_folder);
+			info!("{} already added, ignoring.", repo_folder);
 			continue;
 		}
 		let repo = Repo {
@@ -129,8 +127,8 @@ fn add_repos(repo_folders: &Vec<String>, repos: &mut Repos) {
 			// remotes: Vec::new(),
 		};
 		repos.push(repo);
+		info!("Added {}", repo_folder);
 	}
-	println!("Done.");
 }
 
 fn remove_repos(repo_folders: &Vec<String>, repos: &mut Repos) {
