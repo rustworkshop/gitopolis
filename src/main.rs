@@ -3,6 +3,8 @@ use std::process::Command;
 mod repos;
 use repos::*;
 mod storage;
+use log::info;
+use std::io::Write;
 use storage::*;
 
 /// gitopolis, a cli tool for managnig multiple git repositories - https://github.com/timabell/gitopolis
@@ -40,6 +42,12 @@ enum Commands {
 }
 
 fn main() {
+	// turn off log decorations https://docs.rs/env_logger/0.9.0/env_logger/#using-a-custom-format
+	env_logger::builder()
+		.format(|buf, record| writeln!(buf, "{}", record.args()))
+		.init();
+	info!("logger test");
+
 	let args = Args::parse();
 	let mut repos = load();
 
