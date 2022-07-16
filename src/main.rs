@@ -52,7 +52,7 @@ fn main() {
 
 	match &args.command {
 		Some(Commands::Add { repo_folders }) => repos.add(repo_folders),
-		Some(Commands::Remove { repo_folders }) => remove_repos(repo_folders, &mut repos),
+		Some(Commands::Remove { repo_folders }) => repos.remove(repo_folders),
 		Some(Commands::List) => list(&repos),
 		Some(Commands::Exec { exec_args }) => exec(exec_args, &repos),
 		Some(Commands::Tag {
@@ -112,14 +112,5 @@ fn list(repos: &Repos) {
 	}
 	for repo in &repos.repos {
 		println!("{}", repo.path);
-	}
-}
-
-fn remove_repos(repo_folders: &Vec<String>, repos: &mut Repos) {
-	for repo_folder in repo_folders {
-		let ix = repos
-			.repo_index(repo_folder)
-			.expect(&format!("Repo '{}' not found", repo_folder));
-		repos.remove(ix);
 	}
 }

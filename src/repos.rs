@@ -11,9 +11,6 @@ impl Repos {
 	pub fn new() -> Repos {
 		Repos { repos: Vec::new() }
 	}
-	pub fn remove(&mut self, index: usize) {
-		self.repos.remove(index);
-	}
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -54,6 +51,15 @@ impl Repos {
 			};
 			self.repos.push(repo);
 			info!("Added {}", repo_folder);
+		}
+	}
+
+	pub fn remove(&mut self, repo_folders: &Vec<String>) {
+		for repo_folder in repo_folders {
+			let ix = self
+				.repo_index(repo_folder)
+				.expect(&format!("Repo '{}' not found", repo_folder));
+			self.repos.remove(ix);
 		}
 	}
 }
