@@ -1,4 +1,4 @@
-name: _ci
+name: _release
 on:
   workflow_call:
 
@@ -16,3 +16,7 @@ jobs:
       run: cargo build --verbose
     - name: Test
       run: cargo test --verbose
+    - uses: ncipollo/release-action@v1
+      with:
+        artifacts: "target/debug/gitopolis"
+        token: ${{ secrets.GITHUB_TOKEN }}
