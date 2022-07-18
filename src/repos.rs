@@ -82,3 +82,18 @@ impl Repos {
 		}
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::Repos;
+
+	#[test]
+	fn add(){
+		let mut repos = Repos::new();
+		let mut folders: Vec<String> = Vec::new();
+		folders.push("onions.git".to_owned());
+		folders.push("potatoes".to_owned());
+		repos.add(&folders);
+		assert_eq!(folders.len(), repos.repos.len());
+	}
+}
