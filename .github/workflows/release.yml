@@ -1,6 +1,7 @@
-name: _release
+name: release
 on:
-  workflow_call:
+  push:
+    tags: ['v*']
 
 env:
   CARGO_TERM_COLOR: always

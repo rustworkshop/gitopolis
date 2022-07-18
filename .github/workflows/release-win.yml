@@ -1,6 +1,7 @@
-name: _release
+name: windows
 on:
-  workflow_call:
+  push:
+    tags: ['v*-win']
 
 env:
   CARGO_TERM_COLOR: always
