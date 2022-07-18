@@ -6,5 +6,6 @@ on:
 
 jobs:
   release:
+    uses: ./.github/workflows/release.yml
+  release-win:
     uses: ./.github/workflows/release-win.yml
-#    uses: ./.github/workflows/release.yml
