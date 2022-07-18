@@ -13,9 +13,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --release
     - name: Test
-      run: cargo test --verbose
+      run: cargo test --verbose --release
     - uses: ncipollo/release-action@v1
       with:
         artifacts: "target/debug/gitopolis"
