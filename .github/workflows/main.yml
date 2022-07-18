@@ -7,5 +7,3 @@ on:
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
-#  release:
-#    uses: ./.github/workflows/release.yml
