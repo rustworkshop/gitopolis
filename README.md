@@ -43,7 +43,7 @@ gitopolis clone -t tim
 gitopolis exec -t tim -- git status
 gitopolis list -t tim
 ```
-It currently assumes that it can just grab the url for `origin`, we could add support for multiple origins and different naems later.
+It currently assumes that it can just grab the url for `origin`, we could add support for multiple origins and different names later.
 
 ### Command hierarchy
 
