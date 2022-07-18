@@ -16,3 +16,21 @@ jobs:
       run: cargo build --verbose --release
     - name: Test
       run: cargo test --verbose --release
+  build-win:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      #    - name: apt
+      #      run: apt install -y g++-mingw-w64-x86-64
+#      - name: target
+#        run: rustup target add x86_64-pc-windows-gnu
+#      - name: toolchain
+#        run: rustup toolchain install stable-x86_64-pc-windows-gnu
+      - name: Build
+        run: cargo build --verbose --release
+#    - name: Build
+#      run: cargo build --verbose --release
+#    - name: Test
+#      run: cargo test --verbose --release
