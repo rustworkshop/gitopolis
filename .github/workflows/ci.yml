@@ -6,13 +6,18 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
     - name: Build
       run: cargo build --verbose
-    - name: Run tests
+    - name: Test
       run: cargo test --verbose
+    - name: Release
+      # https://github.com/softprops/action-gh-release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: target/debug/gitopolis
