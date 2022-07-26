@@ -7,21 +7,24 @@ env:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
     - uses: actions/checkout@v3
+    - name: Setup
+      run: cargo install -f cross
     - name: Build
       run: cargo build --verbose --release
+    - name: Build-win
+      run: cross build --target x86_64-pc-windows-gnu
     - name: Test
       run: cargo test --verbose --release
-    - name: release
+    - name: Zip
+      run: tar -czvf target/gitopolis.tar.gz target/release/*
+    - name: Publish
       uses: ncipollo/release-action@v1
       if: startsWith(github.ref, 'refs/tags/v')
       with:
-        artifacts: "target/release/gitopolis*"
+        artifacts: target/gitopolis.tar.gz
         token: ${{ secrets.GITHUB_TOKEN }}
