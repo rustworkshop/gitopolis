@@ -14,14 +14,14 @@ jobs:
     - uses: actions/checkout@v3
     - name: Setup
       run: cargo install -f cross
-    - name: Build
-      run: cargo build --verbose --release
+#    - name: Build
+#      run: cargo build --verbose --release
     - name: Build-win
       run: cross build --target x86_64-pc-windows-gnu
-    - name: Test
-      run: cargo test --verbose --release
+#    - name: Test
+#      run: cargo test --verbose --release
     - name: Package
-      run: package.sh
+      run: tar -czvf gitopolis.tar.gz target/*
     - name: Publish
       uses: ncipollo/release-action@v1
       if: startsWith(github.ref, 'refs/tags/v')
