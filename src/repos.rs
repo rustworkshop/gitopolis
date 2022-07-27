@@ -88,7 +88,7 @@ mod tests {
 	use crate::Repos;
 
 	#[test]
-	fn add(){
+	fn add() {
 		let mut repos = Repos::new();
 		let mut folders: Vec<String> = Vec::new();
 		folders.push("onions.git".to_owned());

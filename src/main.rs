@@ -1,14 +1,16 @@
 mod exec;
+mod gitopolis;
 mod list;
 mod repos;
 mod storage;
+
+use crate::gitopolis::Gitopolis;
 use clap::{Parser, Subcommand};
 use exec::exec;
 use list::list;
 use log::LevelFilter;
 use repos::*;
 use std::io::Write;
-use storage::{load, save};
 
 /// gitopolis, a cli tool for managnig multiple git repositories - https://github.com/timabell/gitopolis
 #[derive(Parser)]
@@ -51,21 +53,18 @@ fn main() {
 		.init();
 
 	let args = Args::parse();
-	let mut repos = load();
+	let mut gitopolis = Gitopolis::new();
 
 	match &args.command {
 		Some(Commands::Add { repo_folders }) => {
-			repos.add(repo_folders);
-			save(repos)
+			gitopolis.add(repo_folders);
 		}
 		Some(Commands::Remove { repo_folders }) => {
-			repos.remove(repo_folders);
-			save(repos)
+			gitopolis.remove(repo_folders);
 		}
-		Some(Commands::List) => list(&repos),
+		Some(Commands::List) => list(gitopolis.read()),
 		Some(Commands::Exec { exec_args }) => {
-			exec(exec_args.to_owned(), &repos);
-			save(repos)
+			exec(exec_args.to_owned(), gitopolis.read());
 		}
 		Some(Commands::Tag {
 			tag_name,
@@ -73,11 +72,10 @@ fn main() {
 			remove,
 		}) => {
 			if *remove {
-				repos.remove_tag(tag_name, repo_folders);
+				gitopolis.remove_tag(tag_name, repo_folders);
 			} else {
-				repos.add_tag(tag_name, repo_folders);
+				gitopolis.add_tag(tag_name, repo_folders);
 			}
-			save(repos)
 		}
 		None => {
 			panic!("no command") // this doesn't happen because help shows instead

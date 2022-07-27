@@ -1,6 +1,6 @@
 use crate::Repos;
 
-pub fn list(repos: &Repos) {
+pub fn list(repos: Repos) {
 	if repos.repos.len() == 0 {
 		println!("No repos");
 		std::process::exit(2);

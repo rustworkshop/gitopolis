@@ -1,7 +1,7 @@
 use crate::Repos;
 use std::process::Command;
 
-pub fn exec(mut exec_args: Vec<String>, repos: &Repos) {
+pub fn exec(mut exec_args: Vec<String>, repos: Repos) {
 	let args = exec_args.split_off(1);
 	let cmd = &exec_args[0]; // only cmd remaining after split_off above
 	for repo in &repos.repos {
