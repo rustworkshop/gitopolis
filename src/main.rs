@@ -5,6 +5,7 @@ mod repos;
 mod storage;
 
 use crate::gitopolis::Gitopolis;
+use crate::storage::StorageImpl;
 use clap::{Parser, Subcommand};
 use exec::exec;
 use list::list;
@@ -53,6 +54,9 @@ fn main() {
 		.init();
 
 	let args = Args::parse();
+
+	// todo: inject storage
+	// let mut gitopolis = Gitopolis::new(StorageImpl { path: ".gitopolis.toml", });
 	let mut gitopolis = Gitopolis::new();
 
 	match &args.command {
