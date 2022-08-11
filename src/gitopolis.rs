@@ -1,5 +1,5 @@
 use crate::storage::Storage;
-use crate::{Repo, Repos, StorageImpl};
+use crate::{Repo, Repos};
 use std::collections::BTreeMap;
 
 pub struct Gitopolis {
@@ -7,14 +7,8 @@ pub struct Gitopolis {
 }
 
 impl Gitopolis {
-	// todo: injectable for tests // pub(crate) fn new(storage:Box<dyn Storage>) -> Gitopolis {
-	// pub(crate) fn new(storage: impl Storage) -> Gitopolis {
-	pub(crate) fn new() -> Gitopolis {
-		Gitopolis {
-			storage: Box::new(StorageImpl {
-				path: ".gitopolis.toml",
-			}),
-		}
+	pub(crate) fn new(storage: Box<dyn Storage>) -> Gitopolis {
+		Gitopolis { storage }
 	}
 
 	pub fn add(&mut self, repo_folders: &Vec<String>) {

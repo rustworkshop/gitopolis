@@ -55,9 +55,9 @@ fn main() {
 
 	let args = Args::parse();
 
-	// todo: inject storage
-	// let mut gitopolis = Gitopolis::new(StorageImpl { path: ".gitopolis.toml", });
-	let mut gitopolis = Gitopolis::new();
+	let mut gitopolis = Gitopolis::new(Box::new(StorageImpl {
+		path: ".gitopolis.toml",
+	}));
 
 	match &args.command {
 		Some(Commands::Add { repo_folders }) => {
