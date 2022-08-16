@@ -1,5 +1,5 @@
+use crate::repos::{Repo, Repos};
 use crate::storage::Storage;
-use crate::{Repo, Repos};
 use std::collections::BTreeMap;
 
 pub struct Gitopolis {
@@ -7,7 +7,7 @@ pub struct Gitopolis {
 }
 
 impl Gitopolis {
-	pub(crate) fn new(storage: Box<dyn Storage>) -> Gitopolis {
+	pub fn new(storage: Box<dyn Storage>) -> Gitopolis {
 		Gitopolis { storage }
 	}
 
@@ -31,7 +31,7 @@ impl Gitopolis {
 		repos.remove_tag(tag_name, repo_folders);
 		self.save(repos)
 	}
-	pub(crate) fn read(&self) -> Repos {
+	pub fn read(&self) -> Repos {
 		self.load()
 	}
 

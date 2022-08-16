@@ -85,7 +85,7 @@ impl Repos {
 
 #[cfg(test)]
 mod tests {
-	use crate::Repos;
+	use crate::repos::Repos;
 
 	#[test]
 	fn add() {

@@ -1,16 +1,9 @@
-mod exec;
-mod gitopolis;
-mod list;
-mod repos;
-mod storage;
-
-use crate::gitopolis::Gitopolis;
-use crate::storage::StorageImpl;
 use clap::{Parser, Subcommand};
-use exec::exec;
-use list::list;
+use gitopolis::exec::exec;
+use gitopolis::gitopolis::Gitopolis;
+use gitopolis::list::list;
+use gitopolis::storage::StorageImpl;
 use log::LevelFilter;
-use repos::*;
 use std::io::Write;
 
 /// gitopolis, a cli tool for managnig multiple git repositories - https://github.com/timabell/gitopolis

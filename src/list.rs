@@ -1,4 +1,4 @@
-use crate::Repos;
+use crate::repos::Repos;
 
 pub fn list(repos: Repos) {
 	if repos.repos.len() == 0 {
