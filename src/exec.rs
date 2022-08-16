@@ -1,4 +1,4 @@
-use crate::Repos;
+use crate::repos::Repos;
 use std::process::Command;
 
 pub fn exec(mut exec_args: Vec<String>, repos: Repos) {
