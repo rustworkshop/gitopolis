@@ -1,5 +1,6 @@
 use log::info;
 use serde_derive::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Repos {
@@ -11,7 +12,7 @@ pub struct Repos {
 pub struct Repo {
 	pub path: String,
 	pub tags: Vec<String>,
-	// pub remotes: Vec<Remote>,
+	pub remotes: BTreeMap<String, Remote>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -36,20 +37,23 @@ impl Repos {
 		self.repos.iter().position(|r| r.path == *folder_name)
 	}
 
-	pub fn add(&mut self, repo_folders: &Vec<String>) {
-		for repo_folder in repo_folders {
-			if let Some(_) = self.repo_index(repo_folder) {
-				info!("{} already added, ignoring.", repo_folder);
-				continue;
-			}
-			let repo = Repo {
-				path: repo_folder.to_owned(),
-				tags: Vec::new(),
-				// remotes: Vec::new(),
-			};
-			self.repos.push(repo);
-			info!("Added {}", repo_folder);
-		}
+	pub fn add(&mut self, repo_folder: &str, url: String, remote_name: &str) {
+		let mut remotes: BTreeMap<String, Remote> = BTreeMap::new();
+		remotes.insert(
+			remote_name.to_owned(),
+			Remote {
+				name: remote_name.to_owned(),
+				url: url.to_owned(),
+			},
+		);
+
+		let repo = Repo {
+			path: repo_folder.to_owned(),
+			tags: Vec::new(),
+			remotes,
+		};
+		self.repos.push(repo);
+		info!("Added {}", repo_folder);
 	}
 
 	pub fn remove(&mut self, repo_folders: &Vec<String>) {
@@ -80,20 +84,5 @@ impl Repos {
 				repo.tags.push(tag_name.to_string());
 			}
 		}
-	}
-}
-
-#[cfg(test)]
-mod tests {
-	use crate::repos::Repos;
-
-	#[test]
-	fn add() {
-		let mut repos = Repos::new();
-		let mut folders: Vec<String> = Vec::new();
-		folders.push("onions.git".to_owned());
-		folders.push("potatoes".to_owned());
-		repos.add(&folders);
-		assert_eq!(folders.len(), repos.repos.len());
 	}
 }

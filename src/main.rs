@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 use gitopolis::exec::exec;
+use gitopolis::git::GitImpl;
 use gitopolis::gitopolis::Gitopolis;
 use gitopolis::list::list;
 use gitopolis::storage::StorageImpl;
@@ -48,9 +49,12 @@ fn main() {
 
 	let args = Args::parse();
 
-	let mut gitopolis = Gitopolis::new(Box::new(StorageImpl {
-		path: ".gitopolis.toml",
-	}));
+	let mut gitopolis = Gitopolis::new(
+		Box::new(StorageImpl {
+			path: ".gitopolis.toml",
+		}),
+		Box::new(GitImpl {}),
+	);
 
 	match &args.command {
 		Some(Commands::Add { repo_folders }) => {

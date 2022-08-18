@@ -1,43 +1,48 @@
+use gitopolis::git::Git;
 use gitopolis::gitopolis::Gitopolis;
-use gitopolis::repos::Repos;
 use gitopolis::storage::Storage;
 
 #[test]
 fn add_repo() {
 	let expected_toml = "[[repos]]
-path = \"foo\"
+path = \"test_repo\"
 tags = []
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
 ";
-	let mut gitopolis = Gitopolis::new(Box::new(FakeStorage {
-		exists: false,
-		contents: "".to_string(),
-		file_saved_callback: Box::new(|state| assert_eq!(expected_toml.to_owned(), state)),
-	}));
+	let mut gitopolis = Gitopolis::new(
+		Box::new(FakeStorage {
+			exists: false,
+			contents: "".to_string(),
+			file_saved_callback: Box::new(|state| assert_eq!(expected_toml.to_owned(), state)),
+		}),
+		Box::new(FakeGit {}),
+	);
 	let mut folders = Vec::new();
-	folders.push("foo".to_string());
+	folders.push("test_repo".to_string());
 	gitopolis.add(&folders);
 }
 
 #[test]
 fn read() {
-	let gitopolis = Gitopolis::new(Box::new(FakeStorage {
-		exists: true,
-		contents: "[[repos]]
-path = \"foo\"
-tags = [\"red\"]
-
-[[repos]]
-path = \"bar\"
-tags = [\"red\"]
-
-[[repos]]
-path = \"baz aroony\"
-tags = []"
+	let gitopolis = Gitopolis::new(
+		Box::new(FakeStorage {
+			exists: true,
+			contents: "[[repos]]
+path = \"test_repo\"
+tags = []
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"\
+"
 			.to_string(),
-		file_saved_callback: Box::new(|_| {}),
-	}));
+			file_saved_callback: Box::new(|_| {}),
+		}),
+		Box::new(FakeGit {}),
+	);
 	let r = gitopolis.read();
-	assert_eq!(3, r.repos.len())
+	assert_eq!(1, r.repos.len())
 }
 
 struct FakeStorage {
@@ -57,5 +62,13 @@ impl Storage for FakeStorage {
 
 	fn read(&self) -> String {
 		self.contents.to_owned()
+	}
+}
+
+struct FakeGit {}
+
+impl Git for FakeGit {
+	fn read_url(&self, _path: &str, _remote_name: &str) -> String {
+		"git://example.org/test_url".to_string()
 	}
 }

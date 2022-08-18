@@ -1,19 +1,31 @@
+use crate::git::Git;
 use crate::repos::{Repo, Repos};
 use crate::storage::Storage;
+use log::info;
 use std::collections::BTreeMap;
 
 pub struct Gitopolis {
 	storage: Box<dyn Storage>,
+	git: Box<dyn Git>,
 }
 
 impl Gitopolis {
-	pub fn new(storage: Box<dyn Storage>) -> Gitopolis {
-		Gitopolis { storage }
+	pub fn new(storage: Box<dyn Storage>, git: Box<dyn Git>) -> Gitopolis {
+		Gitopolis { storage, git }
 	}
 
 	pub fn add(&mut self, repo_folders: &Vec<String>) {
 		let mut repos = self.load();
-		repos.add(repo_folders);
+		for repo_folder in repo_folders {
+			if let Some(_) = repos.repo_index(repo_folder) {
+				info!("{} already added, ignoring.", repo_folder);
+				continue;
+			}
+			// todo: read all remotes, not just origin https://github.com/timabell/gitopolis/i
+			let remote_name = "origin";
+			let url = self.git.read_url(&repo_folder, remote_name);
+			repos.add(repo_folder, url, remote_name);
+		}
 		self.save(repos)
 	}
 	pub fn remove(&mut self, repo_folders: &Vec<String>) {
