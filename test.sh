@@ -36,6 +36,13 @@ echo
 
 echo "$exe list"
 eval "$exe list"
+echo
+
+echo "$exe exec -- git status"
+eval "$exe exec -- git status"
+echo
+
+echo "$exe tag -r RED foo"
 eval "$exe tag -r RED foo"
 echo
 echo "====== .gitopolis.toml ======"
