@@ -39,6 +39,8 @@ enum Commands {
 		#[clap(required = true)]
 		repo_folders: Vec<String>,
 	},
+	/// Use an existing .gitopolis.toml state file to clone any/all missing repositories
+	Clone,
 }
 
 fn main() {
@@ -64,6 +66,7 @@ fn main() {
 			gitopolis.remove(repo_folders);
 		}
 		Some(Commands::List) => list(gitopolis.read()),
+		Some(Commands::Clone) => gitopolis.clone(),
 		Some(Commands::Exec { exec_args }) => {
 			exec(exec_args.to_owned(), gitopolis.read());
 		}

@@ -46,6 +46,14 @@ impl Gitopolis {
 	pub fn read(&self) -> Repos {
 		self.load()
 	}
+	pub fn clone(&self) {
+		let repos = self.load();
+		for repo in repos.repos {
+			// todo: multiple remote support
+			let url = &repo.remotes["origin"].url;
+			self.git.clone(repo.path.as_str(), url);
+		}
+	}
 
 	fn save(&self, repos: Repos) {
 		let state_toml = serialize(&repos);
