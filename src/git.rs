@@ -22,10 +22,10 @@ impl Git for GitImpl {
 
 	fn clone(&self, path: &str, url: &str) {
 		if Path::new(path).exists() {
-			println!("🌲 {}> Already exists, skipped.", path);
+			println!("🏢 {}> Already exists, skipped.", path);
 			return;
 		}
-		println!("🌲 {}> Cloning {} ...", path, url);
+		println!("🏢 {}> Cloning {} ...", path, url);
 		let output = Command::new("git")
 			.args(&["clone".to_string(), url.to_string(), path.to_string()].to_vec())
 			.output()
