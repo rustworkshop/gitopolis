@@ -3,7 +3,7 @@ use gitopolis::gitopolis::Gitopolis;
 use gitopolis::storage::Storage;
 
 #[test]
-fn add_repo() {
+fn add() {
 	let expected_toml = "[[repos]]
 path = \"test_repo\"
 tags = []
