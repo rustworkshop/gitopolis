@@ -18,6 +18,8 @@ fn repo_exec(path: &str, cmd: &str, args: &Vec<String>) {
 		.expect(&format!("Error running exec {}", cmd));
 
 	let stdout = String::from_utf8(output.stdout).expect("Error converting stdout to string");
+	let stderr = String::from_utf8(output.stderr).expect("Error converting stderr to string");
 	println!("{}", stdout);
+	println!("{}", stderr);
 	println!();
 }
