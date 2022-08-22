@@ -10,7 +10,7 @@ pub fn exec(mut exec_args: Vec<String>, repos: Repos) {
 }
 
 fn repo_exec(path: &str, cmd: &str, args: &Vec<String>) {
-	println!("🏢 {}> {} {:?}", path, cmd, args);
+	println!("🏢 {}> {} {}", path, cmd, args.join(" "));
 	let output = Command::new(cmd)
 		.args(args)
 		.current_dir(path)
