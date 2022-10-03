@@ -75,6 +75,35 @@ url = \"git://example.org/test_url\"\
 	gitopolis.clone();
 }
 
+#[test]
+fn tag() {
+	let expected_toml = "[[repos]]
+path = \"test_repo\"
+tags = [\"some_tag\"]
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+";
+	let mut gitopolis = Gitopolis::new(
+		Box::new(FakeStorage {
+			exists: true,
+			contents: "[[repos]]
+path = \"test_repo\"
+tags = []
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"\
+"
+			.to_string(),
+			file_saved_callback: Box::new(|state| assert_eq!(expected_toml.to_owned(), state)),
+		}),
+		Box::new(FakeGit {
+			clone_callback: Box::new(|_, _| {}),
+		}),
+	);
+	gitopolis.add_tag("some_tag", &vec!["test_repo".to_string()]);
+}
+
 struct FakeStorage {
 	exists: bool,
 	contents: String,
