@@ -43,12 +43,22 @@ impl Gitopolis {
 		repos.remove_tag(tag_name, repo_folders);
 		self.save(repos)
 	}
+	pub fn list(&self, tag_name: &Option<String>) -> Vec<Repo> {
+		let repos = self.load();
+		match tag_name {
+			None => repos.repos,
+			Some(tag) => repos
+				.repos
+				.into_iter()
+				.filter(|r| r.tags.contains(&tag.to_string()))
+				.collect(),
+		}
+	}
 	pub fn read(&self) -> Repos {
 		self.load()
 	}
-	pub fn clone(&self) {
-		let repos = self.load();
-		for repo in repos.repos {
+	pub fn clone(&self, repos: Vec<Repo>) {
+		for repo in repos {
 			// todo: multiple remote support
 			let url = &repo.remotes["origin"].url;
 			self.git.clone(repo.path.as_str(), url);

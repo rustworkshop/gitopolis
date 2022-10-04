@@ -38,10 +38,10 @@ url = \"git://example.org/test_url\"\
 
 	let git = FakeGit::new().boxed();
 	let gitopolis = Gitopolis::new(storage, git);
-	let actual_repos = gitopolis.read();
+	let actual_repos = gitopolis.list(&None);
 
 	let expected_repos = 1;
-	assert_eq!(expected_repos, actual_repos.repos.len())
+	assert_eq!(expected_repos, actual_repos.len())
 }
 
 #[test]
@@ -69,7 +69,7 @@ url = \"git://example.org/test_url\"\
 
 	let gitopolis = Gitopolis::new(storage, git);
 
-	gitopolis.clone();
+	gitopolis.clone(gitopolis.list(&None));
 }
 
 #[test]

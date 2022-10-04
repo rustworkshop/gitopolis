@@ -26,8 +26,13 @@ enum Commands {
 		#[clap(required = true)]
 		repo_folders: Vec<String>,
 	},
-	List,
+	List {
+		#[arg(short, long)]
+		tag_name: Option<String>,
+	},
 	Exec {
+		#[arg(short, long)]
+		tag_name: Option<String>,
 		exec_args: Vec<String>,
 	},
 	Tag {
@@ -40,7 +45,10 @@ enum Commands {
 		repo_folders: Vec<String>,
 	},
 	/// Use an existing .gitopolis.toml state file to clone any/all missing repositories
-	Clone,
+	Clone {
+		#[arg(short, long)]
+		tag_name: Option<String>,
+	},
 }
 
 fn main() {
@@ -65,10 +73,13 @@ fn main() {
 		Some(Commands::Remove { repo_folders }) => {
 			gitopolis.remove(repo_folders);
 		}
-		Some(Commands::List) => list(gitopolis.read()),
-		Some(Commands::Clone) => gitopolis.clone(),
-		Some(Commands::Exec { exec_args }) => {
-			exec(exec_args.to_owned(), gitopolis.read());
+		Some(Commands::List { tag_name }) => list(gitopolis.list(tag_name)),
+		Some(Commands::Clone { tag_name }) => gitopolis.clone(gitopolis.list(tag_name)),
+		Some(Commands::Exec {
+			tag_name,
+			exec_args,
+		}) => {
+			exec(exec_args.to_owned(), gitopolis.list(tag_name));
 		}
 		Some(Commands::Tag {
 			tag_name,
