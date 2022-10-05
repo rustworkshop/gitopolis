@@ -28,6 +28,7 @@ echo
 
 echo "$exe add foo"
 eval "$exe add foo"
+echo "$exe tag RED foo"
 eval "$exe tag RED foo"
 echo
 echo "====== .gitopolis.toml ======"
