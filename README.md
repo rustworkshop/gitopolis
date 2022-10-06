@@ -130,3 +130,13 @@ It's a lot to type as a name, but it's nice and unique, and if you use it a lot 
 ## Social
 
 If you like this, then twitter love would be appreciated, here's [a tweet to like/retweet/reply-to](https://twitter.com/tim_abell/status/1577421122739601408).
+
+## Contributing
+
+Suggestions welcome, particularly adding your experience, problems and ideas to the issues list.
+
+I'm happy for people to open issues that are actually just questions and support queries.
+
+Rough internal design and ambitions can be found at [Design.md](Design.md).
+
+PRs are appreciated but bear in mind I have my own plans and this is a side project for me to learn rust in a useful way, so worth talking to me before investing too much time in anything that might not fit yet. I hope to make this smoother with better CI tests etc. Start by opening an issue with your thoughts, or ping me some other way (I'm easy to find for better or worse).
