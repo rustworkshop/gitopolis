@@ -57,9 +57,7 @@ fn main() {
 		.filter(None, LevelFilter::Info) // turn on log output
 		.init();
 
-	let args = Args::parse();
-
-	match &args.command {
+	match &Args::parse().command {
 		Some(Commands::Add { repo_folders }) => {
 			init_gitopolis().add(repo_folders);
 		}
