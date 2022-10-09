@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use gitopolis::exec::exec;
 use gitopolis::git::GitImpl;
 use gitopolis::gitopolis::Gitopolis;
-use gitopolis::list::list;
+use gitopolis::repos::Repo;
 use gitopolis::storage::StorageImpl;
 use log::LevelFilter;
 use std::io::Write;
@@ -98,4 +98,14 @@ fn init_gitopolis() -> Gitopolis {
 		}),
 		Box::new(GitImpl {}),
 	)
+}
+
+fn list(repos: Vec<Repo>) {
+	if repos.len() == 0 {
+		println!("No repos");
+		std::process::exit(2);
+	}
+	for repo in &repos {
+		println!("{}", repo.path);
+	}
 }
