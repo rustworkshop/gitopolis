@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use gitopolis::exec::exec;
 use gitopolis::git::GitImpl;
 use gitopolis::gitopolis::Gitopolis;
-use gitopolis::list::list;
+use gitopolis::repos::Repo;
 use gitopolis::storage::StorageImpl;
 use log::LevelFilter;
 use std::io::Write;
@@ -57,29 +57,22 @@ fn main() {
 		.filter(None, LevelFilter::Info) // turn on log output
 		.init();
 
-	let args = Args::parse();
-
-	let mut gitopolis = Gitopolis::new(
-		Box::new(StorageImpl {
-			path: ".gitopolis.toml",
-		}),
-		Box::new(GitImpl {}),
-	);
-
-	match &args.command {
+	match &Args::parse().command {
 		Some(Commands::Add { repo_folders }) => {
-			gitopolis.add(repo_folders);
+			init_gitopolis().add(repo_folders);
 		}
 		Some(Commands::Remove { repo_folders }) => {
-			gitopolis.remove(repo_folders);
+			init_gitopolis().remove(repo_folders);
 		}
-		Some(Commands::List { tag_name }) => list(gitopolis.list(tag_name)),
-		Some(Commands::Clone { tag_name }) => gitopolis.clone(gitopolis.list(tag_name)),
+		Some(Commands::List { tag_name }) => list(init_gitopolis().list(tag_name)),
+		Some(Commands::Clone { tag_name }) => {
+			init_gitopolis().clone(init_gitopolis().list(tag_name))
+		}
 		Some(Commands::Exec {
 			tag_name,
 			exec_args,
 		}) => {
-			exec(exec_args.to_owned(), gitopolis.list(tag_name));
+			exec(exec_args.to_owned(), init_gitopolis().list(tag_name));
 		}
 		Some(Commands::Tag {
 			tag_name,
@@ -87,13 +80,32 @@ fn main() {
 			remove,
 		}) => {
 			if *remove {
-				gitopolis.remove_tag(tag_name, repo_folders);
+				init_gitopolis().remove_tag(tag_name, repo_folders);
 			} else {
-				gitopolis.add_tag(tag_name, repo_folders);
+				init_gitopolis().add_tag(tag_name, repo_folders);
 			}
 		}
 		None => {
 			panic!("no command") // this doesn't happen because help shows instead
 		}
+	}
+}
+
+fn init_gitopolis() -> Gitopolis {
+	Gitopolis::new(
+		Box::new(StorageImpl {
+			path: ".gitopolis.toml",
+		}),
+		Box::new(GitImpl {}),
+	)
+}
+
+fn list(repos: Vec<Repo>) {
+	if repos.len() == 0 {
+		println!("No repos");
+		std::process::exit(2);
+	}
+	for repo in &repos {
+		println!("{}", repo.path);
 	}
 }
