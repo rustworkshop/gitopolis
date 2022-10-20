@@ -12,10 +12,8 @@ name = \"origin\"
 url = \"git://example.org/test_url\"
 ";
 	let storage = FakeStorage::new()
-		.with_file_saved_callback(|state| assert_eq!(expected_toml.to_owned(), state))
-		.boxed();
-	let git = FakeGit::new().boxed();
-	let mut gitopolis = Gitopolis::new(storage, git);
+		.with_file_saved_callback(|state| assert_eq!(expected_toml.to_owned(), state));
+	let mut gitopolis = Gitopolis::new(storage, FakeGit::new());
 	let mut folders = Vec::new();
 	folders.push("test_repo".to_string());
 
@@ -32,12 +30,9 @@ name = \"origin\"
 url = \"git://example.org/test_url\"\
 ";
 
-	let storage = FakeStorage::new()
-		.with_contents(starting_state.to_string())
-		.boxed();
+	let storage = FakeStorage::new().with_contents(starting_state.to_string());
 
-	let git = FakeGit::new().boxed();
-	let gitopolis = Gitopolis::new(storage, git);
+	let gitopolis = Gitopolis::new(storage, FakeGit::new());
 	let actual_repos = gitopolis.list(&None);
 
 	let expected_repos = 1;
@@ -56,16 +51,12 @@ name = \"origin\"
 url = \"git://example.org/test_url\"\
 ";
 
-	let storage = FakeStorage::new()
-		.with_contents(starting_state.to_string())
-		.boxed();
+	let storage = FakeStorage::new().with_contents(starting_state.to_string());
 
-	let git = FakeGit::new()
-		.with_clone_callback(Box::new(|actual_path, actual_url| {
-			assert_eq!(actual_path, "test_repo");
-			assert_eq!(actual_url, "git://example.org/test_url");
-		}))
-		.boxed();
+	let git = FakeGit::new().with_clone_callback(Box::new(|actual_path, actual_url| {
+		assert_eq!(actual_path, "test_repo");
+		assert_eq!(actual_url, "git://example.org/test_url");
+	}));
 
 	let gitopolis = Gitopolis::new(storage, git);
 
@@ -92,11 +83,9 @@ url = \"git://example.org/test_url\"
 
 	let storage = FakeStorage::new()
 		.with_contents(starting_state.to_string())
-		.with_file_saved_callback(|state| assert_eq!(expected_toml.to_owned(), state))
-		.boxed();
+		.with_file_saved_callback(|state| assert_eq!(expected_toml.to_owned(), state));
 
-	let git = FakeGit::new().boxed();
-	let mut gitopolis = Gitopolis::new(storage, git);
+	let mut gitopolis = Gitopolis::new(storage, FakeGit::new());
 
 	gitopolis.add_tag("some_tag", &vec!["test_repo".to_string()]);
 }
@@ -130,10 +119,6 @@ impl FakeStorage {
 		self.file_saved_callback = Box::new(callback);
 		self
 	}
-
-	fn boxed(self) -> Box<dyn Storage> {
-		Box::new(self)
-	}
 }
 
 impl Storage for FakeStorage {
@@ -165,10 +150,6 @@ impl FakeGit {
 	fn with_clone_callback(mut self, callback: Box<dyn Fn(String, String)>) -> Self {
 		self.clone_callback = callback;
 		self
-	}
-
-	fn boxed(self) -> Box<Self> {
-		Box::new(self)
 	}
 }
 

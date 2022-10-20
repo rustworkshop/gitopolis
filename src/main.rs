@@ -91,12 +91,12 @@ fn main() {
 	}
 }
 
-fn init_gitopolis() -> Gitopolis {
+fn init_gitopolis<'a>() -> Gitopolis<GitImpl, StorageImpl<'a>> {
 	Gitopolis::new(
-		Box::new(StorageImpl {
+		StorageImpl {
 			path: ".gitopolis.toml",
-		}),
-		Box::new(GitImpl {}),
+		},
+		GitImpl {},
 	)
 }
 
