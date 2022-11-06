@@ -28,12 +28,6 @@ impl Storage for Box<dyn Storage + 'static> {
 
 // The implementation used in production code
 impl<'a> Storage for StorageImpl<'a> {
-	// fn new(path: &str) -> StorageImpl<'a> {
-	// 	StorageImpl{
-	// 		path
-	// 	}
-	// }
-
 	fn exists(&self) -> bool {
 		std::path::Path::new(self.path).exists()
 	}
