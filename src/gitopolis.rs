@@ -4,17 +4,13 @@ use crate::storage::Storage;
 use log::info;
 use std::collections::BTreeMap;
 
-pub struct Gitopolis<TGit, TStorage> {
-	storage: TStorage,
-	git: TGit,
+pub struct Gitopolis {
+	storage: Box<dyn Storage>,
+	git: Box<dyn Git>,
 }
 
-impl<TGit, TStorage> Gitopolis<TGit, TStorage>
-where
-	TGit: Git,
-	TStorage: Storage,
-{
-	pub fn new(storage: TStorage, git: TGit) -> Gitopolis<TGit, TStorage> {
+impl Gitopolis {
+	pub fn new(storage: Box<dyn Storage>, git: Box<dyn Git>) -> Gitopolis {
 		Gitopolis { storage, git }
 	}
 
