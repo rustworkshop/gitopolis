@@ -13,3 +13,8 @@ log = "0.4.17"
 serde = "1.0.145"
 serde_derive = "1.0.145"
 toml = "0.5.9"
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "2.1"
+tempfile = "3.2.0"
