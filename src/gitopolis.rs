@@ -64,6 +64,18 @@ impl Gitopolis {
 			self.git.clone(repo.path.as_str(), url);
 		}
 	}
+	pub fn tags(self) -> Vec<String> {
+		let repos = self.load();
+		let nest_of_tags: Vec<Vec<String>> = repos
+			.repos
+			.into_iter()
+			.map(|r| r.tags.into_iter().collect())
+			.collect();
+		let mut flat: Vec<String> = nest_of_tags.into_iter().flatten().collect();
+		flat.sort();
+		flat.dedup();
+		flat
+	}
 
 	fn save(&self, repos: Repos) {
 		let state_toml = serialize(&repos);

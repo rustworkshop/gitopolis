@@ -101,6 +101,36 @@ url = \"git://example.org/test_url\"
 	gitopolis.add_tag("some_tag", &vec!["test_repo".to_string()]);
 }
 
+#[test]
+fn tags() {
+	let starting_state = "[[repos]]
+path = \"repo1\"
+tags = [\"some_tag\", \"another_tag\"]
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+
+[[repos]]
+path = \"repo2\"
+tags = [\"some_tag\", \"more_tags\"]
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"\
+";
+	let storage = FakeStorage::new()
+		.with_contents(starting_state.to_string())
+		.boxed();
+
+	let git = FakeGit::new().boxed();
+	let gitopolis = Gitopolis::new(storage, git);
+
+	let result = gitopolis.tags();
+	assert_eq!(3, result.len());
+	assert_eq!("another_tag", result[0]);
+	assert_eq!("more_tags", result[1]);
+	assert_eq!("some_tag", result[2]);
+}
+
 struct FakeStorage {
 	exists: bool,
 	contents: String,

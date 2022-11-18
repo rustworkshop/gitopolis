@@ -46,6 +46,8 @@ enum Commands {
 		#[clap(required = true)]
 		repo_folders: Vec<String>,
 	},
+	/// List known tags
+	Tags,
 	/// Use an existing .gitopolis.toml state file to clone any/all missing repositories
 	Clone {
 		#[arg(short, long)]
@@ -89,6 +91,7 @@ fn main() {
 				init_gitopolis().add_tag(tag_name, repo_folders);
 			}
 		}
+		Some(Commands::Tags) => list_tags(init_gitopolis().tags()),
 		None => {
 			panic!("no command") // this doesn't happen because help shows instead
 		}
@@ -120,5 +123,11 @@ fn list(repos: Vec<Repo>, verbose: bool) {
 		} else {
 			println!("{}", repo.path);
 		}
+	}
+}
+
+fn list_tags(tags: Vec<String>) {
+	for tag in tags {
+		println!("{}", tag);
 	}
 }
