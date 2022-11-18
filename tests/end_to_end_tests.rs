@@ -37,6 +37,16 @@ fn add() {
 		.assert()
 		.success()
 		.stderr(predicate::str::contains("Added some_git_folder\n"));
+
+	let actual_toml = fs::read_to_string(".gitopolis.toml").expect("failed to read back toml");
+	let expected_toml = "[[repos]]
+path = \"some_git_folder\"
+tags = []
+[repos.remotes.origin]
+name = \"origin\"
+url = \"\"
+";
+	assert_eq!(expected_toml, actual_toml);
 }
 
 fn init_repo(path: PathBuf) {
