@@ -64,7 +64,7 @@ impl Gitopolis {
 			self.git.clone(repo.path.as_str(), url);
 		}
 	}
-	pub fn tags(self) -> Vec<String> {
+	pub fn tags(&self) -> Vec<String> {
 		let repos = self.load();
 		let nest_of_tags: Vec<Vec<String>> = repos
 			.repos
