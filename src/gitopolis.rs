@@ -21,7 +21,7 @@ impl Gitopolis {
 				info!("{} already added, ignoring.", repo_folder);
 				continue;
 			}
-			// todo: read all remotes, not just origin https://github.com/timabell/gitopolis/i
+			// todo: read all remotes, not just origin https://github.com/timabell/gitopolis/issues/7
 			let remote_name = "origin";
 			let url = self.git.read_url(&repo_folder, remote_name);
 			repos.add(repo_folder, url, remote_name);
@@ -59,7 +59,7 @@ impl Gitopolis {
 	}
 	pub fn clone(&self, repos: Vec<Repo>) {
 		for repo in repos {
-			// todo: multiple remote support
+			// todo: multiple remote support https://github.com/timabell/gitopolis/issues/7
 			let url = &repo.remotes["origin"].url;
 			self.git.clone(repo.path.as_str(), url);
 		}
