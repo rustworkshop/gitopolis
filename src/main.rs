@@ -29,6 +29,8 @@ enum Commands {
 	List {
 		#[arg(short, long)]
 		tag_name: Option<String>,
+		#[clap(short, long)]
+		verbose: bool,
 	},
 	Exec {
 		#[arg(short, long)]
@@ -64,7 +66,9 @@ fn main() {
 		Some(Commands::Remove { repo_folders }) => {
 			init_gitopolis().remove(repo_folders);
 		}
-		Some(Commands::List { tag_name }) => list(init_gitopolis().list(tag_name)),
+		Some(Commands::List { tag_name, verbose }) => {
+			list(init_gitopolis().list(tag_name), *verbose)
+		}
 		Some(Commands::Clone { tag_name }) => {
 			init_gitopolis().clone(init_gitopolis().list(tag_name))
 		}
@@ -100,12 +104,21 @@ fn init_gitopolis() -> Gitopolis {
 	)
 }
 
-fn list(repos: Vec<Repo>) {
+fn list(repos: Vec<Repo>, verbose: bool) {
 	if repos.len() == 0 {
 		println!("No repos");
 		std::process::exit(2);
 	}
 	for repo in &repos {
-		println!("{}", repo.path);
+		if verbose {
+			println!(
+				"{}\t{}\t{}",
+				repo.path,
+				repo.tags.join(","),
+				repo.remotes["origin"].url
+			);
+		} else {
+			println!("{}", repo.path);
+		}
 	}
 }
