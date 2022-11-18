@@ -8,18 +8,18 @@ use tempfile::tempdir;
 
 #[test]
 fn help() {
-	let mut cmd = get_binary_cmd();
-	cmd.arg("help");
-	cmd.assert()
+	get_binary_cmd()
+		.arg("help")
+		.assert()
 		.success()
 		.stdout(predicate::str::contains("Usage: gitopolis"));
 }
 
 #[test]
 fn list_empty_exit_code_2() {
-	let mut cmd = get_binary_cmd();
-	cmd.arg("list");
-	cmd.assert()
+	get_binary_cmd()
+		.arg("list")
+		.assert()
 		.failure()
 		.code(2)
 		.stdout(predicate::str::contains("No repos"));
