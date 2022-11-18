@@ -29,7 +29,7 @@ fn list_empty_exit_code_2() {
 fn add() {
 	let temp = tempdir().expect("get tmp dir failed");
 	let repo = "some_git_folder";
-	init_repo(temp.path().join(repo));
+	init_repo(temp.path().join(repo), "git://example.org/test_url");
 	set_current_dir(temp.path()).expect("chdir failed");
 
 	get_binary_cmd()
@@ -44,16 +44,20 @@ path = \"some_git_folder\"
 tags = []
 [repos.remotes.origin]
 name = \"origin\"
-url = \"\"
+url = \"git://example.org/test_url\"
 ";
 	assert_eq!(expected_toml, actual_toml);
 }
 
-fn init_repo(path: PathBuf) {
+fn init_repo(path: PathBuf, remote_url: &str) {
 	fs::create_dir_all(&path).expect("create repo dir failed");
 	set_current_dir(path).expect("chdir failed");
 	Command::new("git")
 		.args(vec!["init"])
+		.output()
+		.expect("git command failed");
+	Command::new("git")
+		.args(vec!["config", "remote.origin.url", remote_url])
 		.output()
 		.expect("git command failed");
 }
