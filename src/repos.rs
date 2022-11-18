@@ -81,8 +81,23 @@ impl Repos {
 					repo.tags.remove(ix);
 				}
 			} else {
-				repo.tags.push(tag_name.to_string());
+				if !repo.tags.iter().any(|s| s == &tag_name.to_string()) {
+					repo.tags.push(tag_name.to_string());
+				}
 			}
 		}
 	}
+}
+
+#[test]
+fn idempotent_tag() {
+	let mut repos = Repos::new();
+	let path = "repo_path";
+	repos.add(path, "url".to_string(), "origin");
+	let tag = "tag_name";
+	repos.add_tag(tag, &vec![path.to_string()]);
+	repos.add_tag(tag, &vec![path.to_string()]);
+	let repo = repos.find_repo(path).expect("repo awol");
+	assert_eq!(1, repo.tags.len());
+	assert_eq!(tag, repo.tags[0]);
 }
