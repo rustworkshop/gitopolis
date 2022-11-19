@@ -7,7 +7,7 @@ use gitopolis::storage::StorageImpl;
 use log::LevelFilter;
 use std::io::Write;
 
-/// gitopolis, a cli tool for managing multiple git repositories - https://github.com/timabell/gitopolis
+/// gitopolis, a cli tool for managing multiple git repositories - https://github.com/timabell/gitopolis - MIT licensed.
 #[derive(Parser)]
 #[clap(author, version, subcommand_required = true)]
 struct Args {
@@ -17,28 +17,32 @@ struct Args {
 
 #[derive(Subcommand)]
 enum Commands {
-	/// add one or more git repos to manage
+	/// Add one or more git repos to manage.
 	Add {
 		#[clap(required = true)]
 		repo_folders: Vec<String>,
 	},
+	/// Remove one or more git repos from gitopolis's list. Leaves actual repo on filesystem alone.
 	Remove {
 		#[clap(required = true)]
 		repo_folders: Vec<String>,
 	},
+	/// Show list of repos gitopolis knows about. Use verbose to see tags and urls (tab separated format).
 	List {
 		#[arg(short, long)]
 		tag_name: Option<String>,
 		#[clap(short, long)]
 		verbose: bool,
 	},
+	/// Run any shell command. E.g. `gitopolis exec -- git pull`. Double-dash separator indicates end of gitopolis's arguments and prevents arguments to your commands being interpreted by gitopolis.
 	Exec {
 		#[arg(short, long)]
 		tag_name: Option<String>,
 		exec_args: Vec<String>,
 	},
+	/// Add/remove repo tags. Use tags to organise repos and allow running commands against subsets of the repo list.
 	Tag {
-		/// Remove this tag from these repo_folders
+		/// Remove this tag from these repo_folders.
 		#[clap(short, long)]
 		remove: bool,
 		#[clap(required = true)]
@@ -46,12 +50,12 @@ enum Commands {
 		#[clap(required = true)]
 		repo_folders: Vec<String>,
 	},
-	/// List known tags
+	/// List known tags. Use verbose to list repos per tag.
 	Tags {
 		#[clap(short, long)]
 		verbose: bool,
 	},
-	/// Use an existing .gitopolis.toml state file to clone any/all missing repositories
+	/// Use an existing .gitopolis.toml state file to clone any/all missing repositories.
 	Clone {
 		#[arg(short, long)]
 		tag_name: Option<String>,
