@@ -22,8 +22,8 @@ pub struct Remote {
 }
 
 impl Repos {
-	pub fn new() -> Repos {
-		Repos { repos: Vec::new() }
+	pub fn new() -> Self {
+		Self { repos: Vec::new() }
 	}
 
 	pub fn find_repo(&mut self, folder_name: &str) -> Option<&mut Repo> {

@@ -10,8 +10,8 @@ pub struct Gitopolis {
 }
 
 impl Gitopolis {
-	pub fn new(storage: Box<dyn Storage>, git: Box<dyn Git>) -> Gitopolis {
-		Gitopolis { storage, git }
+	pub fn new(storage: Box<dyn Storage>, git: Box<dyn Git>) -> Self {
+		Self { storage, git }
 	}
 
 	pub fn add(&mut self, repo_folders: &Vec<String>) {

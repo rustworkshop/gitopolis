@@ -139,8 +139,8 @@ struct FakeStorage {
 
 // fluent interface for building up fake storage (like the "builder pattern")
 impl FakeStorage {
-	fn new() -> FakeStorage {
-		FakeStorage {
+	fn new() -> Self {
+		Self {
 			exists: false,
 			contents: "".to_string(),
 			file_saved_callback: Box::new(|_| {}),
@@ -187,7 +187,7 @@ struct FakeGit {
 // fluent interface for building up fake git
 impl FakeGit {
 	fn new() -> Self {
-		FakeGit {
+		Self {
 			clone_callback: Box::new(|_, _| {}),
 		}
 	}
