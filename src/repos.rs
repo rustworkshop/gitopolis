@@ -15,6 +15,19 @@ pub struct Repo {
 	pub remotes: BTreeMap<String, Remote>,
 }
 
+impl Repo {
+	fn new(path: String) -> Self {
+		Self {
+			path,
+			tags: vec![],
+			remotes: Default::default(),
+		}
+	}
+	pub(crate) fn add_remote(&mut self, name: String, url: String) {
+		self.remotes.insert(name.to_owned(), Remote { name, url });
+	}
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Remote {
 	pub name: String,
@@ -38,20 +51,8 @@ impl Repos {
 	}
 
 	pub fn add(&mut self, repo_folder: &str, url: String, remote_name: &str) {
-		let mut remotes: BTreeMap<String, Remote> = BTreeMap::new();
-		remotes.insert(
-			remote_name.to_owned(),
-			Remote {
-				name: remote_name.to_owned(),
-				url: url.to_owned(),
-			},
-		);
-
-		let repo = Repo {
-			path: repo_folder.to_owned(),
-			tags: Vec::new(),
-			remotes,
-		};
+		let mut repo = Repo::new(repo_folder.to_string());
+		repo.add_remote(remote_name.to_string(), url.to_string());
 		self.repos.push(repo);
 		info!("Added {}", repo_folder);
 	}
