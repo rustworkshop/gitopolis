@@ -24,7 +24,7 @@ impl Repo {
 		}
 	}
 	pub(crate) fn add_remote(&mut self, name: String, url: String) {
-		self.remotes.insert(name.to_owned(), Remote { name, url });
+		self.remotes.insert(name.clone(), Remote { name, url });
 	}
 }
 
@@ -50,9 +50,9 @@ impl Repos {
 		self.repos.iter().position(|r| r.path == *folder_name)
 	}
 
-	pub fn add(&mut self, repo_folder: &str, url: String, remote_name: &str) {
-		let mut repo = Repo::new(repo_folder.to_string());
-		repo.add_remote(remote_name.to_string(), url.to_string());
+	pub fn add(&mut self, repo_folder: String, url: String, remote_name: String) {
+		let mut repo = Repo::new(repo_folder.clone());
+		repo.add_remote(remote_name, url);
 		self.repos.push(repo);
 		info!("Added {}", repo_folder);
 	}
@@ -93,12 +93,12 @@ impl Repos {
 #[test]
 fn idempotent_tag() {
 	let mut repos = Repos::new();
-	let path = "repo_path";
-	repos.add(path, "url".to_string(), "origin");
+	let path = "repo_path".to_string();
+	repos.add(path.clone(), "url".to_string(), "origin".to_string());
 	let tag = "tag_name";
 	repos.add_tag(tag, &vec![path.to_string()]);
 	repos.add_tag(tag, &vec![path.to_string()]);
-	let repo = repos.find_repo(path).expect("repo awol");
+	let repo = repos.find_repo(&path).expect("repo awol");
 	assert_eq!(1, repo.tags.len());
 	assert_eq!(tag, repo.tags[0]);
 }
