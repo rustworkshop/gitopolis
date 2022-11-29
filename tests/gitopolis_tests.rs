@@ -17,7 +17,7 @@ url = \"git://example.org/test_url\"
 	let git = FakeGit::new().boxed();
 	let mut gitopolis = Gitopolis::new(storage, git);
 	let mut folders = Vec::new();
-	folders.push("test_repo".to_string());
+	folders.push("test_repo/".to_string());
 
 	gitopolis.add(&folders);
 }

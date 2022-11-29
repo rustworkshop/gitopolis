@@ -17,14 +17,15 @@ impl Gitopolis {
 	pub fn add(&mut self, repo_folders: &Vec<String>) {
 		let mut repos = self.load();
 		for repo_folder in repo_folders {
-			if let Some(_) = repos.repo_index(repo_folder) {
-				info!("{} already added, ignoring.", repo_folder);
+			let normalized_folder = repo_folder.trim_end_matches("/");
+			if let Some(_) = repos.repo_index(normalized_folder) {
+				info!("{} already added, ignoring.", normalized_folder);
 				continue;
 			}
 			// todo: read all remotes, not just origin https://github.com/timabell/gitopolis/issues/7
 			let remote_name = "origin".to_string();
-			let url = self.git.read_url(&repo_folder, &remote_name);
-			repos.add(repo_folder.clone(), url, remote_name);
+			let url = self.git.read_url(&normalized_folder, &remote_name);
+			repos.add(normalized_folder.to_string(), url, remote_name);
 		}
 		self.save(repos)
 	}
