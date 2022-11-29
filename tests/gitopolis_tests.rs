@@ -131,6 +131,29 @@ url = \"git://example.org/test_url\"\
 	assert_eq!("some_tag", result[2]);
 }
 
+#[test]
+fn remove() {
+	let starting_state = "[[repos]]
+path = \"test_repo\"
+tags = []
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"\
+";
+
+	let expected_toml = "repos = []\n";
+
+	let storage = FakeStorage::new()
+		.with_contents(starting_state.to_string())
+		.with_file_saved_callback(|state| assert_eq!(expected_toml.to_owned(), state))
+		.boxed();
+
+	let git = FakeGit::new().boxed();
+	let mut gitopolis = Gitopolis::new(storage, git);
+
+	gitopolis.remove(&vec!["test_repo".to_string()]);
+}
+
 struct FakeStorage {
 	exists: bool,
 	contents: String,
