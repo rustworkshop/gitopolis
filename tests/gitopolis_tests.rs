@@ -151,7 +151,7 @@ url = \"git://example.org/test_url\"\
 	let git = FakeGit::new().boxed();
 	let mut gitopolis = Gitopolis::new(storage, git);
 
-	gitopolis.remove(&vec!["test_repo".to_string()]);
+	gitopolis.remove(&vec!["test_repo/".to_string()]);
 }
 
 struct FakeStorage {

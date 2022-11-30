@@ -57,7 +57,7 @@ impl Repos {
 		info!("Added {}", repo_folder);
 	}
 
-	pub fn remove(&mut self, repo_folders: &Vec<String>) {
+	pub fn remove(&mut self, repo_folders: Vec<&str>) {
 		for repo_folder in repo_folders {
 			let ix = self
 				.repo_index(repo_folder)
