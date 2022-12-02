@@ -112,6 +112,17 @@ fn parse(state_toml: &str) -> Repos {
 fn normalize_folders(repo_folders: &Vec<String>) -> Vec<&str> {
 	repo_folders
 		.into_iter()
-		.map(|f| f.trim_end_matches("/"))
+		.map(|f| f.trim_end_matches("/").trim_end_matches("\\"))
 		.collect()
+}
+
+#[test]
+fn test_normalize_folders() {
+	let input = vec![
+		"foo".to_string(),
+		"bar/".to_string(),  // *nix
+		"baz\\".to_string(), // windows
+	];
+	let output = normalize_folders(&input);
+	assert_eq!(output, vec!["foo", "bar", "baz"]);
 }
