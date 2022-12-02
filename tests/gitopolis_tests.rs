@@ -98,7 +98,7 @@ url = \"git://example.org/test_url\"
 	let git = FakeGit::new().boxed();
 	let mut gitopolis = Gitopolis::new(storage, git);
 
-	gitopolis.add_tag("some_tag", &vec!["test_repo".to_string()]);
+	gitopolis.add_tag("some_tag", &vec!["test_repo/".to_string()]);
 }
 
 #[test]
@@ -127,7 +127,7 @@ url = \"git://example.org/test_url\"
 	let git = FakeGit::new().boxed();
 	let mut gitopolis = Gitopolis::new(storage, git);
 
-	gitopolis.remove_tag("some_tag", &vec!["test_repo".to_string()]);
+	gitopolis.remove_tag("some_tag", &vec!["test_repo/".to_string()]);
 }
 
 #[test]

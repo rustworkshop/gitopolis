@@ -66,13 +66,13 @@ impl Repos {
 		}
 	}
 
-	pub fn add_tag(&mut self, tag_name: &str, repo_folders: &Vec<String>) {
+	pub fn add_tag(&mut self, tag_name: &str, repo_folders: Vec<&str>) {
 		self.tag(tag_name, repo_folders, false)
 	}
-	pub fn remove_tag(&mut self, tag_name: &str, repo_folders: &Vec<String>) {
+	pub fn remove_tag(&mut self, tag_name: &str, repo_folders: Vec<&str>) {
 		self.tag(tag_name, repo_folders, true)
 	}
-	fn tag(&mut self, tag_name: &str, repo_folders: &Vec<String>, remove: bool) {
+	fn tag(&mut self, tag_name: &str, repo_folders: Vec<&str>, remove: bool) {
 		for repo_folder in repo_folders {
 			let repo = self
 				.find_repo(repo_folder)
@@ -93,11 +93,11 @@ impl Repos {
 #[test]
 fn idempotent_tag() {
 	let mut repos = Repos::new();
-	let path = "repo_path".to_string();
-	repos.add(path.clone(), "url".to_string(), "origin".to_string());
+	let path = "repo_path";
+	repos.add(path.to_string(), "url".to_string(), "origin".to_string());
 	let tag = "tag_name";
-	repos.add_tag(tag, &vec![path.to_string()]);
-	repos.add_tag(tag, &vec![path.to_string()]);
+	repos.add_tag(tag, vec![path]);
+	repos.add_tag(tag, vec![path]);
 	let repo = repos.find_repo(&path).expect("repo awol");
 	assert_eq!(1, repo.tags.len());
 	assert_eq!(tag, repo.tags[0]);
