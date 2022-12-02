@@ -15,6 +15,19 @@ pub struct Repo {
 	pub remotes: BTreeMap<String, Remote>,
 }
 
+impl Repo {
+	fn new(path: String) -> Self {
+		Self {
+			path,
+			tags: vec![],
+			remotes: Default::default(),
+		}
+	}
+	pub(crate) fn add_remote(&mut self, name: String, url: String) {
+		self.remotes.insert(name.clone(), Remote { name, url });
+	}
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Remote {
 	pub name: String,
@@ -37,26 +50,14 @@ impl Repos {
 		self.repos.iter().position(|r| r.path == *folder_name)
 	}
 
-	pub fn add(&mut self, repo_folder: &str, url: String, remote_name: &str) {
-		let mut remotes: BTreeMap<String, Remote> = BTreeMap::new();
-		remotes.insert(
-			remote_name.to_owned(),
-			Remote {
-				name: remote_name.to_owned(),
-				url: url.to_owned(),
-			},
-		);
-
-		let repo = Repo {
-			path: repo_folder.to_owned(),
-			tags: Vec::new(),
-			remotes,
-		};
+	pub fn add(&mut self, repo_folder: String, url: String, remote_name: String) {
+		let mut repo = Repo::new(repo_folder.clone());
+		repo.add_remote(remote_name, url);
 		self.repos.push(repo);
 		info!("Added {}", repo_folder);
 	}
 
-	pub fn remove(&mut self, repo_folders: &Vec<String>) {
+	pub fn remove(&mut self, repo_folders: Vec<&str>) {
 		for repo_folder in repo_folders {
 			let ix = self
 				.repo_index(repo_folder)
@@ -65,13 +66,13 @@ impl Repos {
 		}
 	}
 
-	pub fn add_tag(&mut self, tag_name: &str, repo_folders: &Vec<String>) {
+	pub fn add_tag(&mut self, tag_name: &str, repo_folders: Vec<&str>) {
 		self.tag(tag_name, repo_folders, false)
 	}
-	pub fn remove_tag(&mut self, tag_name: &str, repo_folders: &Vec<String>) {
+	pub fn remove_tag(&mut self, tag_name: &str, repo_folders: Vec<&str>) {
 		self.tag(tag_name, repo_folders, true)
 	}
-	fn tag(&mut self, tag_name: &str, repo_folders: &Vec<String>, remove: bool) {
+	fn tag(&mut self, tag_name: &str, repo_folders: Vec<&str>, remove: bool) {
 		for repo_folder in repo_folders {
 			let repo = self
 				.find_repo(repo_folder)
@@ -93,11 +94,11 @@ impl Repos {
 fn idempotent_tag() {
 	let mut repos = Repos::new();
 	let path = "repo_path";
-	repos.add(path, "url".to_string(), "origin");
+	repos.add(path.to_string(), "url".to_string(), "origin".to_string());
 	let tag = "tag_name";
-	repos.add_tag(tag, &vec![path.to_string()]);
-	repos.add_tag(tag, &vec![path.to_string()]);
-	let repo = repos.find_repo(path).expect("repo awol");
+	repos.add_tag(tag, vec![path]);
+	repos.add_tag(tag, vec![path]);
+	let repo = repos.find_repo(&path).expect("repo awol");
 	assert_eq!(1, repo.tags.len());
 	assert_eq!(tag, repo.tags[0]);
 }

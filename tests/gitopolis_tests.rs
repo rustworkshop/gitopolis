@@ -17,7 +17,7 @@ url = \"git://example.org/test_url\"
 	let git = FakeGit::new().boxed();
 	let mut gitopolis = Gitopolis::new(storage, git);
 	let mut folders = Vec::new();
-	folders.push("test_repo".to_string());
+	folders.push("test_repo/".to_string());
 
 	gitopolis.add(&folders);
 }
@@ -98,7 +98,36 @@ url = \"git://example.org/test_url\"
 	let git = FakeGit::new().boxed();
 	let mut gitopolis = Gitopolis::new(storage, git);
 
-	gitopolis.add_tag("some_tag", &vec!["test_repo".to_string()]);
+	gitopolis.add_tag("some_tag", &vec!["test_repo/".to_string()]);
+}
+
+#[test]
+fn remove_tag() {
+	let starting_state = "[[repos]]
+path = \"test_repo\"
+tags = [\"some_tag\"]
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"\
+";
+
+	let expected_toml = "[[repos]]
+path = \"test_repo\"
+tags = []
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+";
+
+	let storage = FakeStorage::new()
+		.with_contents(starting_state.to_string())
+		.with_file_saved_callback(|state| assert_eq!(expected_toml.to_owned(), state))
+		.boxed();
+
+	let git = FakeGit::new().boxed();
+	let mut gitopolis = Gitopolis::new(storage, git);
+
+	gitopolis.remove_tag("some_tag", &vec!["test_repo/".to_string()]);
 }
 
 #[test]
@@ -129,6 +158,29 @@ url = \"git://example.org/test_url\"\
 	assert_eq!("another_tag", result[0]);
 	assert_eq!("more_tags", result[1]);
 	assert_eq!("some_tag", result[2]);
+}
+
+#[test]
+fn remove() {
+	let starting_state = "[[repos]]
+path = \"test_repo\"
+tags = []
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"\
+";
+
+	let expected_toml = "repos = []\n";
+
+	let storage = FakeStorage::new()
+		.with_contents(starting_state.to_string())
+		.with_file_saved_callback(|state| assert_eq!(expected_toml.to_owned(), state))
+		.boxed();
+
+	let git = FakeGit::new().boxed();
+	let mut gitopolis = Gitopolis::new(storage, git);
+
+	gitopolis.remove(&vec!["test_repo/".to_string()]);
 }
 
 struct FakeStorage {
