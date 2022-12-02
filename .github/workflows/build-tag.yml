@@ -6,4 +6,4 @@ on:
 
 jobs:
   ci:
-    uses: ./.github/workflows/release.yml
+    uses: ./.github/workflows/_release.yml
