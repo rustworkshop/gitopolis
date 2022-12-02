@@ -1,9 +1,0 @@
-name: tag
-
-on:
-  push:
-    tags: [ "v*" ]
-
-jobs:
-  ci:
-    uses: ./.github/workflows/release.yml
