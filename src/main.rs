@@ -78,9 +78,7 @@ fn main() {
 		Some(Commands::List { tag_name, verbose }) => {
 			list(init_gitopolis().list(tag_name), *verbose)
 		}
-		Some(Commands::Clone { tag_name }) => {
-			init_gitopolis().clone(init_gitopolis().list(tag_name))
-		}
+		Some(Commands::Clone { tag_name }) => clone(tag_name),
 		Some(Commands::Exec {
 			tag_name,
 			exec_args,
@@ -103,6 +101,11 @@ fn main() {
 			panic!("no command") // this doesn't happen because help shows instead
 		}
 	}
+}
+
+fn clone(tag_name: &Option<String>) {
+	let gitopolis = init_gitopolis();
+	gitopolis.clone(gitopolis.list(tag_name))
 }
 
 fn init_gitopolis() -> Gitopolis {
