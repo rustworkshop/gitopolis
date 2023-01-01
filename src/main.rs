@@ -27,12 +27,12 @@ enum Commands {
 		#[clap(required = true)]
 		repo_folders: Vec<String>,
 	},
-	/// Show list of repos gitopolis knows about. Use verbose to see tags and urls (tab separated format).
+	/// Show list of repos gitopolis knows about. Use "long" to see tags and urls (tab separated format).
 	List {
 		#[arg(short, long)]
 		tag_name: Option<String>,
 		#[clap(short, long)]
-		verbose: bool,
+		long: bool,
 	},
 	/// Run any shell command. E.g. `gitopolis exec -- git pull`. Double-dash separator indicates end of gitopolis's arguments and prevents arguments to your commands being interpreted by gitopolis.
 	Exec {
@@ -50,10 +50,10 @@ enum Commands {
 		#[clap(required = true)]
 		repo_folders: Vec<String>,
 	},
-	/// List known tags. Use verbose to list repos per tag.
+	/// List known tags. Use "long" to list repos per tag.
 	Tags {
 		#[clap(short, long)]
-		verbose: bool,
+		long: bool,
 	},
 	/// Use an existing .gitopolis.toml state file to clone any/all missing repositories.
 	Clone {
@@ -75,8 +75,8 @@ fn main() {
 		Some(Commands::Remove { repo_folders }) => {
 			init_gitopolis().remove(repo_folders);
 		}
-		Some(Commands::List { tag_name, verbose }) => {
-			list(init_gitopolis().list(tag_name), *verbose)
+		Some(Commands::List { tag_name, long }) => {
+			list(init_gitopolis().list(tag_name), *long)
 		}
 		Some(Commands::Clone { tag_name }) => clone(tag_name),
 		Some(Commands::Exec {
@@ -96,7 +96,7 @@ fn main() {
 				init_gitopolis().add_tag(tag_name, repo_folders);
 			}
 		}
-		Some(Commands::Tags { verbose }) => list_tags(*verbose),
+		Some(Commands::Tags { long }) => list_tags(*long),
 		None => {
 			panic!("no command") // this doesn't happen because help shows instead
 		}
@@ -117,13 +117,13 @@ fn init_gitopolis() -> Gitopolis {
 	)
 }
 
-fn list(repos: Vec<Repo>, verbose: bool) {
+fn list(repos: Vec<Repo>, long: bool) {
 	if repos.len() == 0 {
 		println!("No repos");
 		std::process::exit(2);
 	}
 	for repo in &repos {
-		if verbose {
+		if long {
 			println!(
 				"{}\t{}\t{}",
 				repo.path,
@@ -136,9 +136,9 @@ fn list(repos: Vec<Repo>, verbose: bool) {
 	}
 }
 
-fn list_tags(verbose: bool) {
+fn list_tags(long: bool) {
 	let gitopolis = &init_gitopolis();
-	if verbose {
+	if long {
 		for tag in gitopolis.tags() {
 			println!("{}", tag);
 			for r in gitopolis.list(&Some(tag)) {
