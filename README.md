@@ -6,7 +6,7 @@ Manage multiple git repositories with ease.
 * 🤓 -> Re-clone all your repos on new machines.
 * 🤓 -> Limit actions to custom tags.
 * 🤓 -> Easy to remember and use command list (`add` / `exec` / `clone` / `tag`).
-* 🤓 -> MIT licensed labour of love ❤️.
+* 🤓 -> A-GPL v3 licensed labour of love ❤️.
 
 ## Usage
 
