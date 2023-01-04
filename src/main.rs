@@ -75,9 +75,7 @@ fn main() {
 		Some(Commands::Remove { repo_folders }) => {
 			init_gitopolis().remove(repo_folders);
 		}
-		Some(Commands::List { tag_name, long }) => {
-			list(init_gitopolis().list(tag_name), *long)
-		}
+		Some(Commands::List { tag_name, long }) => list(init_gitopolis().list(tag_name), *long),
 		Some(Commands::Clone { tag_name }) => clone(tag_name),
 		Some(Commands::Exec {
 			tag_name,
