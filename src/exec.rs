@@ -7,6 +7,7 @@ pub fn exec(mut exec_args: Vec<String>, repos: Vec<Repo>) {
 	let cmd = &exec_args[0]; // only cmd remaining after split_off above
 	for repo in &repos {
 		repo_exec(&repo.path, &cmd, &args).expect("Failed to execute command.");
+		println!();
 	}
 }
 
