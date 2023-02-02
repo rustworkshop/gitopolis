@@ -39,14 +39,14 @@ impl Repos {
 		Self { repos: Vec::new() }
 	}
 
-	pub fn find_repo(&mut self, folder_name: &str) -> Option<&mut Repo> {
+	pub fn find_repo(&mut self, folder_name: String) -> Option<&mut Repo> {
 		if let Some(ix) = self.repo_index(folder_name) {
 			return Some(&mut self.repos[ix]);
 		}
 		None
 	}
 
-	pub fn repo_index(&self, folder_name: &str) -> Option<usize> {
+	pub fn repo_index(&self, folder_name: String) -> Option<usize> {
 		self.repos.iter().position(|r| r.path == *folder_name)
 	}
 
@@ -57,25 +57,25 @@ impl Repos {
 		info!("Added {}", repo_folder);
 	}
 
-	pub fn remove(&mut self, repo_folders: Vec<&str>) {
+	pub fn remove(&mut self, repo_folders: Vec<String>) {
 		for repo_folder in repo_folders {
 			let ix = self
-				.repo_index(repo_folder)
+				.repo_index(repo_folder.to_owned())
 				.expect(&format!("Repo '{}' not found", repo_folder));
 			self.repos.remove(ix);
 		}
 	}
 
-	pub fn add_tag(&mut self, tag_name: &str, repo_folders: Vec<&str>) {
+	pub fn add_tag(&mut self, tag_name: &str, repo_folders: Vec<String>) {
 		self.tag(tag_name, repo_folders, false)
 	}
-	pub fn remove_tag(&mut self, tag_name: &str, repo_folders: Vec<&str>) {
+	pub fn remove_tag(&mut self, tag_name: &str, repo_folders: Vec<String>) {
 		self.tag(tag_name, repo_folders, true)
 	}
-	fn tag(&mut self, tag_name: &str, repo_folders: Vec<&str>, remove: bool) {
+	fn tag(&mut self, tag_name: &str, repo_folders: Vec<String>, remove: bool) {
 		for repo_folder in repo_folders {
 			let repo = self
-				.find_repo(repo_folder)
+				.find_repo(repo_folder.to_owned())
 				.expect(&format!("Repo '{}' not found", repo_folder));
 			if remove {
 				if let Some(ix) = repo.tags.iter().position(|t| t == tag_name) {
@@ -93,12 +93,12 @@ impl Repos {
 #[test]
 fn idempotent_tag() {
 	let mut repos = Repos::new();
-	let path = "repo_path";
+	let path = "repo_path".to_string();
 	repos.add(path.to_string(), "url".to_string(), "origin".to_string());
 	let tag = "tag_name";
-	repos.add_tag(tag, vec![path]);
-	repos.add_tag(tag, vec![path]);
-	let repo = repos.find_repo(&path).expect("repo awol");
+	repos.add_tag(tag, vec![path.to_owned()]);
+	repos.add_tag(tag, vec![path.to_owned()]);
+	let repo = repos.find_repo(path).expect("repo awol");
 	assert_eq!(1, repo.tags.len());
 	assert_eq!(tag, repo.tags[0]);
 }

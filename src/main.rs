@@ -69,9 +69,7 @@ fn main() {
 		.init();
 
 	match &Args::parse().command {
-		Some(Commands::Add { repo_folders }) => {
-			init_gitopolis().add(repo_folders);
-		}
+		Some(Commands::Add { repo_folders }) => add(repo_folders.to_owned()),
 		Some(Commands::Remove { repo_folders }) => {
 			init_gitopolis().remove(repo_folders);
 		}
@@ -113,6 +111,12 @@ fn init_gitopolis() -> Gitopolis {
 		}),
 		Box::new(GitImpl {}),
 	)
+}
+
+fn add(repo_folders: Vec<String>) {
+	for repo_folder in repo_folders {
+		init_gitopolis().add(repo_folder).expect("Add failed");
+	}
 }
 
 fn list(repos: Vec<Repo>, long: bool) {
