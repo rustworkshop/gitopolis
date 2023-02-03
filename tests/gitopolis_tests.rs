@@ -1,5 +1,5 @@
 use gitopolis::git::Git;
-use gitopolis::gitopolis::Gitopolis;
+use gitopolis::gitopolis::{Gitopolis, GitopolisError};
 use gitopolis::storage::Storage;
 
 #[test]
@@ -16,10 +16,8 @@ url = \"git://example.org/test_url\"
 		.boxed();
 	let git = FakeGit::new().boxed();
 	let mut gitopolis = Gitopolis::new(storage, git);
-	let mut folders = Vec::new();
-	folders.push("test_repo/".to_string());
 
-	gitopolis.add(&folders);
+	gitopolis.add("test_repo/".to_string()).expect("Failed");
 }
 
 #[test]
@@ -255,8 +253,8 @@ impl FakeGit {
 }
 
 impl Git for FakeGit {
-	fn read_url(&self, _path: &str, _remote_name: &str) -> String {
-		"git://example.org/test_url".to_string()
+	fn read_url(&self, _path: String, _remote_name: String) -> Result<String, GitopolisError> {
+		Ok("git://example.org/test_url".to_string())
 	}
 
 	fn clone(&self, path: &str, url: &str) {

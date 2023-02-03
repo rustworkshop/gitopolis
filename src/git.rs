@@ -1,23 +1,29 @@
+use crate::gitopolis::GitopolisError;
+use crate::gitopolis::GitopolisError::{GitError, GitRemoteError};
+use git2::Repository;
 use std::path::Path;
 use std::process::Command;
 
 pub trait Git {
-	fn read_url(&self, path: &str, remote_name: &str) -> String;
+	fn read_url(&self, path: String, remote_name: String) -> Result<String, GitopolisError>;
 	fn clone(&self, path: &str, url: &str);
 }
 
 pub struct GitImpl {}
 
 impl Git for GitImpl {
-	/// hacky call to external git command to get url of origin
-	fn read_url(&self, path: &str, remote_name: &str) -> String {
-		repo_capture_exec(
-			&path,
-			"git",
-			&["config".to_string(), format!("remote.{}.url", remote_name)].to_vec(),
-		)
-		.trim()
-		.to_owned()
+	fn read_url(&self, path: String, remote_name: String) -> Result<String, GitopolisError> {
+		let repository = Repository::open(&path).map_err(|error| GitError {
+			message: format!("Couldn't open git repo. {}", error.message()),
+		})?;
+		let remote = repository
+			.find_remote(remote_name.as_str())
+			.map_err(|error| GitRemoteError {
+				message: format!("Remote not found. {}", error.message()),
+				remote: remote_name,
+			})?;
+		let url: String = remote.url().unwrap_or("").to_string();
+		Ok(url)
 	}
 
 	fn clone(&self, path: &str, url: &str) {
@@ -35,18 +41,4 @@ impl Git for GitImpl {
 		println!("{}", stdout);
 		println!("{}", stderr);
 	}
-}
-
-/// Run a command and capture the output for use internally
-fn repo_capture_exec(path: &str, cmd: &str, args: &Vec<String>) -> String {
-	let output = Command::new(cmd)
-		.args(args)
-		.current_dir(path)
-		.output()
-		.expect(&format!(
-			"Error running external command {} {:?} in folder {}",
-			cmd, args, path
-		));
-
-	String::from_utf8(output.stdout).expect("Error converting stdout to string")
 }

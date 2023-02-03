@@ -3,10 +3,18 @@ use crate::repos::{Repo, Repos};
 use crate::storage::Storage;
 use log::info;
 use std::collections::BTreeMap;
+use std::io;
 
 pub struct Gitopolis {
 	storage: Box<dyn Storage>,
 	git: Box<dyn Git>,
+}
+
+#[derive(Debug)]
+pub enum GitopolisError {
+	GitError { message: String },
+	GitRemoteError { message: String, remote: String },
+	IoError { inner: io::Error },
 }
 
 impl Gitopolis {
@@ -14,19 +22,20 @@ impl Gitopolis {
 		Self { storage, git }
 	}
 
-	pub fn add(&mut self, repo_folders: &Vec<String>) {
+	pub fn add(&mut self, repo_folder: String) -> Result<(), GitopolisError> {
 		let mut repos = self.load();
-		for repo_folder in normalize_folders(repo_folders) {
-			if let Some(_) = repos.repo_index(repo_folder) {
-				info!("{} already added, ignoring.", repo_folder);
-				continue;
-			}
-			// todo: read all remotes, not just origin https://github.com/timabell/gitopolis/issues/7
-			let remote_name = "origin".to_string();
-			let url = self.git.read_url(&repo_folder, &remote_name);
-			repos.add(repo_folder.to_string(), url, remote_name);
+		let normalized_folder: String = normalize_folder(repo_folder);
+		if let Some(_) = repos.repo_index(normalized_folder.to_owned()) {
+			info!("{} already added, ignoring.", normalized_folder);
+			return Ok(());
 		}
-		self.save(repos)
+		let remote_name = "origin".to_string(); // todo: read all remotes, not just origin https://github.com/timabell/gitopolis/issues/7
+		let url = self
+			.git
+			.read_url(normalized_folder.to_owned(), remote_name.to_owned())?;
+		repos.add(normalized_folder.to_string(), url, remote_name);
+		self.save(repos);
+		Ok(())
 	}
 
 	pub fn remove(&mut self, repo_folders: &Vec<String>) {
@@ -109,11 +118,18 @@ fn parse(state_toml: &str) -> Repos {
 	Repos { repos }
 }
 
-fn normalize_folders(repo_folders: &Vec<String>) -> Vec<&str> {
+fn normalize_folders(repo_folders: &Vec<String>) -> Vec<String> {
 	repo_folders
 		.into_iter()
-		.map(|f| f.trim_end_matches("/").trim_end_matches("\\"))
+		.map(|f| normalize_folder(f.to_string()))
 		.collect()
+}
+
+fn normalize_folder(repo_folder: String) -> String {
+	repo_folder
+		.trim_end_matches("/")
+		.trim_end_matches("\\")
+		.to_string()
 }
 
 #[test]
