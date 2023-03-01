@@ -117,7 +117,7 @@ fn parse(state_toml: &str) -> Repos {
 	Repos { repos }
 }
 
-fn normalize_folders(repo_folders: &Vec<String>) -> Vec<String> {
+fn normalize_folders(repo_folders: &[String]) -> Vec<String> {
 	repo_folders
 		.iter()
 		.map(|f| normalize_folder(f.to_string()))
