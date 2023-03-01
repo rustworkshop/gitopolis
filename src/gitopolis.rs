@@ -110,7 +110,7 @@ fn serialize(repos: &Repos) -> String {
 
 fn parse(state_toml: &str) -> Repos {
 	let mut named_container: BTreeMap<&str, Vec<Repo>> =
-		toml::from_str(&state_toml).expect(&format!("Failed to parse {}", ".gitopolis.toml"));
+		toml::from_str(state_toml).expect(&format!("Failed to parse {}", ".gitopolis.toml"));
 
 	let repos = named_container
 		.remove("repos") // [re]move this rather than taking a ref so that ownership moves with it (borrow checker)
