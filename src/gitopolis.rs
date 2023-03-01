@@ -33,7 +33,7 @@ impl Gitopolis {
 		let url = self
 			.git
 			.read_url(normalized_folder.to_owned(), remote_name.to_owned())?;
-		repos.add(normalized_folder.to_string(), url, remote_name);
+		repos.add(normalized_folder, url, remote_name);
 		self.save(repos);
 		Ok(())
 	}
