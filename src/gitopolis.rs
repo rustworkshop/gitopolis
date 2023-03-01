@@ -104,8 +104,7 @@ impl Gitopolis {
 }
 
 fn serialize(repos: &Repos) -> String {
-	let state_toml = toml::to_string(&repos).expect("Failed to generate toml for repo list");
-	state_toml
+	toml::to_string(&repos).expect("Failed to generate toml for repo list")
 }
 
 fn parse(state_toml: &str) -> Repos {
