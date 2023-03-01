@@ -25,7 +25,7 @@ impl Gitopolis {
 	pub fn add(&mut self, repo_folder: String) -> Result<(), GitopolisError> {
 		let mut repos = self.load();
 		let normalized_folder: String = normalize_folder(repo_folder);
-		if let Some(_) = repos.repo_index(normalized_folder.to_owned()) {
+		if repos.repo_index(normalized_folder.to_owned()).is_some() {
 			info!("{} already added, ignoring.", normalized_folder);
 			return Ok(());
 		}
