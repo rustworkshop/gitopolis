@@ -126,8 +126,8 @@ fn normalize_folders(repo_folders: &Vec<String>) -> Vec<String> {
 
 fn normalize_folder(repo_folder: String) -> String {
 	repo_folder
-		.trim_end_matches("/")
-		.trim_end_matches("\\")
+		.trim_end_matches('/')
+		.trim_end_matches('\\')
 		.to_string()
 }
 
