@@ -119,7 +119,7 @@ fn parse(state_toml: &str) -> Repos {
 
 fn normalize_folders(repo_folders: &Vec<String>) -> Vec<String> {
 	repo_folders
-		.into_iter()
+		.iter()
 		.map(|f| normalize_folder(f.to_string()))
 		.collect()
 }
