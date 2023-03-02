@@ -38,17 +38,17 @@ impl Gitopolis {
 		Ok(())
 	}
 
-	pub fn remove(&mut self, repo_folders: &Vec<String>) {
+	pub fn remove(&mut self, repo_folders: &[String]) {
 		let mut repos = self.load();
 		repos.remove(normalize_folders(repo_folders));
 		self.save(repos)
 	}
-	pub fn add_tag(&mut self, tag_name: &str, repo_folders: &Vec<String>) {
+	pub fn add_tag(&mut self, tag_name: &str, repo_folders: &[String]) {
 		let mut repos = self.load();
 		repos.add_tag(tag_name, normalize_folders(repo_folders));
 		self.save(repos)
 	}
-	pub fn remove_tag(&mut self, tag_name: &str, repo_folders: &Vec<String>) {
+	pub fn remove_tag(&mut self, tag_name: &str, repo_folders: &[String]) {
 		let mut repos = self.load();
 		repos.remove_tag(tag_name, normalize_folders(repo_folders));
 		self.save(repos)
