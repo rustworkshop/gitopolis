@@ -81,10 +81,8 @@ impl Repos {
 				if let Some(ix) = repo.tags.iter().position(|t| t == tag_name) {
 					repo.tags.remove(ix);
 				}
-			} else {
-				if !repo.tags.iter().any(|s| s == &tag_name.to_string()) {
-					repo.tags.push(tag_name.to_string());
-				}
+			} else if !repo.tags.iter().any(|s| s == &tag_name.to_string()) {
+				repo.tags.push(tag_name.to_string());
 			}
 		}
 	}

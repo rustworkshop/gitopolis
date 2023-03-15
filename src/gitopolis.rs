@@ -25,7 +25,7 @@ impl Gitopolis {
 	pub fn add(&mut self, repo_folder: String) -> Result<(), GitopolisError> {
 		let mut repos = self.load();
 		let normalized_folder: String = normalize_folder(repo_folder);
-		if let Some(_) = repos.repo_index(normalized_folder.to_owned()) {
+		if repos.repo_index(normalized_folder.to_owned()).is_some() {
 			info!("{} already added, ignoring.", normalized_folder);
 			return Ok(());
 		}
@@ -33,22 +33,22 @@ impl Gitopolis {
 		let url = self
 			.git
 			.read_url(normalized_folder.to_owned(), remote_name.to_owned())?;
-		repos.add(normalized_folder.to_string(), url, remote_name);
+		repos.add(normalized_folder, url, remote_name);
 		self.save(repos);
 		Ok(())
 	}
 
-	pub fn remove(&mut self, repo_folders: &Vec<String>) {
+	pub fn remove(&mut self, repo_folders: &[String]) {
 		let mut repos = self.load();
 		repos.remove(normalize_folders(repo_folders));
 		self.save(repos)
 	}
-	pub fn add_tag(&mut self, tag_name: &str, repo_folders: &Vec<String>) {
+	pub fn add_tag(&mut self, tag_name: &str, repo_folders: &[String]) {
 		let mut repos = self.load();
 		repos.add_tag(tag_name, normalize_folders(repo_folders));
 		self.save(repos)
 	}
-	pub fn remove_tag(&mut self, tag_name: &str, repo_folders: &Vec<String>) {
+	pub fn remove_tag(&mut self, tag_name: &str, repo_folders: &[String]) {
 		let mut repos = self.load();
 		repos.remove_tag(tag_name, normalize_folders(repo_folders));
 		self.save(repos)
@@ -104,13 +104,12 @@ impl Gitopolis {
 }
 
 fn serialize(repos: &Repos) -> String {
-	let state_toml = toml::to_string(&repos).expect("Failed to generate toml for repo list");
-	state_toml
+	toml::to_string(&repos).expect("Failed to generate toml for repo list")
 }
 
 fn parse(state_toml: &str) -> Repos {
 	let mut named_container: BTreeMap<&str, Vec<Repo>> =
-		toml::from_str(&state_toml).expect(&format!("Failed to parse {}", ".gitopolis.toml"));
+		toml::from_str(state_toml).expect(&format!("Failed to parse {}", ".gitopolis.toml"));
 
 	let repos = named_container
 		.remove("repos") // [re]move this rather than taking a ref so that ownership moves with it (borrow checker)
@@ -118,17 +117,17 @@ fn parse(state_toml: &str) -> Repos {
 	Repos { repos }
 }
 
-fn normalize_folders(repo_folders: &Vec<String>) -> Vec<String> {
+fn normalize_folders(repo_folders: &[String]) -> Vec<String> {
 	repo_folders
-		.into_iter()
+		.iter()
 		.map(|f| normalize_folder(f.to_string()))
 		.collect()
 }
 
 fn normalize_folder(repo_folder: String) -> String {
 	repo_folder
-		.trim_end_matches("/")
-		.trim_end_matches("\\")
+		.trim_end_matches('/')
+		.trim_end_matches('\\')
 		.to_string()
 }
 

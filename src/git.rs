@@ -13,7 +13,7 @@ pub struct GitImpl {}
 
 impl Git for GitImpl {
 	fn read_url(&self, path: String, remote_name: String) -> Result<String, GitopolisError> {
-		let repository = Repository::open(&path).map_err(|error| GitError {
+		let repository = Repository::open(path).map_err(|error| GitError {
 			message: format!("Couldn't open git repo. {}", error.message()),
 		})?;
 		let remote = repository
@@ -35,7 +35,7 @@ impl Git for GitImpl {
 		let output = Command::new("git")
 			.args(&["clone".to_string(), url.to_string(), path.to_string()].to_vec())
 			.output()
-			.expect(&format!("Error running git clone"));
+			.expect("Error running git clone");
 		let stdout = String::from_utf8(output.stdout).expect("Error converting stdout to string");
 		let stderr = String::from_utf8(output.stderr).expect("Error converting stderr to string");
 		println!("{}", stdout);
