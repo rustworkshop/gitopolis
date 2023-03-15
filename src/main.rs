@@ -71,15 +71,27 @@ fn main() {
 	match &Args::parse().command {
 		Some(Commands::Add { repo_folders }) => add(repo_folders.to_owned()),
 		Some(Commands::Remove { repo_folders }) => {
-			init_gitopolis().remove(repo_folders);
+			init_gitopolis()
+				.remove(repo_folders)
+				.expect("TODO: panic message");
 		}
-		Some(Commands::List { tag_name, long }) => list(init_gitopolis().list(tag_name), *long),
+		Some(Commands::List { tag_name, long }) => list(
+			init_gitopolis()
+				.list(tag_name)
+				.expect("TODO: panic message"),
+			*long,
+		),
 		Some(Commands::Clone { tag_name }) => clone(tag_name),
 		Some(Commands::Exec {
 			tag_name,
 			exec_args,
 		}) => {
-			exec(exec_args.to_owned(), init_gitopolis().list(tag_name));
+			exec(
+				exec_args.to_owned(),
+				init_gitopolis()
+					.list(tag_name)
+					.expect("TODO: panic message"),
+			);
 		}
 		Some(Commands::Tag {
 			tag_name,
@@ -87,9 +99,13 @@ fn main() {
 			remove,
 		}) => {
 			if *remove {
-				init_gitopolis().remove_tag(tag_name, repo_folders);
+				init_gitopolis()
+					.remove_tag(tag_name, repo_folders)
+					.expect("TODO: panic message");
 			} else {
-				init_gitopolis().add_tag(tag_name, repo_folders);
+				init_gitopolis()
+					.add_tag(tag_name, repo_folders)
+					.expect("TODO: panic message");
 			}
 		}
 		Some(Commands::Tags { long }) => list_tags(*long),
@@ -101,14 +117,14 @@ fn main() {
 
 fn clone(tag_name: &Option<String>) {
 	let gitopolis = init_gitopolis();
-	gitopolis.clone(gitopolis.list(tag_name))
+	gitopolis.clone(gitopolis.list(tag_name).expect("TODO: panic message"))
 }
+
+const STATE_FILE: &str = ".gitopolis.toml";
 
 fn init_gitopolis() -> Gitopolis {
 	Gitopolis::new(
-		Box::new(StorageImpl {
-			path: ".gitopolis.toml",
-		}),
+		Box::new(StorageImpl { path: STATE_FILE }),
 		Box::new(GitImpl {}),
 	)
 }
@@ -141,15 +157,15 @@ fn list(repos: Vec<Repo>, long: bool) {
 fn list_tags(long: bool) {
 	let gitopolis = &init_gitopolis();
 	if long {
-		for tag in gitopolis.tags() {
+		for tag in gitopolis.tags().expect("TODO: panic message") {
 			println!("{}", tag);
-			for r in gitopolis.list(&Some(tag)) {
+			for r in gitopolis.list(&Some(tag)).expect("TODO: panic message") {
 				println!("\t{}", r.path);
 			}
 			println!();
 		}
 	} else {
-		for tag in gitopolis.tags() {
+		for tag in gitopolis.tags().expect("TODO: panic message") {
 			println!("{}", tag);
 		}
 	}

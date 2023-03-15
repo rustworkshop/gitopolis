@@ -1,4 +1,5 @@
 use crate::git::Git;
+use crate::gitopolis::GitopolisError::*;
 use crate::repos::{Repo, Repos};
 use crate::storage::Storage;
 use log::info;
@@ -13,8 +14,20 @@ pub struct Gitopolis {
 #[derive(Debug)]
 pub enum GitopolisError {
 	GitError { message: String },
+	StateError { message: String },
 	GitRemoteError { message: String, remote: String },
 	IoError { inner: io::Error },
+}
+
+impl GitopolisError {
+	pub fn message(&self) -> String {
+		match self {
+			GitError { message } => message.to_string(),
+			StateError { message } => message.to_string(),
+			GitRemoteError { message, remote: _ } => message.to_string(),
+			IoError { inner } => inner.to_string(),
+		}
+	}
 }
 
 impl Gitopolis {
@@ -23,7 +36,7 @@ impl Gitopolis {
 	}
 
 	pub fn add(&mut self, repo_folder: String) -> Result<(), GitopolisError> {
-		let mut repos = self.load();
+		let mut repos = self.load()?;
 		let normalized_folder: String = normalize_folder(repo_folder);
 		if repos.repo_index(normalized_folder.to_owned()).is_some() {
 			info!("{} already added, ignoring.", normalized_folder);
@@ -34,37 +47,45 @@ impl Gitopolis {
 			.git
 			.read_url(normalized_folder.to_owned(), remote_name.to_owned())?;
 		repos.add(normalized_folder, url, remote_name);
-		self.save(repos);
+		self.save(repos)?;
 		Ok(())
 	}
 
-	pub fn remove(&mut self, repo_folders: &[String]) {
-		let mut repos = self.load();
+	pub fn remove(&mut self, repo_folders: &[String]) -> Result<(), GitopolisError> {
+		let mut repos = self.load()?;
 		repos.remove(normalize_folders(repo_folders));
 		self.save(repos)
 	}
-	pub fn add_tag(&mut self, tag_name: &str, repo_folders: &[String]) {
-		let mut repos = self.load();
+	pub fn add_tag(
+		&mut self,
+		tag_name: &str,
+		repo_folders: &[String],
+	) -> Result<(), GitopolisError> {
+		let mut repos = self.load()?;
 		repos.add_tag(tag_name, normalize_folders(repo_folders));
 		self.save(repos)
 	}
-	pub fn remove_tag(&mut self, tag_name: &str, repo_folders: &[String]) {
-		let mut repos = self.load();
+	pub fn remove_tag(
+		&mut self,
+		tag_name: &str,
+		repo_folders: &[String],
+	) -> Result<(), GitopolisError> {
+		let mut repos = self.load()?;
 		repos.remove_tag(tag_name, normalize_folders(repo_folders));
 		self.save(repos)
 	}
-	pub fn list(&self, tag_name: &Option<String>) -> Vec<Repo> {
-		let repos = self.load();
-		match tag_name {
+	pub fn list(&self, tag_name: &Option<String>) -> Result<Vec<Repo>, GitopolisError> {
+		let repos = self.load()?;
+		Ok(match tag_name {
 			None => repos.repos,
 			Some(tag) => repos
 				.repos
 				.into_iter()
 				.filter(|r| r.tags.contains(&tag.to_string()))
 				.collect(),
-		}
+		})
 	}
-	pub fn read(&self) -> Repos {
+	pub fn read(&self) -> Result<Repos, GitopolisError> {
 		self.load()
 	}
 	pub fn clone(&self, repos: Vec<Repo>) {
@@ -74,8 +95,8 @@ impl Gitopolis {
 			self.git.clone(repo.path.as_str(), url);
 		}
 	}
-	pub fn tags(&self) -> Vec<String> {
-		let repos = self.load();
+	pub fn tags(&self) -> Result<Vec<String>, GitopolisError> {
+		let repos = self.load()?;
 		let nest_of_tags: Vec<Vec<String>> = repos
 			.repos
 			.into_iter()
@@ -84,17 +105,18 @@ impl Gitopolis {
 		let mut flat: Vec<String> = nest_of_tags.into_iter().flatten().collect();
 		flat.sort();
 		flat.dedup();
-		flat
+		Ok(flat)
 	}
 
-	fn save(&self, repos: Repos) {
-		let state_toml = serialize(&repos);
+	fn save(&self, repos: Repos) -> Result<(), GitopolisError> {
+		let state_toml = serialize(&repos)?;
 		self.storage.save(state_toml);
+		Ok(())
 	}
 
-	fn load(&self) -> Repos {
+	fn load(&self) -> Result<Repos, GitopolisError> {
 		if !self.storage.exists() {
-			return Repos::new();
+			return Ok(Repos::new());
 		}
 
 		let state_toml = self.storage.read();
@@ -103,18 +125,22 @@ impl Gitopolis {
 	}
 }
 
-fn serialize(repos: &Repos) -> String {
-	toml::to_string(&repos).expect("Failed to generate toml for repo list")
+fn serialize(repos: &Repos) -> Result<String, GitopolisError> {
+	toml::to_string(&repos).map_err(|error| StateError {
+		message: format!("Failed to generate toml for repo list. {}", error),
+	})
 }
 
-fn parse(state_toml: &str) -> Repos {
+fn parse(state_toml: &str) -> Result<Repos, GitopolisError> {
 	let mut named_container: BTreeMap<&str, Vec<Repo>> =
-		toml::from_str(state_toml).expect(&format!("Failed to parse {}", ".gitopolis.toml"));
+		toml::from_str(state_toml).map_err(|error| StateError {
+			message: format!("Failed to parse state data as valid TOML. {}", error),
+		})?;
 
 	let repos = named_container
 		.remove("repos") // [re]move this rather than taking a ref so that ownership moves with it (borrow checker)
-		.expect(&format!("Corrupted state file {}", ".gitopolis.toml"));
-	Repos { repos }
+		.expect("Failed to read 'repos' entry from state TOML");
+	Ok(Repos { repos })
 }
 
 fn normalize_folders(repo_folders: &[String]) -> Vec<String> {

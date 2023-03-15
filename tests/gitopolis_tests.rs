@@ -36,10 +36,32 @@ url = \"git://example.org/test_url\"\
 
 	let git = FakeGit::new().boxed();
 	let gitopolis = Gitopolis::new(storage, git);
-	let actual_repos = gitopolis.list(&None);
+	let actual_repos = gitopolis.list(&None).expect("TODO: panic message");
 
 	let expected_repos = 1;
 	assert_eq!(expected_repos, actual_repos.len())
+}
+
+#[test]
+fn read_corrupt() {
+	let starting_state = "[[NOT_A_repos]]
+path = \"test_repo\"
+tags = []
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"\
+";
+
+	let storage = FakeStorage::new()
+		.with_contents(starting_state.to_string())
+		.boxed();
+
+	let git = FakeGit::new().boxed();
+	let gitopolis = Gitopolis::new(storage, git);
+	let repos_result = gitopolis.list(&None);
+	let actual_error = repos_result.expect_err("should error");
+	let expected_error = "Failed to parse state data as valid TOML. missing field `remotes` for key `NOT_A_repos` at line 4 column 1";
+	assert_eq!(expected_error, actual_error.message())
 }
 
 #[test]
@@ -67,7 +89,7 @@ url = \"git://example.org/test_url\"\
 
 	let gitopolis = Gitopolis::new(storage, git);
 
-	gitopolis.clone(gitopolis.list(&None));
+	gitopolis.clone(gitopolis.list(&None).expect("TODO: panic message"));
 }
 
 #[test]
@@ -96,7 +118,9 @@ url = \"git://example.org/test_url\"
 	let git = FakeGit::new().boxed();
 	let mut gitopolis = Gitopolis::new(storage, git);
 
-	gitopolis.add_tag("some_tag", &vec!["test_repo/".to_string()]);
+	gitopolis
+		.add_tag("some_tag", &vec!["test_repo/".to_string()])
+		.expect("TODO: panic message");
 }
 
 #[test]
@@ -125,7 +149,9 @@ url = \"git://example.org/test_url\"
 	let git = FakeGit::new().boxed();
 	let mut gitopolis = Gitopolis::new(storage, git);
 
-	gitopolis.remove_tag("some_tag", &vec!["test_repo/".to_string()]);
+	gitopolis
+		.remove_tag("some_tag", &vec!["test_repo/".to_string()])
+		.expect("TODO: panic message");
 }
 
 #[test]
@@ -151,7 +177,7 @@ url = \"git://example.org/test_url\"\
 	let git = FakeGit::new().boxed();
 	let gitopolis = Gitopolis::new(storage, git);
 
-	let result = gitopolis.tags();
+	let result = gitopolis.tags().expect("TODO: panic message");
 	assert_eq!(3, result.len());
 	assert_eq!("another_tag", result[0]);
 	assert_eq!("more_tags", result[1]);
@@ -178,7 +204,9 @@ url = \"git://example.org/test_url\"\
 	let git = FakeGit::new().boxed();
 	let mut gitopolis = Gitopolis::new(storage, git);
 
-	gitopolis.remove(&vec!["test_repo/".to_string()]);
+	gitopolis
+		.remove(&vec!["test_repo/".to_string()])
+		.expect("TODO: panic message");
 }
 
 struct FakeStorage {
