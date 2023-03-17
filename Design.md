@@ -18,14 +18,11 @@ Mostly for me to think about how it should be.
   * writes to stdout, not streamed, also needs to change
 * [repos](src/repos.rs) - models for encapsulating state of repo(s) with methods for changing state
   * needs a bit of tlc, currently exposes its `Vec<Repo>` internals, but otherwise seems sound
-* [list](src/list.rs) - probably needs to go away, just writes repo list or message to stdout. Listing functionality needs expanding.
 
 ## Testing
 
-* [test.sh](test.sh) - hacky shell based test, will go away when have a better end-to-end rust test.
 * End-to-end, uses all the code for real, what's mocked and simulated tbc but should be testing maximum breadth of code. This is the one to give confidence that a PR hasn't completely broken it in a way the more granular tests don't catch, e.g. someone breaking the arg parser.
 * [gitopolis_tests](tests/gitopolis_tests.rs) - tests just the main logic in the library, with mocked storage, git (& stdout?). Faster and more granular than end-to-end.
-
 
 ## Output
 
