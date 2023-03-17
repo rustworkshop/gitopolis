@@ -61,7 +61,7 @@ impl Repos {
 		for repo_folder in repo_folders {
 			let ix = self
 				.repo_index(repo_folder.to_owned())
-				.expect(&format!("Repo '{}' not found", repo_folder));
+				.unwrap_or_else(|| panic!("Repo '{}' not found", repo_folder));
 			self.repos.remove(ix);
 		}
 	}
@@ -76,7 +76,7 @@ impl Repos {
 		for repo_folder in repo_folders {
 			let repo = self
 				.find_repo(repo_folder.to_owned())
-				.expect(&format!("Repo '{}' not found", repo_folder));
+				.unwrap_or_else(|| panic!("Repo '{}' not found", repo_folder));
 			if remove {
 				if let Some(ix) = repo.tags.iter().position(|t| t == tag_name) {
 					repo.tags.remove(ix);
