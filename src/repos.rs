@@ -2,7 +2,7 @@ use log::info;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Repos {
 	// todo: make inner repos private if possible
 	pub repos: Vec<Repo>,
@@ -36,7 +36,7 @@ pub struct Remote {
 
 impl Repos {
 	pub fn new() -> Self {
-		Self { repos: Vec::new() }
+		Default::default()
 	}
 
 	pub fn find_repo(&mut self, folder_name: String) -> Option<&mut Repo> {
