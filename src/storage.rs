@@ -33,7 +33,8 @@ impl<'a> Storage for StorageImpl<'a> {
 	}
 
 	fn save(&self, state_toml: String) {
-		fs::write(self.path, state_toml).expect(&format!("Failed to write {}", self.path));
+		fs::write(self.path, state_toml)
+			.unwrap_or_else(|_| panic!("Failed to write {}", self.path));
 	}
 
 	fn read(&self) -> String {

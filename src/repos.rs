@@ -2,7 +2,7 @@ use log::info;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Repos {
 	// todo: make inner repos private if possible
 	pub repos: Vec<Repo>,
@@ -36,7 +36,7 @@ pub struct Remote {
 
 impl Repos {
 	pub fn new() -> Self {
-		Self { repos: Vec::new() }
+		Default::default()
 	}
 
 	pub fn find_repo(&mut self, folder_name: String) -> Option<&mut Repo> {
@@ -61,7 +61,7 @@ impl Repos {
 		for repo_folder in repo_folders {
 			let ix = self
 				.repo_index(repo_folder.to_owned())
-				.expect(&format!("Repo '{}' not found", repo_folder));
+				.unwrap_or_else(|| panic!("Repo '{}' not found", repo_folder));
 			self.repos.remove(ix);
 		}
 	}
@@ -76,7 +76,7 @@ impl Repos {
 		for repo_folder in repo_folders {
 			let repo = self
 				.find_repo(repo_folder.to_owned())
-				.expect(&format!("Repo '{}' not found", repo_folder));
+				.unwrap_or_else(|| panic!("Repo '{}' not found", repo_folder));
 			if remove {
 				if let Some(ix) = repo.tags.iter().position(|t| t == tag_name) {
 					repo.tags.remove(ix);

@@ -136,7 +136,7 @@ fn add(repo_folders: Vec<String>) {
 }
 
 fn list(repos: Vec<Repo>, long: bool) {
-	if repos.len() == 0 {
+	if repos.is_empty() {
 		println!("No repos");
 		std::process::exit(2);
 	}
