@@ -13,7 +13,7 @@ git2 = "0.16.1"
 log = "0.4.17"
 serde = "1.0.157"
 serde_derive = "1.0.157"
-toml = "0.5.11"
+toml = "0.7.3"
 
 [dev-dependencies]
 assert_cmd = "2.0"
