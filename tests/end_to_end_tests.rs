@@ -42,6 +42,7 @@ fn add() {
 	let expected_toml = "[[repos]]
 path = \"some_git_folder\"
 tags = []
+
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/test_url\"

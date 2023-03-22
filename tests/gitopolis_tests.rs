@@ -7,6 +7,7 @@ fn add() {
 	let expected_toml = "[[repos]]
 path = \"test_repo\"
 tags = []
+
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/test_url\"
@@ -25,6 +26,7 @@ fn read() {
 	let starting_state = "[[repos]]
 path = \"test_repo\"
 tags = []
+
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/test_url\"\
@@ -47,6 +49,7 @@ fn read_corrupt() {
 	let starting_state = "[[NOT_A_repos]]
 path = \"test_repo\"
 tags = []
+
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/test_url\"\
@@ -60,7 +63,7 @@ url = \"git://example.org/test_url\"\
 	let gitopolis = Gitopolis::new(storage, git);
 	let repos_result = gitopolis.list(&None);
 	let actual_error = repos_result.expect_err("should error");
-	let expected_error = "Failed to parse state data as valid TOML. missing field `remotes` for key `NOT_A_repos` at line 4 column 1";
+	let expected_error = "Failed to parse state data as valid TOML. TOML parse error at line 1, column 1\n  |\n1 | [[NOT_A_repos]]\n  | ^^^^^^^^^^^^^^^\nmissing field `remotes`\n";
 	assert_eq!(expected_error, actual_error.message())
 }
 
@@ -71,6 +74,7 @@ fn clone() {
 	let starting_state = "[[repos]]
 path = \"test_repo\"
 tags = []
+
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/test_url\"\
@@ -97,6 +101,7 @@ fn tag() {
 	let starting_state = "[[repos]]
 path = \"test_repo\"
 tags = []
+
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/test_url\"\
@@ -105,6 +110,7 @@ url = \"git://example.org/test_url\"\
 	let expected_toml = "[[repos]]
 path = \"test_repo\"
 tags = [\"some_tag\"]
+
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/test_url\"
@@ -128,6 +134,7 @@ fn remove_tag() {
 	let starting_state = "[[repos]]
 path = \"test_repo\"
 tags = [\"some_tag\"]
+
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/test_url\"\
@@ -136,6 +143,7 @@ url = \"git://example.org/test_url\"\
 	let expected_toml = "[[repos]]
 path = \"test_repo\"
 tags = []
+
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/test_url\"
@@ -159,6 +167,7 @@ fn tags() {
 	let starting_state = "[[repos]]
 path = \"repo1\"
 tags = [\"some_tag\", \"another_tag\"]
+
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/test_url\"
@@ -166,6 +175,7 @@ url = \"git://example.org/test_url\"
 [[repos]]
 path = \"repo2\"
 tags = [\"some_tag\", \"more_tags\"]
+
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/test_url\"\
@@ -189,6 +199,7 @@ fn remove() {
 	let starting_state = "[[repos]]
 path = \"test_repo\"
 tags = []
+
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/test_url\"\

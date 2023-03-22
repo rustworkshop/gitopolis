@@ -132,7 +132,7 @@ fn serialize(repos: &Repos) -> Result<String, GitopolisError> {
 }
 
 fn parse(state_toml: &str) -> Result<Repos, GitopolisError> {
-	let mut named_container: BTreeMap<&str, Vec<Repo>> =
+	let mut named_container: BTreeMap<String, Vec<Repo>> =
 		toml::from_str(state_toml).map_err(|error| StateError {
 			message: format!("Failed to parse state data as valid TOML. {}", error),
 		})?;
