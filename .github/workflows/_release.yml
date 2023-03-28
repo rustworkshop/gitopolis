@@ -18,6 +18,7 @@ jobs:
       run: |
         PKG_CONFIG_ALLOW_SYSTEM_CFLAGS="1" pkg-config --libs --cflags openssl
         echo $?
+        echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
     - name: Setup
       run: cargo install -f cross
     - name: Version
