@@ -164,6 +164,23 @@ fn list() {
 }
 
 #[test]
+fn list_tag_short() {
+	let temp = tempdir().expect("get tmp dir failed");
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	tag_repo(&temp, repo, "some_tag");
+	let repo2 = "some_other_git_folder";
+	add_a_repo(&temp, repo2, "git://example.org/test_url2");
+
+	get_binary_cmd()
+		.current_dir(&temp)
+		.args(vec!["list", "-t", "some_tag"])
+		.assert()
+		.success()
+		.stdout("some_git_folder\n");
+}
+
+#[test]
 fn list_long() {
 	let temp = tempdir().expect("get tmp dir failed");
 	let repo = "some_git_folder";
