@@ -3,7 +3,7 @@ use predicates::prelude::predicate;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
-use tempfile::tempdir;
+use tempfile::{tempdir, TempDir};
 
 #[test]
 fn help() {
@@ -54,14 +54,7 @@ url = \"git://example.org/test_url\"
 fn tag() {
 	let temp = tempdir().expect("get tmp dir failed");
 	let repo = "some_git_folder";
-	init_repo(temp.path().join(repo), "git://example.org/test_url");
-
-	get_binary_cmd()
-		.current_dir(&temp)
-		.args(vec!["add", repo])
-		.assert()
-		.success()
-		.stderr(predicate::str::contains("Added some_git_folder\n"));
+	add_a_repo(&temp, repo, "git://example.org/test_url");
 
 	get_binary_cmd()
 		.current_dir(&temp)
@@ -86,13 +79,7 @@ url = \"git://example.org/test_url\"
 fn list() {
 	let temp = tempdir().expect("get tmp dir failed");
 	let repo = "some_git_folder";
-	init_repo(temp.path().join(repo), "git://example.org/test_url");
-
-	get_binary_cmd()
-		.current_dir(&temp)
-		.args(vec!["add", repo])
-		.assert()
-		.success();
+	add_a_repo(&temp, repo, "git://example.org/test_url");
 
 	get_binary_cmd()
 		.current_dir(&temp)
@@ -118,6 +105,16 @@ fn list() {
 		.stdout(predicate::str::contains(
 			"some_git_folder\t\tgit://example.org/test_url",
 		));
+}
+
+fn add_a_repo(temp: &TempDir, repo: &str, remote_url: &str) {
+	init_repo(temp.path().join(repo), remote_url);
+
+	get_binary_cmd()
+		.current_dir(temp)
+		.args(vec!["add", repo])
+		.output()
+		.expect("Failed to add repo");
 }
 
 fn init_repo(path: PathBuf, remote_url: &str) {
