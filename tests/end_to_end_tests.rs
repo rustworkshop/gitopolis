@@ -27,7 +27,7 @@ fn list_empty_exit_code_2() {
 #[test]
 fn add() {
 	let temp = tempdir().expect("get tmp dir failed");
-	let repo = "add_some_git_folder";
+	let repo = "some_git_folder";
 	init_repo(temp.path().join(repo), "git://example.org/test_url");
 
 	get_binary_cmd()
@@ -35,12 +35,12 @@ fn add() {
 		.args(vec!["add", repo])
 		.assert()
 		.success()
-		.stderr(predicate::str::contains("Added add_some_git_folder\n"));
+		.stderr(predicate::str::contains("Added some_git_folder\n"));
 
 	let actual_toml =
 		fs::read_to_string(temp.path().join(".gitopolis.toml")).expect("failed to read back toml");
 	let expected_toml = "[[repos]]
-path = \"add_some_git_folder\"
+path = \"some_git_folder\"
 tags = []
 
 [repos.remotes.origin]
@@ -53,7 +53,7 @@ url = \"git://example.org/test_url\"
 #[test]
 fn tag() {
 	let temp = tempdir().expect("get tmp dir failed");
-	let repo = "tag_some_git_folder";
+	let repo = "some_git_folder";
 	init_repo(temp.path().join(repo), "git://example.org/test_url");
 
 	get_binary_cmd()
@@ -61,7 +61,7 @@ fn tag() {
 		.args(vec!["add", repo])
 		.assert()
 		.success()
-		.stderr(predicate::str::contains("Added tag_some_git_folder\n"));
+		.stderr(predicate::str::contains("Added some_git_folder\n"));
 
 	get_binary_cmd()
 		.current_dir(&temp)
@@ -72,7 +72,7 @@ fn tag() {
 	let actual_toml =
 		fs::read_to_string(temp.path().join(".gitopolis.toml")).expect("failed to read back toml");
 	let expected_toml = "[[repos]]
-path = \"tag_some_git_folder\"
+path = \"some_git_folder\"
 tags = [\"some_tag\"]
 
 [repos.remotes.origin]
@@ -85,7 +85,7 @@ url = \"git://example.org/test_url\"
 #[test]
 fn list() {
 	let temp = tempdir().expect("get tmp dir failed");
-	let repo = "list_some_git_folder";
+	let repo = "some_git_folder";
 	init_repo(temp.path().join(repo), "git://example.org/test_url");
 
 	get_binary_cmd()
@@ -99,7 +99,7 @@ fn list() {
 		.args(vec!["list"])
 		.assert()
 		.success()
-		.stdout(predicate::str::contains("list_some_git_folder"));
+		.stdout(predicate::str::contains("some_git_folder"));
 
 	get_binary_cmd()
 		.current_dir(&temp)
@@ -107,7 +107,7 @@ fn list() {
 		.assert()
 		.success()
 		.stdout(predicate::str::contains(
-			"list_some_git_folder\t\tgit://example.org/test_url",
+			"some_git_folder\t\tgit://example.org/test_url",
 		));
 
 	get_binary_cmd()
@@ -116,7 +116,7 @@ fn list() {
 		.assert()
 		.success()
 		.stdout(predicate::str::contains(
-			"list_some_git_folder\t\tgit://example.org/test_url",
+			"some_git_folder\t\tgit://example.org/test_url",
 		));
 }
 
