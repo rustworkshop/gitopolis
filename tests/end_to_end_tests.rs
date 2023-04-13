@@ -93,6 +93,58 @@ url = \"git://example.org/test_url\"
 }
 
 #[test]
+fn tag_remove() {
+	let temp = tempdir().expect("get tmp dir failed");
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	tag_repo(&temp, repo, "some_tag");
+
+	get_binary_cmd()
+		.current_dir(&temp)
+		.args(vec!["tag", "--remove", "some_tag", repo])
+		.assert()
+		.success();
+
+	let actual_toml =
+		fs::read_to_string(temp.path().join(".gitopolis.toml")).expect("failed to read back toml");
+	let expected_toml = "[[repos]]
+path = \"some_git_folder\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+";
+	assert_eq!(expected_toml, actual_toml);
+}
+
+#[test]
+fn tag_remove_short() {
+	let temp = tempdir().expect("get tmp dir failed");
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	tag_repo(&temp, repo, "some_tag");
+
+	get_binary_cmd()
+		.current_dir(&temp)
+		.args(vec!["tag", "-r", "some_tag", repo])
+		.assert()
+		.success();
+
+	let actual_toml =
+		fs::read_to_string(temp.path().join(".gitopolis.toml")).expect("failed to read back toml");
+	let expected_toml = "[[repos]]
+path = \"some_git_folder\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+";
+	assert_eq!(expected_toml, actual_toml);
+}
+
+#[test]
 fn list() {
 	let temp = tempdir().expect("get tmp dir failed");
 	let repo = "some_git_folder";
