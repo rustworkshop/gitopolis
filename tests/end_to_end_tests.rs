@@ -92,8 +92,20 @@ fn list() {
 		.assert()
 		.success()
 		.stdout("some_git_folder\nsome_other_git_folder\n");
+}
+
+#[test]
+fn list_long() {
+	let temp = tempdir().expect("get tmp dir failed");
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	let repo2 = "some_other_git_folder";
+	add_a_repo(&temp, repo2, "git://example.org/test_url2");
+	tag_repo(&temp, repo, "some_tag");
+	tag_repo(&temp, repo, "another_tag");
 
 	let expected_long_output = "some_git_folder\tsome_tag,another_tag\tgit://example.org/test_url\nsome_other_git_folder\t\tgit://example.org/test_url2\n";
+
 	get_binary_cmd()
 		.current_dir(&temp)
 		.args(vec!["list", "-l"])
