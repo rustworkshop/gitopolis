@@ -51,6 +51,23 @@ url = \"git://example.org/test_url\"
 }
 
 #[test]
+fn remove() {
+	let temp = tempdir().expect("get tmp dir failed");
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+
+	get_binary_cmd()
+		.current_dir(&temp)
+		.args(vec!["remove", repo])
+		.assert()
+		.success();
+
+	let actual_toml =
+		fs::read_to_string(temp.path().join(".gitopolis.toml")).expect("failed to read back toml");
+	assert_eq!("repos = []\n", actual_toml);
+}
+
+#[test]
 fn tag() {
 	let temp = tempdir().expect("get tmp dir failed");
 	let repo = "some_git_folder";
