@@ -80,31 +80,30 @@ fn list() {
 	let temp = tempdir().expect("get tmp dir failed");
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
+	let repo2 = "some_other_git_folder";
+	add_a_repo(&temp, repo2, "git://example.org/test_url2");
 
 	get_binary_cmd()
 		.current_dir(&temp)
 		.args(vec!["list"])
 		.assert()
 		.success()
-		.stdout(predicate::str::contains("some_git_folder"));
+		.stdout("some_git_folder\nsome_other_git_folder\n");
 
+	let expected_long_output = "some_git_folder\t\tgit://example.org/test_url\nsome_other_git_folder\t\tgit://example.org/test_url2\n";
 	get_binary_cmd()
 		.current_dir(&temp)
 		.args(vec!["list", "-l"])
 		.assert()
 		.success()
-		.stdout(predicate::str::contains(
-			"some_git_folder\t\tgit://example.org/test_url",
-		));
+		.stdout(expected_long_output);
 
 	get_binary_cmd()
 		.current_dir(&temp)
 		.args(vec!["list", "--long"])
 		.assert()
 		.success()
-		.stdout(predicate::str::contains(
-			"some_git_folder\t\tgit://example.org/test_url",
-		));
+		.stdout(expected_long_output);
 }
 
 fn add_a_repo(temp: &TempDir, repo: &str, remote_url: &str) {
