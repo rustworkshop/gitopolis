@@ -30,14 +30,14 @@ enum Commands {
 	/// Show list of repos gitopolis knows about. Use "long" to see tags and urls (tab separated format).
 	List {
 		#[arg(short, long)]
-		tag_name: Option<String>,
+		tag: Option<String>,
 		#[clap(short, long)]
 		long: bool,
 	},
 	/// Run any shell command. E.g. `gitopolis exec -- git pull`. Double-dash separator indicates end of gitopolis's arguments and prevents arguments to your commands being interpreted by gitopolis.
 	Exec {
 		#[arg(short, long)]
-		tag_name: Option<String>,
+		tag: Option<String>,
 		exec_args: Vec<String>,
 	},
 	/// Add/remove repo tags. Use tags to organise repos and allow running commands against subsets of the repo list.
@@ -46,7 +46,7 @@ enum Commands {
 		#[clap(short, long)]
 		remove: bool,
 		#[clap(required = true)]
-		tag_name: String,
+		tag: String,
 		#[clap(required = true)]
 		repo_folders: Vec<String>,
 	},
@@ -58,7 +58,7 @@ enum Commands {
 	/// Use an existing .gitopolis.toml state file to clone any/all missing repositories.
 	Clone {
 		#[arg(short, long)]
-		tag_name: Option<String>,
+		tag: Option<String>,
 	},
 }
 
@@ -75,15 +75,18 @@ fn main() {
 				.remove(repo_folders)
 				.expect("TODO: panic message");
 		}
-		Some(Commands::List { tag_name, long }) => list(
+		Some(Commands::List {
+			tag: tag_name,
+			long,
+		}) => list(
 			init_gitopolis()
 				.list(tag_name)
 				.expect("TODO: panic message"),
 			*long,
 		),
-		Some(Commands::Clone { tag_name }) => clone(tag_name),
+		Some(Commands::Clone { tag: tag_name }) => clone(tag_name),
 		Some(Commands::Exec {
-			tag_name,
+			tag: tag_name,
 			exec_args,
 		}) => {
 			exec(
@@ -94,7 +97,7 @@ fn main() {
 			);
 		}
 		Some(Commands::Tag {
-			tag_name,
+			tag: tag_name,
 			repo_folders,
 			remove,
 		}) => {
