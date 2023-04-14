@@ -224,6 +224,90 @@ fn list_long() {
 		.stdout(expected_long_output);
 }
 
+#[test]
+fn exec() {
+	let temp = tempdir().expect("get tmp dir failed");
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	let repo2 = "some_other_git_folder";
+	add_a_repo(&temp, repo2, "git://example.org/test_url2");
+
+	let expected_stdout = "🏢 some_git_folder> git config remote.origin.url
+git://example.org/test_url
+
+🏢 some_other_git_folder> git config remote.origin.url
+git://example.org/test_url2
+
+";
+
+	get_binary_cmd()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "git", "config", "remote.origin.url"])
+		.assert()
+		.success()
+		.stdout(expected_stdout);
+}
+
+#[test]
+fn exec_tag() {
+	let temp = tempdir().expect("get tmp dir failed");
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	tag_repo(&temp, repo, "some_tag");
+	let repo2 = "some_other_git_folder";
+	add_a_repo(&temp, repo2, "git://example.org/test_url2");
+
+	let expected_stdout = "🏢 some_git_folder> git config remote.origin.url
+git://example.org/test_url
+
+";
+
+	get_binary_cmd()
+		.current_dir(&temp)
+		.args(vec![
+			"exec",
+			"--tag",
+			"some_tag",
+			"--",
+			"git",
+			"config",
+			"remote.origin.url",
+		])
+		.assert()
+		.success()
+		.stdout(expected_stdout);
+}
+
+#[test]
+fn exec_tag_short() {
+	let temp = tempdir().expect("get tmp dir failed");
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	tag_repo(&temp, repo, "some_tag");
+	let repo2 = "some_other_git_folder";
+	add_a_repo(&temp, repo2, "git://example.org/test_url2");
+
+	let expected_stdout = "🏢 some_git_folder> git config remote.origin.url
+git://example.org/test_url
+
+";
+
+	get_binary_cmd()
+		.current_dir(&temp)
+		.args(vec![
+			"exec",
+			"-t",
+			"some_tag",
+			"--",
+			"git",
+			"config",
+			"remote.origin.url",
+		])
+		.assert()
+		.success()
+		.stdout(expected_stdout);
+}
+
 fn tag_repo(temp: &TempDir, repo: &str, tag_name: &str) {
 	get_binary_cmd()
 		.current_dir(temp)
