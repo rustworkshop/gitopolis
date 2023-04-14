@@ -119,7 +119,7 @@ url = \"git://example.org/test_url\"
 }
 
 #[test]
-fn tag_remove_short() {
+fn tag_remove_abbreviated() {
 	let temp = tempdir().expect("get tmp dir failed");
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
@@ -142,6 +142,81 @@ name = \"origin\"
 url = \"git://example.org/test_url\"
 ";
 	assert_eq!(expected_toml, actual_toml);
+}
+
+#[test]
+fn tags() {
+	let temp = tempdir().expect("get tmp dir failed");
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	tag_repo(&temp, repo, "some_tag");
+	let repo2 = "some_other_git_folder";
+	add_a_repo(&temp, repo2, "git://example.org/test_url2");
+	tag_repo(&temp, repo2, "some_tag");
+	tag_repo(&temp, repo2, "another_tag");
+
+	get_binary_cmd()
+		.current_dir(&temp)
+		.args(vec!["tags"])
+		.assert()
+		.success()
+		.stdout("another_tag\nsome_tag\n");
+}
+
+#[test]
+fn tags_long() {
+	let temp = tempdir().expect("get tmp dir failed");
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	tag_repo(&temp, repo, "some_tag");
+	let repo2 = "some_other_git_folder";
+	add_a_repo(&temp, repo2, "git://example.org/test_url2");
+	tag_repo(&temp, repo2, "some_tag");
+	tag_repo(&temp, repo2, "another_tag");
+
+	let expected_stdout = "another_tag
+	some_other_git_folder
+
+some_tag
+	some_git_folder
+	some_other_git_folder
+
+";
+
+	get_binary_cmd()
+		.current_dir(&temp)
+		.args(vec!["tags", "--long"])
+		.assert()
+		.success()
+		.stdout(expected_stdout);
+}
+
+#[test]
+fn tags_long_abbreviated() {
+	let temp = tempdir().expect("get tmp dir failed");
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	tag_repo(&temp, repo, "some_tag");
+	let repo2 = "some_other_git_folder";
+	add_a_repo(&temp, repo2, "git://example.org/test_url2");
+	tag_repo(&temp, repo2, "some_tag");
+	tag_repo(&temp, repo2, "another_tag");
+
+	let expected_stdout = "another_tag
+	some_other_git_folder
+
+some_tag
+	some_git_folder
+	some_other_git_folder
+
+";
+
+	get_binary_cmd()
+		.current_dir(&temp)
+		.args(vec!["tags", "-l"])
+		.assert()
+		.success()
+		.stdout(expected_stdout);
 }
 
 #[test]
@@ -181,7 +256,7 @@ fn list_tag() {
 }
 
 #[test]
-fn list_tag_short() {
+fn list_tag_abbreviated() {
 	let temp = tempdir().expect("get tmp dir failed");
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
@@ -279,7 +354,7 @@ git://example.org/test_url
 }
 
 #[test]
-fn exec_tag_short() {
+fn exec_tag_abbreviated() {
 	let temp = tempdir().expect("get tmp dir failed");
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
