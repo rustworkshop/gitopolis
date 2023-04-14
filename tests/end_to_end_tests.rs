@@ -14,16 +14,6 @@ fn help() {
 }
 
 #[test]
-fn list_empty_exit_code_2() {
-	gitopolis_executable()
-		.arg("list")
-		.assert()
-		.failure()
-		.code(2)
-		.stdout(predicate::str::contains("No repos"));
-}
-
-#[test]
 fn add() {
 	let temp = temp_folder();
 	create_git_repo(&temp, "some_git_folder", "git://example.org/test_url");
@@ -62,151 +52,13 @@ fn remove() {
 }
 
 #[test]
-fn tag() {
-	let temp = temp_folder();
-	let repo = "some_git_folder";
-	add_a_repo(&temp, repo, "git://example.org/test_url");
-
+fn list_errors_when_no_config() {
 	gitopolis_executable()
-		.current_dir(&temp)
-		.args(vec!["tag", "some_tag", repo])
+		.arg("list")
 		.assert()
-		.success();
-
-	let expected_toml = "[[repos]]
-path = \"some_git_folder\"
-tags = [\"some_tag\"]
-
-[repos.remotes.origin]
-name = \"origin\"
-url = \"git://example.org/test_url\"
-";
-	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
-}
-
-#[test]
-fn tag_remove() {
-	let temp = temp_folder();
-	let repo = "some_git_folder";
-	add_a_repo(&temp, repo, "git://example.org/test_url");
-	tag_repo(&temp, repo, "some_tag");
-
-	gitopolis_executable()
-		.current_dir(&temp)
-		.args(vec!["tag", "--remove", "some_tag", repo])
-		.assert()
-		.success();
-
-	let actual_toml = read_gitopolis_state_toml(&temp);
-	let expected_toml = "[[repos]]
-path = \"some_git_folder\"
-tags = []
-
-[repos.remotes.origin]
-name = \"origin\"
-url = \"git://example.org/test_url\"
-";
-	assert_eq!(expected_toml, actual_toml);
-}
-
-#[test]
-fn tag_remove_abbreviated() {
-	let temp = temp_folder();
-	let repo = "some_git_folder";
-	add_a_repo(&temp, repo, "git://example.org/test_url");
-	tag_repo(&temp, repo, "some_tag");
-
-	gitopolis_executable()
-		.current_dir(&temp)
-		.args(vec!["tag", "-r", "some_tag", repo])
-		.assert()
-		.success();
-
-	let actual_toml = read_gitopolis_state_toml(&temp);
-	let expected_toml = "[[repos]]
-path = \"some_git_folder\"
-tags = []
-
-[repos.remotes.origin]
-name = \"origin\"
-url = \"git://example.org/test_url\"
-";
-	assert_eq!(expected_toml, actual_toml);
-}
-
-#[test]
-fn tags() {
-	let temp = temp_folder();
-	let repo = "some_git_folder";
-	add_a_repo(&temp, repo, "git://example.org/test_url");
-	tag_repo(&temp, repo, "some_tag");
-	let repo2 = "some_other_git_folder";
-	add_a_repo(&temp, repo2, "git://example.org/test_url2");
-	tag_repo(&temp, repo2, "some_tag");
-	tag_repo(&temp, repo2, "another_tag");
-
-	gitopolis_executable()
-		.current_dir(&temp)
-		.args(vec!["tags"])
-		.assert()
-		.success()
-		.stdout("another_tag\nsome_tag\n");
-}
-
-#[test]
-fn tags_long() {
-	let temp = temp_folder();
-	let repo = "some_git_folder";
-	add_a_repo(&temp, repo, "git://example.org/test_url");
-	tag_repo(&temp, repo, "some_tag");
-	let repo2 = "some_other_git_folder";
-	add_a_repo(&temp, repo2, "git://example.org/test_url2");
-	tag_repo(&temp, repo2, "some_tag");
-	tag_repo(&temp, repo2, "another_tag");
-
-	let expected_stdout = "another_tag
-	some_other_git_folder
-
-some_tag
-	some_git_folder
-	some_other_git_folder
-
-";
-
-	gitopolis_executable()
-		.current_dir(&temp)
-		.args(vec!["tags", "--long"])
-		.assert()
-		.success()
-		.stdout(expected_stdout);
-}
-
-#[test]
-fn tags_long_abbreviated() {
-	let temp = temp_folder();
-	let repo = "some_git_folder";
-	add_a_repo(&temp, repo, "git://example.org/test_url");
-	tag_repo(&temp, repo, "some_tag");
-	let repo2 = "some_other_git_folder";
-	add_a_repo(&temp, repo2, "git://example.org/test_url2");
-	tag_repo(&temp, repo2, "some_tag");
-	tag_repo(&temp, repo2, "another_tag");
-
-	let expected_stdout = "another_tag
-	some_other_git_folder
-
-some_tag
-	some_git_folder
-	some_other_git_folder
-
-";
-
-	gitopolis_executable()
-		.current_dir(&temp)
-		.args(vec!["tags", "-l"])
-		.assert()
-		.success()
-		.stdout(expected_stdout);
+		.failure()
+		.code(2)
+		.stdout(predicate::str::contains("No repos"));
 }
 
 #[test]
@@ -368,6 +220,154 @@ git://example.org/test_url
 			"config",
 			"remote.origin.url",
 		])
+		.assert()
+		.success()
+		.stdout(expected_stdout);
+}
+
+#[test]
+fn tag() {
+	let temp = temp_folder();
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["tag", "some_tag", repo])
+		.assert()
+		.success();
+
+	let expected_toml = "[[repos]]
+path = \"some_git_folder\"
+tags = [\"some_tag\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+";
+	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
+}
+
+#[test]
+fn tag_remove() {
+	let temp = temp_folder();
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	tag_repo(&temp, repo, "some_tag");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["tag", "--remove", "some_tag", repo])
+		.assert()
+		.success();
+
+	let actual_toml = read_gitopolis_state_toml(&temp);
+	let expected_toml = "[[repos]]
+path = \"some_git_folder\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+";
+	assert_eq!(expected_toml, actual_toml);
+}
+
+#[test]
+fn tag_remove_abbreviated() {
+	let temp = temp_folder();
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	tag_repo(&temp, repo, "some_tag");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["tag", "-r", "some_tag", repo])
+		.assert()
+		.success();
+
+	let actual_toml = read_gitopolis_state_toml(&temp);
+	let expected_toml = "[[repos]]
+path = \"some_git_folder\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+";
+	assert_eq!(expected_toml, actual_toml);
+}
+
+#[test]
+fn tags() {
+	let temp = temp_folder();
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	tag_repo(&temp, repo, "some_tag");
+	let repo2 = "some_other_git_folder";
+	add_a_repo(&temp, repo2, "git://example.org/test_url2");
+	tag_repo(&temp, repo2, "some_tag");
+	tag_repo(&temp, repo2, "another_tag");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["tags"])
+		.assert()
+		.success()
+		.stdout("another_tag\nsome_tag\n");
+}
+
+#[test]
+fn tags_long() {
+	let temp = temp_folder();
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	tag_repo(&temp, repo, "some_tag");
+	let repo2 = "some_other_git_folder";
+	add_a_repo(&temp, repo2, "git://example.org/test_url2");
+	tag_repo(&temp, repo2, "some_tag");
+	tag_repo(&temp, repo2, "another_tag");
+
+	let expected_stdout = "another_tag
+	some_other_git_folder
+
+some_tag
+	some_git_folder
+	some_other_git_folder
+
+";
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["tags", "--long"])
+		.assert()
+		.success()
+		.stdout(expected_stdout);
+}
+
+#[test]
+fn tags_long_abbreviated() {
+	let temp = temp_folder();
+	let repo = "some_git_folder";
+	add_a_repo(&temp, repo, "git://example.org/test_url");
+	tag_repo(&temp, repo, "some_tag");
+	let repo2 = "some_other_git_folder";
+	add_a_repo(&temp, repo2, "git://example.org/test_url2");
+	tag_repo(&temp, repo2, "some_tag");
+	tag_repo(&temp, repo2, "another_tag");
+
+	let expected_stdout = "another_tag
+	some_other_git_folder
+
+some_tag
+	some_git_folder
+	some_other_git_folder
+
+";
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["tags", "-l"])
 		.assert()
 		.success()
 		.stdout(expected_stdout);
