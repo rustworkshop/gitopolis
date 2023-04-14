@@ -25,6 +25,19 @@ fn add() {
 		.success()
 		.stderr(predicate::str::contains("Added some_git_folder\n"));
 
+	create_git_repo(
+		&temp,
+		"some_other_git_folder",
+		"git://example.org/test_url2",
+	);
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["add", "some_other_git_folder"])
+		.assert()
+		.success()
+		.stderr(predicate::str::contains("Added some_other_git_folder\n"));
+
 	let expected_toml = "[[repos]]
 path = \"some_git_folder\"
 tags = []
@@ -32,6 +45,14 @@ tags = []
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/test_url\"
+
+[[repos]]
+path = \"some_other_git_folder\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url2\"
 ";
 	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
 }
