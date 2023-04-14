@@ -1,13 +1,12 @@
 use assert_cmd::Command as AssertCommand;
 use predicates::prelude::predicate;
 use std::fs;
-use std::path::PathBuf;
 use std::process::Command;
 use tempfile::{tempdir, TempDir};
 
 #[test]
 fn help() {
-	get_binary_cmd()
+	gitopolis_executable()
 		.arg("help")
 		.assert()
 		.success()
@@ -16,7 +15,7 @@ fn help() {
 
 #[test]
 fn list_empty_exit_code_2() {
-	get_binary_cmd()
+	gitopolis_executable()
 		.arg("list")
 		.assert()
 		.failure()
@@ -26,19 +25,16 @@ fn list_empty_exit_code_2() {
 
 #[test]
 fn add() {
-	let temp = tempdir().expect("get tmp dir failed");
-	let repo = "some_git_folder";
-	init_repo(&temp.path().join(repo), "git://example.org/test_url");
+	let temp = temp_folder();
+	create_git_repo(&temp, "some_git_folder", "git://example.org/test_url");
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
-		.args(vec!["add", repo])
+		.args(vec!["add", "some_git_folder"])
 		.assert()
 		.success()
 		.stderr(predicate::str::contains("Added some_git_folder\n"));
 
-	let actual_toml =
-		fs::read_to_string(temp.path().join(".gitopolis.toml")).expect("failed to read back toml");
 	let expected_toml = "[[repos]]
 path = \"some_git_folder\"
 tags = []
@@ -47,40 +43,36 @@ tags = []
 name = \"origin\"
 url = \"git://example.org/test_url\"
 ";
-	assert_eq!(expected_toml, actual_toml);
+	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
 }
 
 #[test]
 fn remove() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["remove", repo])
 		.assert()
 		.success();
 
-	let actual_toml =
-		fs::read_to_string(temp.path().join(".gitopolis.toml")).expect("failed to read back toml");
-	assert_eq!("repos = []\n", actual_toml);
+	assert_eq!("repos = []\n", read_gitopolis_state_toml(&temp));
 }
 
 #[test]
 fn tag() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["tag", "some_tag", repo])
 		.assert()
 		.success();
 
-	let actual_toml =
-		fs::read_to_string(temp.path().join(".gitopolis.toml")).expect("failed to read back toml");
 	let expected_toml = "[[repos]]
 path = \"some_git_folder\"
 tags = [\"some_tag\"]
@@ -89,24 +81,23 @@ tags = [\"some_tag\"]
 name = \"origin\"
 url = \"git://example.org/test_url\"
 ";
-	assert_eq!(expected_toml, actual_toml);
+	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
 }
 
 #[test]
 fn tag_remove() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
 	tag_repo(&temp, repo, "some_tag");
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["tag", "--remove", "some_tag", repo])
 		.assert()
 		.success();
 
-	let actual_toml =
-		fs::read_to_string(temp.path().join(".gitopolis.toml")).expect("failed to read back toml");
+	let actual_toml = read_gitopolis_state_toml(&temp);
 	let expected_toml = "[[repos]]
 path = \"some_git_folder\"
 tags = []
@@ -120,19 +111,18 @@ url = \"git://example.org/test_url\"
 
 #[test]
 fn tag_remove_abbreviated() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
 	tag_repo(&temp, repo, "some_tag");
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["tag", "-r", "some_tag", repo])
 		.assert()
 		.success();
 
-	let actual_toml =
-		fs::read_to_string(temp.path().join(".gitopolis.toml")).expect("failed to read back toml");
+	let actual_toml = read_gitopolis_state_toml(&temp);
 	let expected_toml = "[[repos]]
 path = \"some_git_folder\"
 tags = []
@@ -146,7 +136,7 @@ url = \"git://example.org/test_url\"
 
 #[test]
 fn tags() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
 	tag_repo(&temp, repo, "some_tag");
@@ -155,7 +145,7 @@ fn tags() {
 	tag_repo(&temp, repo2, "some_tag");
 	tag_repo(&temp, repo2, "another_tag");
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["tags"])
 		.assert()
@@ -165,7 +155,7 @@ fn tags() {
 
 #[test]
 fn tags_long() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
 	tag_repo(&temp, repo, "some_tag");
@@ -183,7 +173,7 @@ some_tag
 
 ";
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["tags", "--long"])
 		.assert()
@@ -193,7 +183,7 @@ some_tag
 
 #[test]
 fn tags_long_abbreviated() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
 	tag_repo(&temp, repo, "some_tag");
@@ -211,7 +201,7 @@ some_tag
 
 ";
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["tags", "-l"])
 		.assert()
@@ -221,7 +211,7 @@ some_tag
 
 #[test]
 fn list() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
 	let repo2 = "some_other_git_folder";
@@ -230,7 +220,7 @@ fn list() {
 	tag_repo(&temp, repo, "some_tag");
 	tag_repo(&temp, repo, "another_tag");
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["list"])
 		.assert()
@@ -240,14 +230,14 @@ fn list() {
 
 #[test]
 fn list_tag() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
 	tag_repo(&temp, repo, "some_tag");
 	let repo2 = "some_other_git_folder";
 	add_a_repo(&temp, repo2, "git://example.org/test_url2");
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["list", "--tag", "some_tag"])
 		.assert()
@@ -257,14 +247,14 @@ fn list_tag() {
 
 #[test]
 fn list_tag_abbreviated() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
 	tag_repo(&temp, repo, "some_tag");
 	let repo2 = "some_other_git_folder";
 	add_a_repo(&temp, repo2, "git://example.org/test_url2");
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["list", "-t", "some_tag"])
 		.assert()
@@ -274,7 +264,7 @@ fn list_tag_abbreviated() {
 
 #[test]
 fn list_long() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
 	let repo2 = "some_other_git_folder";
@@ -284,14 +274,14 @@ fn list_long() {
 
 	let expected_long_output = "some_git_folder\tsome_tag,another_tag\tgit://example.org/test_url\nsome_other_git_folder\t\tgit://example.org/test_url2\n";
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["list", "-l"])
 		.assert()
 		.success()
 		.stdout(expected_long_output);
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["list", "--long"])
 		.assert()
@@ -301,7 +291,7 @@ fn list_long() {
 
 #[test]
 fn exec() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
 	let repo2 = "some_other_git_folder";
@@ -315,7 +305,7 @@ git://example.org/test_url2
 
 ";
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--", "git", "config", "remote.origin.url"])
 		.assert()
@@ -325,7 +315,7 @@ git://example.org/test_url2
 
 #[test]
 fn exec_tag() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
 	tag_repo(&temp, repo, "some_tag");
@@ -337,7 +327,7 @@ git://example.org/test_url
 
 ";
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec![
 			"exec",
@@ -355,7 +345,7 @@ git://example.org/test_url
 
 #[test]
 fn exec_tag_abbreviated() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "some_git_folder";
 	add_a_repo(&temp, repo, "git://example.org/test_url");
 	tag_repo(&temp, repo, "some_tag");
@@ -367,7 +357,7 @@ git://example.org/test_url
 
 ";
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec![
 			"exec",
@@ -385,7 +375,7 @@ git://example.org/test_url
 
 #[test]
 fn clone() {
-	let temp = tempdir().expect("get tmp dir failed");
+	let temp = temp_folder();
 	let repo = "source_repo";
 	create_local_repo(&temp, repo);
 	let initial_state_toml = "[[repos]]
@@ -396,8 +386,7 @@ tags = []
 name = \"origin\"
 url = \"source_repo\"
 ";
-	fs::write(temp.path().join(".gitopolis.toml"), initial_state_toml)
-		.expect("failed to write initial state toml");
+	write_gitopolis_state_toml(&temp, initial_state_toml);
 
 	let expected_clone_stdout = "🏢 some_git_folder> Cloning source_repo ...
 
@@ -407,7 +396,7 @@ done.
 
 ";
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["clone"])
 		.assert()
@@ -424,7 +413,7 @@ nothing to commit (create/copy files and use \"git add\" to track)
 
 ";
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--", "git", "status"])
 		.assert()
@@ -433,12 +422,11 @@ nothing to commit (create/copy files and use \"git add\" to track)
 }
 
 fn create_local_repo(temp: &TempDir, repo: &str) {
-	let repo_folder = temp.path().join(repo);
-	init_repo(&repo_folder, "git://example.org/test_url");
+	create_git_repo(&temp, repo, "git://example.org/test_url");
 }
 
 fn tag_repo(temp: &TempDir, repo: &str, tag_name: &str) {
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(temp)
 		.args(vec!["tag", tag_name, repo])
 		.output()
@@ -446,16 +434,17 @@ fn tag_repo(temp: &TempDir, repo: &str, tag_name: &str) {
 }
 
 fn add_a_repo(temp: &TempDir, repo: &str, remote_url: &str) {
-	init_repo(&temp.path().join(repo), remote_url);
+	create_git_repo(temp, repo, remote_url);
 
-	get_binary_cmd()
+	gitopolis_executable()
 		.current_dir(temp)
 		.args(vec!["add", repo])
 		.output()
 		.expect("Failed to add repo");
 }
 
-fn init_repo(path: &PathBuf, remote_url: &str) {
+fn create_git_repo(temp: &TempDir, repo_name: &str, remote_url: &str) {
+	let path = &temp.path().join(repo_name);
 	fs::create_dir_all(path).expect("create repo dir failed");
 	Command::new("git")
 		.current_dir(path)
@@ -469,6 +458,17 @@ fn init_repo(path: &PathBuf, remote_url: &str) {
 		.expect("git command failed");
 }
 
-fn get_binary_cmd() -> AssertCommand {
+fn gitopolis_executable() -> AssertCommand {
 	AssertCommand::cargo_bin("gitopolis").expect("failed to find binary")
+}
+
+fn write_gitopolis_state_toml(temp: &TempDir, initial_state_toml: &str) {
+	fs::write(temp.path().join(".gitopolis.toml"), initial_state_toml)
+		.expect("failed to write initial state toml");
+}
+fn read_gitopolis_state_toml(temp: &TempDir) -> String {
+	fs::read_to_string(temp.path().join(".gitopolis.toml")).expect("failed to read back toml")
+}
+fn temp_folder() -> TempDir {
+	tempdir().expect("get tmp dir failed")
 }
