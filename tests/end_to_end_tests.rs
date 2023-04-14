@@ -28,7 +28,7 @@ fn list_empty_exit_code_2() {
 fn add() {
 	let temp = tempdir().expect("get tmp dir failed");
 	let repo = "some_git_folder";
-	init_repo(temp.path().join(repo), "git://example.org/test_url");
+	init_repo(&temp.path().join(repo), "git://example.org/test_url");
 
 	get_binary_cmd()
 		.current_dir(&temp)
@@ -383,6 +383,60 @@ git://example.org/test_url
 		.stdout(expected_stdout);
 }
 
+#[test]
+fn clone() {
+	let temp = tempdir().expect("get tmp dir failed");
+	let repo = "source_repo";
+	create_local_repo(&temp, repo);
+	let initial_state_toml = "[[repos]]
+path = \"some_git_folder\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"source_repo\"
+";
+	fs::write(temp.path().join(".gitopolis.toml"), initial_state_toml)
+		.expect("failed to write initial state toml");
+
+	let expected_clone_stdout = "🏢 some_git_folder> Cloning source_repo ...
+
+Cloning into \'some_git_folder\'...
+warning: You appear to have cloned an empty repository.
+done.
+
+";
+
+	get_binary_cmd()
+		.current_dir(&temp)
+		.args(vec!["clone"])
+		.assert()
+		.success()
+		.stdout(expected_clone_stdout);
+
+	// check repo is valid by running a command on it
+	let expected_exec_stdout = "🏢 some_git_folder> git status
+On branch master
+
+No commits yet
+
+nothing to commit (create/copy files and use \"git add\" to track)
+
+";
+
+	get_binary_cmd()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "git", "status"])
+		.assert()
+		.success()
+		.stdout(expected_exec_stdout);
+}
+
+fn create_local_repo(temp: &TempDir, repo: &str) {
+	let repo_folder = temp.path().join(repo);
+	init_repo(&repo_folder, "git://example.org/test_url");
+}
+
 fn tag_repo(temp: &TempDir, repo: &str, tag_name: &str) {
 	get_binary_cmd()
 		.current_dir(temp)
@@ -392,7 +446,7 @@ fn tag_repo(temp: &TempDir, repo: &str, tag_name: &str) {
 }
 
 fn add_a_repo(temp: &TempDir, repo: &str, remote_url: &str) {
-	init_repo(temp.path().join(repo), remote_url);
+	init_repo(&temp.path().join(repo), remote_url);
 
 	get_binary_cmd()
 		.current_dir(temp)
@@ -401,15 +455,15 @@ fn add_a_repo(temp: &TempDir, repo: &str, remote_url: &str) {
 		.expect("Failed to add repo");
 }
 
-fn init_repo(path: PathBuf, remote_url: &str) {
-	fs::create_dir_all(&path).expect("create repo dir failed");
+fn init_repo(path: &PathBuf, remote_url: &str) {
+	fs::create_dir_all(path).expect("create repo dir failed");
 	Command::new("git")
-		.current_dir(&path)
+		.current_dir(path)
 		.args(vec!["init"])
 		.output()
 		.expect("git command failed");
 	Command::new("git")
-		.current_dir(&path)
+		.current_dir(path)
 		.args(vec!["config", "remote.origin.url", remote_url])
 		.output()
 		.expect("git command failed");
