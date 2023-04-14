@@ -502,6 +502,68 @@ nothing to commit (create/copy files and use \"git add\" to track)
 		.stdout(expected_exec_stdout);
 }
 
+#[test]
+fn clone_tag() {
+	let temp = temp_folder();
+	create_local_repo(&temp, "source_repo");
+	let initial_state_toml = "[[repos]]
+path = \"some_git_folder\"
+tags = [\"some_tag\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"source_repo\"
+
+[[repos]]
+path = \"some_other_git_folder\"
+tags = [\"some_other_tag\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"nonexistent_source_repo\"
+
+[[repos]]
+path = \"yet_other_git_folder\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"nonexistent_source_repo\"
+";
+	write_gitopolis_state_toml(&temp, initial_state_toml);
+
+	let expected_clone_stdout = "🏢 some_git_folder> Cloning source_repo ...
+
+Cloning into \'some_git_folder\'...
+warning: You appear to have cloned an empty repository.
+done.
+
+";
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["clone", "--tag", "some_tag"])
+		.assert()
+		.success()
+		.stdout(expected_clone_stdout);
+
+	// check repo has been successfully cloned by running a git command on it via exec
+	let expected_exec_stdout = "🏢 some_git_folder> git status
+On branch master
+
+No commits yet
+
+nothing to commit (create/copy files and use \"git add\" to track)
+
+";
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--tag", "some_tag", "--", "git", "status"]) // filter exec to tag otherwise it runs on repos that don't yet exists https://github.com/timabell/gitopolis/issues/29
+		.assert()
+		.success()
+		.stdout(expected_exec_stdout);
+}
+
 fn create_local_repo(temp: &TempDir, repo_name: &str) {
 	create_git_repo(temp, repo_name, "git://example.org/test_url");
 }
