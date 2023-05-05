@@ -96,7 +96,17 @@ It's a lot to type as a name, but it's nice and unique, and if you use it a lot 
 
 ## Social
 
-If you like this, then twitter love would be appreciated, here's [a tweet to like/retweet/reply-to](https://twitter.com/tim_abell/status/1577421122739601408).
+Help others discover gitopolis:
+
+### Twitter
+
+[Tweet about gitopolis](http://twitter.com/share?text=Gitopolis%20is%20fab,%20check%20it%20out%20-%20made%20by%20@tim_abell&url=https://github.com/timabell/gitopolis)
+
+### Product Hunt
+
+Vote for gitopolis:
+
+<a href="https://www.producthunt.com/posts/gitopolis?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-gitopolis" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=392942&theme=light" alt="Gitopolis - Manage&#0032;multiple&#0032;git&#0032;repositories&#0032;with&#0032;ease&#0046; | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 
 ## Contributing
 
