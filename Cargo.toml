@@ -19,4 +19,4 @@ openssl = { version = "0.10", features = ["vendored"] }
 [dev-dependencies]
 assert_cmd = "2.0"
 predicates = "3.0"
-tempfile = "3.6.0"
+tempfile = "3.7.0"
