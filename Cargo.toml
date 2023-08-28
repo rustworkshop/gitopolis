@@ -12,7 +12,7 @@ env_logger = "0.10.0"
 git2 = "0.17.2"
 log = "0.4.19"
 serde = "1.0.183"
-serde_derive = "1.0.183"
+serde_derive = "1.0.188"
 toml = "0.7.6"
 openssl = { version = "0.10", features = ["vendored"] }
 
