@@ -22,7 +22,7 @@ url = \"git://example.org/test_url\"
 }
 
 #[test]
-fn read() {
+fn list() {
 	let starting_state = "[[repos]]
 path = \"test_repo\"
 tags = []
@@ -46,7 +46,7 @@ url = \"git://example.org/test_url\"\
 }
 
 #[test]
-fn read_corrupt() {
+fn list_corrupt() {
 	let starting_state = "[[NOT_A_repos]]
 path = \"test_repo\"
 tags = []
