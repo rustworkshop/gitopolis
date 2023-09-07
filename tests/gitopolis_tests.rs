@@ -38,7 +38,8 @@ url = \"git://example.org/test_url\"\
 
 	let git = FakeGit::new().boxed();
 	let gitopolis = Gitopolis::new(storage, git);
-	let actual_repos = gitopolis.list(&None).expect("TODO: panic message");
+	let tag = &None;
+	let actual_repos = gitopolis.list(tag).expect("TODO: panic message");
 
 	let expected_repos = 1;
 	assert_eq!(expected_repos, actual_repos.len())
@@ -61,7 +62,8 @@ url = \"git://example.org/test_url\"\
 
 	let git = FakeGit::new().boxed();
 	let gitopolis = Gitopolis::new(storage, git);
-	let repos_result = gitopolis.list(&None);
+	let tag = &None;
+	let repos_result = gitopolis.list(tag);
 	let actual_error = repos_result.expect_err("should error");
 	let expected_error = "Failed to parse state data as valid TOML. TOML parse error at line 1, column 1\n  |\n1 | [[NOT_A_repos]]\n  | ^^^^^^^^^^^^^^^\nmissing field `remotes`\n";
 	assert_eq!(expected_error, actual_error.message())
@@ -93,7 +95,8 @@ url = \"git://example.org/test_url\"\
 
 	let gitopolis = Gitopolis::new(storage, git);
 
-	gitopolis.clone(gitopolis.list(&None).expect("TODO: panic message"));
+	let tag = &None;
+	gitopolis.clone(gitopolis.list(tag).expect("TODO: panic message"));
 }
 
 #[test]
