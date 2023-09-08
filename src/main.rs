@@ -7,9 +7,11 @@ use gitopolis::storage::StorageImpl;
 use log::LevelFilter;
 use std::io::Write;
 
-/// gitopolis, a cli tool for managing multiple git repositories - https://github.com/timabell/gitopolis - A-GPL v3.0 licensed.
+/// A CLI tool for managing multiple git repositories
+/// License: A-GPL v3.0
+/// Repo: https://github.com/rustworkshop/gitopolis
 #[derive(Parser)]
-#[clap(author, version, subcommand_required = true)]
+#[clap(author, version, subcommand_required = true, verbatim_doc_comment)]
 struct Args {
 	#[clap(subcommand)]
 	command: Option<Commands>,
