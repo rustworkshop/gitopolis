@@ -216,6 +216,31 @@ git://example.org/test_url2
 }
 
 #[test]
+fn exec_missing() {
+	let temp = temp_folder();
+
+	let initial_state_toml = "[[repos]]
+path = \"missing_git_folder\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"example_url\"
+";
+	write_gitopolis_state_toml(&temp, initial_state_toml);
+
+	let expected_stdout = "🏢 missing_git_folder> Repo folder missing, skipped.
+";
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "never_called"])
+		.assert()
+		.success()
+		.stdout(expected_stdout);
+}
+
+#[test]
 fn exec_tag() {
 	let temp = temp_folder();
 	add_a_repo_with_tags(
