@@ -1,5 +1,5 @@
-use std::env;
 use crate::repos::Repo;
+use std::env;
 use std::io::Error;
 use std::process::{Child, Command};
 
@@ -7,7 +7,7 @@ pub fn exec(mut exec_args: Vec<String>, repos: Vec<Repo>) {
 	let args = exec_args.split_off(1);
 	let cmd = &exec_args[0]; // only cmd remaining after split_off above
 	for repo in &repos {
-		if !exists(&repo.path){
+		if !exists(&repo.path) {
 			println!("🏢 {}> Repo folder missing, skipped.", &repo.path);
 			return;
 		}
