@@ -77,9 +77,9 @@ impl Gitopolis {
 	pub fn list(&self, tag_name: &Option<String>) -> Result<Vec<Repo>, GitopolisError> {
 		let repos = self.load()?;
 		Ok(match tag_name {
-			None => repos.repos,
+			None => repos.into_vec(),
 			Some(tag) => repos
-				.repos
+				.into_vec()
 				.into_iter()
 				.filter(|r| r.tags.contains(&tag.to_string()))
 				.collect(),
@@ -98,7 +98,7 @@ impl Gitopolis {
 	pub fn tags(&self) -> Result<Vec<String>, GitopolisError> {
 		let repos = self.load()?;
 		let nest_of_tags: Vec<Vec<String>> = repos
-			.repos
+			.into_vec()
 			.into_iter()
 			.map(|r| r.tags.into_iter().collect())
 			.collect();
@@ -140,7 +140,7 @@ fn parse(state_toml: &str) -> Result<Repos, GitopolisError> {
 	let repos = named_container
 		.remove("repos") // [re]move this rather than taking a ref so that ownership moves with it (borrow checker)
 		.expect("Failed to read 'repos' entry from state TOML");
-	Ok(Repos { repos })
+	Ok(Repos::new_with_repos(repos))
 }
 
 fn normalize_folders(repo_folders: &[String]) -> Vec<String> {

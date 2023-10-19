@@ -4,8 +4,7 @@ use std::collections::BTreeMap;
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Repos {
-	// todo: make inner repos private if possible
-	pub repos: Vec<Repo>,
+	repos: Vec<Repo>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -35,8 +34,20 @@ pub struct Remote {
 }
 
 impl Repos {
+	pub fn as_vec(&self) -> &Vec<Repo> {
+		&self.repos
+	}
+
+	pub fn into_vec(self) -> Vec<Repo> {
+		self.repos
+	}
+
 	pub fn new() -> Self {
 		Default::default()
+	}
+
+	pub fn new_with_repos(repos: Vec<Repo>) -> Self {
+		Repos { repos }
 	}
 
 	pub fn find_repo(&mut self, folder_name: String) -> Option<&mut Repo> {
