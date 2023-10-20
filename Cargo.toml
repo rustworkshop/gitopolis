@@ -9,11 +9,11 @@ edition = "2021"
 ansi_term = "0.12.1"
 clap = { version = "4.4.6", features = ["derive"] }
 env_logger = "0.10.0"
-git2 = "0.17.2"
+git2 = "0.18.1"
 log = "0.4.20"
 serde = "1.0.189"
 serde_derive = "1.0.189"
-toml = "0.7.8"
+toml = "0.8.2"
 openssl = { version = "0.10", features = ["vendored"] }
 
 [dev-dependencies]
