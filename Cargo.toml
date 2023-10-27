@@ -7,16 +7,16 @@ edition = "2021"
 
 [dependencies]
 ansi_term = "0.12.1"
-clap = { version = "4.4.6", features = ["derive"] }
+clap = { version = "4.4.7", features = ["derive"] }
 env_logger = "0.10.0"
 git2 = "0.18.1"
 log = "0.4.20"
-serde = "1.0.189"
-serde_derive = "1.0.189"
-toml = "0.8.2"
+serde = "1.0.190"
+serde_derive = "1.0.190"
+toml = "0.8.5"
 openssl = { version = "0.10", features = ["vendored"] }
 
 [dev-dependencies]
 assert_cmd = "2.0"
 predicates = "3.0"
-tempfile = "3.8.0"
+tempfile = "3.8.1"
