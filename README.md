@@ -8,6 +8,14 @@ Manage multiple git repositories with ease.
 * 🤓 -> Easy to remember and use command list (`add` / `exec` / `clone` / `tag`).
 * 🤓 -> A-GPL v3 licensed labour of love ❤️.
 
+## Installation
+
+1. Grab the [latest release](https://github.com/timabell/gitopolis/releases/latest),
+2. unzip it
+3. put the binary somewhere in your `PATH`.
+
+I suggest adding a shorter shell alias to save typing. Perhaps `gm` for git many or `gop`.
+
 ## Usage
 
 ### Initial setup
@@ -37,6 +45,18 @@ wget https://gist.githubusercontent.com/timabell/87add070a8a44db4985586efe380757
 
 gitopolis clone
 ```
+
+### Using shell aliases
+
+You can't currently use shell aliases because commands are executed directly rather than passing through a shell such as bash/zsh/fish. See <https://github.com/rustworkshop/gitopolis/issues/13>.
+
+As a workaround you can create git aliases that run arbitrary shell commands. See <https://github.com/rustworkshop/gitopolis/issues/80#issuecomment-1803344802>
+
+### Using chained commands
+
+You can't chain commands together with `&&` or `||` like this `gitopolis exec -- git branch && git pull` because the shell (bash etc) will parse the `&&` before it ever gets to gitopolis.
+
+As a workaround you can create git aliases that run arbitrary shell commands. See <https://github.com/rustworkshop/gitopolis/issues/80#issuecomment-1803344802>
 
 ### State file
 
@@ -68,14 +88,6 @@ url = "git@github.com:timabell/database-diagram-scm.git"
 [View as gist](https://gist.github.com/timabell/87add070a8a44db4985586efe380757d).
 
 [TOML](https://toml.io/) is a well-supported config markup with parsers for many programming languages.
-
-## Installation
-
-1. Grab the [latest release](https://github.com/timabell/gitopolis/releases/latest),
-2. unzip it
-3. put the binary somewhere in your `PATH`.
-
-I suggest adding a shorter shell alias to save typing. Perhaps `gm` for git many or `gop`.
 
 ---
 
