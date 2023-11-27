@@ -11,7 +11,7 @@ clap = { version = "4.4.7", features = ["derive"] }
 env_logger = "0.10.0"
 git2 = "0.18.1"
 log = "0.4.20"
-serde = "1.0.190"
+serde = "1.0.193"
 serde_derive = "1.0.190"
 toml = "0.8.8"
 openssl = { version = "0.10", features = ["vendored"] }
