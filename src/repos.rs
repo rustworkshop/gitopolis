@@ -70,10 +70,14 @@ impl Repos {
 
 	pub fn remove(&mut self, repo_folders: Vec<String>) {
 		for repo_folder in repo_folders {
-			let ix = self
-				.repo_index(repo_folder.to_owned())
-				.unwrap_or_else(|| panic!("Repo '{}' not found", repo_folder));
-			self.repos.remove(ix);
+			match self.repo_index(repo_folder.to_owned()) {
+				Some(ix) => {
+					self.repos.remove(ix);
+				}
+				None => {
+					info!("Repo already absent, skipped: {}", repo_folder)
+				}
+			}
 		}
 	}
 

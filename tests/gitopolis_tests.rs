@@ -223,6 +223,17 @@ url = \"git://example.org/test_url\"\
 		.expect("TODO: panic message");
 }
 
+#[test]
+fn remove_unknown() {
+	let storage = FakeStorage::new().boxed();
+	let git = FakeGit::new().boxed();
+	let mut gitopolis = Gitopolis::new(storage, git);
+
+	gitopolis
+		.remove(&["non-existent-repo".to_string()])
+		.expect("Failed");
+}
+
 struct FakeStorage {
 	exists: bool,
 	contents: String,
