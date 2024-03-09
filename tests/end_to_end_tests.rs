@@ -199,8 +199,10 @@ fn exec() {
 		"git://example.org/test_url2",
 	);
 
-	let expected_stdout = "🏢 some_git_folder> git config remote.origin.url
+	let expected_stdout = "
+🏢 some_git_folder> git config remote.origin.url
 git://example.org/test_url
+
 
 🏢 some_other_git_folder> git config remote.origin.url
 git://example.org/test_url2
@@ -255,7 +257,8 @@ fn exec_tag() {
 		"git://example.org/test_url2",
 	);
 
-	let expected_stdout = "🏢 some_git_folder> git config remote.origin.url
+	let expected_stdout = "
+🏢 some_git_folder> git config remote.origin.url
 git://example.org/test_url
 
 ";
@@ -291,7 +294,8 @@ fn exec_tag_abbreviated() {
 		"git://example.org/test_url2",
 	);
 
-	let expected_stdout = "🏢 some_git_folder> git config remote.origin.url
+	let expected_stdout = "
+🏢 some_git_folder> git config remote.origin.url
 git://example.org/test_url
 
 ";
@@ -510,7 +514,8 @@ done.
 		.stdout(expected_clone_stdout);
 
 	// check repo has been successfully cloned by running a git command on it via exec
-	let expected_exec_stdout = "🏢 some_git_folder> git status
+	let expected_exec_stdout = "
+🏢 some_git_folder> git status
 On branch master
 
 No commits yet
@@ -573,7 +578,8 @@ done.
 		.stdout(expected_clone_stdout);
 
 	// check repo has been successfully cloned by running a git command on it via exec
-	let expected_exec_stdout = "🏢 some_git_folder> git status
+	let expected_exec_stdout = "
+🏢 some_git_folder> git status
 On branch master
 
 No commits yet

@@ -23,6 +23,7 @@ fn exists(repo_path: &String) -> bool {
 }
 
 fn repo_exec(path: &str, cmd: &str, args: &Vec<String>) -> Result<(), Error> {
+	println!();
 	println!("🏢 {}> {} {}", path, cmd, args.join(" "));
 
 	// defaults to piping stdout/stderr to parent process output, so no need to specify
