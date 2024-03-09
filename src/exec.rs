@@ -1,18 +1,25 @@
 use crate::repos::Repo;
 use std::env;
 use std::io::Error;
-use std::process::{Child, Command};
+use std::process::{Child, Command, ExitStatus};
 
 pub fn exec(mut exec_args: Vec<String>, repos: Vec<Repo>) {
 	let args = exec_args.split_off(1);
 	let cmd = &exec_args[0]; // only cmd remaining after split_off above
+	let mut error_count = 0;
 	for repo in &repos {
 		if !exists(&repo.path) {
 			println!("🏢 {}> Repo folder missing, skipped.", &repo.path);
 			return;
 		}
-		repo_exec(&repo.path, cmd, &args).expect("Failed to execute command.");
+		let exit_status = repo_exec(&repo.path, cmd, &args).expect("Failed to execute command.");
+		if !exit_status.success() {
+			error_count += 1
+		}
 		println!();
+	}
+	if error_count > 0 {
+		eprintln!("{} commands exited with non-zero status code", error_count);
 	}
 }
 
@@ -22,7 +29,7 @@ fn exists(repo_path: &String) -> bool {
 	path.exists() && path.is_dir()
 }
 
-fn repo_exec(path: &str, cmd: &str, args: &Vec<String>) -> Result<(), Error> {
+fn repo_exec(path: &str, cmd: &str, args: &Vec<String>) -> Result<ExitStatus, Error> {
 	println!();
 	println!("🏢 {}> {} {}", path, cmd, args.join(" "));
 
@@ -33,5 +40,5 @@ fn repo_exec(path: &str, cmd: &str, args: &Vec<String>) -> Result<(), Error> {
 	if !exit_code.success() {
 		eprintln!("Command exited with code {}", exit_code);
 	}
-	Ok(())
+	Ok(*exit_code)
 }

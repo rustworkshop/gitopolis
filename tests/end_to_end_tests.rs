@@ -317,6 +317,51 @@ git://example.org/test_url
 }
 
 #[test]
+fn exec_non_zero() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "some_git_folder", "git://example.org/test_url");
+	add_a_repo(
+		&temp,
+		"some_other_git_folder",
+		"git://example.org/test_url2",
+	);
+
+	let expected_stdout = "
+🏢 some_git_folder> ls non-existent
+
+
+🏢 some_other_git_folder> ls non-existent
+
+";
+	let expected_stderr = "ls: cannot access \'non-existent\': No such file or directory
+Command exited with code exit status: 2
+ls: cannot access \'non-existent\': No such file or directory
+Command exited with code exit status: 2
+2 commands exited with non-zero status code
+";
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "ls", "non-existent"])
+		.assert()
+		.success()
+		.stdout(expected_stdout)
+		.stderr(expected_stderr);
+}
+
+#[test]
+fn exec_invalid_command() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "some_git_folder", "git://example.org/test_url");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "not-a-command"])
+		.assert()
+		.failure();
+}
+
+#[test]
 fn tag() {
 	let temp = temp_folder();
 	add_a_repo(&temp, "some_git_folder", "git://example.org/test_url");
