@@ -70,7 +70,7 @@ fn main() {
 		.filter(None, LevelFilter::Info) // turn on log output
 		.init();
 
-	match &Args::parse().command {
+	match &Args::parse_from(wild::args()).command {
 		Some(Commands::Add { repo_folders }) => add(repo_folders.to_owned()),
 		Some(Commands::Remove { repo_folders }) => {
 			init_gitopolis()
