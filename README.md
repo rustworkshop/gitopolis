@@ -22,9 +22,6 @@ I suggest adding a shorter shell alias to save typing. Perhaps `gm` for git many
 ```sh
 cd ~/repos/
 gitopolis add *
-
-# (or in windows command-line):
-gitopolis add */
 ```
 
 ### Running shell / git commands in many repos
