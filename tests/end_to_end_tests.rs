@@ -13,6 +13,42 @@ fn help() {
 		.stdout(predicate::str::contains("Usage: gitopolis"));
 }
 
+#[cfg(target_os = "windows")] // only windows (cmd/powerhell) needs to have globs expanded for it, real OS's do it for you in the shell
+#[test]
+fn add_glob() {
+	// Linux has shell globbing built in, but that's not available for windows/cmd so "add *" is passed
+	// in without being expanded, resulting in an error instead of adding everything.
+	// https://github.com/rustworkshop/gitopolis/issues/122
+	let temp = temp_folder();
+	create_git_repo(&temp, "first_git_folder", "git://example.org/test_url");
+	create_git_repo(&temp, "second_git_folder", "git://example.org/test_url2");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["add", "*"])
+		.assert()
+		.success()
+		.stderr(predicate::str::contains("Added second_git_folder"));
+
+	let expected_toml = "[[repos]]
+path = \"first_git_folder\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+
+[[repos]]
+path = \"second_git_folder\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url2\"
+";
+	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
+}
+
 #[test]
 fn add() {
 	let temp = temp_folder();
