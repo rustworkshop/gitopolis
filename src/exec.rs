@@ -38,7 +38,7 @@ fn repo_exec(path: &str, cmd: &str, args: &Vec<String>) -> Result<ExitStatus, Er
 
 	let exit_code = &child_process.wait()?;
 	if !exit_code.success() {
-		eprintln!("Command exited with code {}", exit_code);
+		eprintln!("Command exited with code {}", exit_code.code().expect("exit code missing"));
 	}
 	Ok(*exit_code)
 }
