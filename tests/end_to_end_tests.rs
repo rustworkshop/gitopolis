@@ -334,9 +334,9 @@ fn exec_non_zero() {
 
 ";
 	let expected_stderr = "ls: cannot access \'non-existent\': No such file or directory
-Command exited with code exit status: 2
+Command exited with code 2
 ls: cannot access \'non-existent\': No such file or directory
-Command exited with code exit status: 2
+Command exited with code 2
 2 commands exited with non-zero status code
 ";
 
