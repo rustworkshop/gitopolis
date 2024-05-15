@@ -6,7 +6,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -23,15 +23,84 @@ jobs:
         sed -i "s/0\\.0\\.0-git/${RELEASE_TAG##*\/v}/" Cargo.lock
     - name: Build-linux
       run: cross build --target x86_64-unknown-linux-gnu --release
-    - name: Build-win
-      run: cross build --target x86_64-pc-windows-gnu --release
     - name: Package Linux
       run: tar -czvf gitopolis-linux-x86_64.tar.gz -C target/x86_64-unknown-linux-gnu/release/ gitopolis
+    - name: Upload Linux Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: gitopolis-linux-x86_64
+        path: gitopolis-linux-x86_64.tar.gz
+
+  build-windows:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup
+      run: cargo install -f cross
+    - name: Version
+      shell: bash
+      env:
+        RELEASE_TAG: ${{ github.ref }}
+      run: |
+        sed -i "s/0\\.0\\.0-git/${RELEASE_TAG##*\/v}/" Cargo.toml
+        sed -i "s/0\\.0\\.0-git/${RELEASE_TAG##*\/v}/" Cargo.lock
+    - name: Build-win
+      run: cross build --target x86_64-pc-windows-gnu --release
     - name: Package Windows
       run: zip gitopolis-windows-x86_64.zip target/x86_64-pc-windows-gnu/release/gitopolis.exe
+    - name: Upload Windows Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: gitopolis-windows-x86_64
+        path: gitopolis-windows-x86_64.zip
+
+  build-osx:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Version
+      shell: bash
+      env:
+        RELEASE_TAG: ${{ github.ref }}
+      run: |
+        sed -i '' "s/0\\.0\\.0-git/${RELEASE_TAG##*\/v}/" Cargo.toml
+        sed -i '' "s/0\\.0\\.0-git/${RELEASE_TAG##*\/v}/" Cargo.lock
+    - name: Build-osx
+      run: |
+        rustup target add x86_64-apple-darwin
+        cargo build --target x86_64-apple-darwin --release
+    - name: Package OSX
+      run: zip gitopolis-osx-x86_64.zip target/x86_64-apple-darwin/release/gitopolis
+    - name: Upload OSX Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: gitopolis-osx-x86_64
+        path: gitopolis-osx-x86_64.zip
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-windows, build-osx]
+    steps:
+    - name: Download Linux Artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: gitopolis-linux-x86_64
+        path: .
+    - name: Download Windows Artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: gitopolis-windows-x86_64
+        path: .
+    - name: Download OSX Artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: gitopolis-osx-x86_64
+        path: .
     - name: Publish
       uses: ncipollo/release-action@v1
       if: startsWith(github.ref, 'refs/tags/v')
       with:
-        artifacts: gitopolis-linux-x86_64.tar.gz,gitopolis-windows-x86_64.zip
+        artifacts: gitopolis-linux-x86_64.tar.gz,gitopolis-windows-x86_64.zip,gitopolis-osx-x86_64.zip
         token: ${{ secrets.GITHUB_TOKEN }}
