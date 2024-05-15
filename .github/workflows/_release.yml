@@ -25,13 +25,17 @@ jobs:
       run: cross build --target x86_64-unknown-linux-gnu --release
     - name: Build-win
       run: cross build --target x86_64-pc-windows-gnu --release
+    - name: Build-osx
+      run: cargo build --target x86_64-apple-darwin --release
     - name: Package Linux
       run: tar -czvf gitopolis-linux-x86_64.tar.gz -C target/x86_64-unknown-linux-gnu/release/ gitopolis
     - name: Package Windows
       run: zip gitopolis-windows-x86_64.zip target/x86_64-pc-windows-gnu/release/gitopolis.exe
+    - name: Package OSX
+      run: zip gitopolis-osx-x86_64.zip target/x86_64-apple-darwin/release/gitopolis
     - name: Publish
       uses: ncipollo/release-action@v1
-      if: startsWith(github.ref, 'refs/tags/v')
+      # if: startsWith(github.ref, 'refs/tags/v')
       with:
-        artifacts: gitopolis-linux-x86_64.tar.gz,gitopolis-windows-x86_64.zip
-        token: ${{ secrets.GITHUB_TOKEN }}
+        artifacts: gitopolis-linux-x86_64.tar.gz,gitopolis-windows-x86_64.zip,gitopolis-osx-x86_64.zip
+        # token: ${{ secrets.GITHUB_TOKEN }}
