@@ -13,7 +13,7 @@ git2 = "0.18.3"
 log = "0.4.21"
 serde = "1.0.201"
 serde_derive = "1.0.201"
-toml = "0.8.12"
+toml = "0.8.13"
 openssl = { version = "0.10", features = ["vendored"] }
 wild = "2.2.1"
 
