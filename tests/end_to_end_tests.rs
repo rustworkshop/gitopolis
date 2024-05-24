@@ -376,9 +376,7 @@ fn exec_non_zero() {
 		.assert()
 		.success()
 		.stdout(expected_stdout)
-		.stderr(predicate::str::contains(
-			"2 commands exited with non-zero status code",
-		));
+		.stderr(predicate::str::contains("No such file or directory"));
 }
 
 #[test]
