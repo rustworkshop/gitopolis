@@ -609,12 +609,22 @@ done.
 		.stdout(expected_clone_stdout);
 
 	// check repo has been successfully cloned by running a git command on it via exec
+	let expected_exec_stdout = "
+🏢 some_git_folder> git status
+On branch master
+
+No commits yet
+
+nothing to commit (create/copy files and use \"git add\" to track)
+
+";
+
 	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--", "git", "status"])
 		.assert()
 		.success()
-		.stdout(predicate::str::contains("nothing to commit"));
+		.stdout(expected_exec_stdout);
 }
 
 #[test]
@@ -663,12 +673,21 @@ done.
 		.stdout(expected_clone_stdout);
 
 	// check repo has been successfully cloned by running a git command on it via exec
+	let expected_exec_stdout = "
+🏢 some_git_folder> git status
+On branch master
+
+No commits yet
+
+nothing to commit (create/copy files and use \"git add\" to track)
+
+";
 	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--tag", "some_tag", "--", "git", "status"]) // filter exec to tag otherwise it runs on repos that don't yet exists https://github.com/timabell/gitopolis/issues/29
 		.assert()
 		.success()
-		.stdout(predicate::str::contains("nothing to commit"));
+		.stdout(expected_exec_stdout);
 }
 
 fn create_local_repo(temp: &TempDir, repo_name: &str) {
