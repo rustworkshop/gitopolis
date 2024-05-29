@@ -609,7 +609,20 @@ done.
 		.stdout(expected_clone_stdout);
 
 	// check repo has been successfully cloned by running a git command on it via exec
-	let expected_exec_stdout = "
+	let expected_exec_stdout = match get_operating_system() {
+		OperatingSystem::MacOSX => {
+			"
+🏢 some_git_folder> git status
+On branch master
+
+No commits yet
+
+nothing to commit
+
+"
+		}
+		OperatingSystem::Other => {
+			"
 🏢 some_git_folder> git status
 On branch master
 
@@ -617,7 +630,9 @@ No commits yet
 
 nothing to commit (create/copy files and use \"git add\" to track)
 
-";
+"
+		}
+	};
 
 	gitopolis_executable()
 		.current_dir(&temp)
@@ -673,7 +688,20 @@ done.
 		.stdout(expected_clone_stdout);
 
 	// check repo has been successfully cloned by running a git command on it via exec
-	let expected_exec_stdout = "
+	let expected_exec_stdout = match get_operating_system() {
+		OperatingSystem::MacOSX => {
+			"
+🏢 some_git_folder> git status
+On branch master
+
+No commits yet
+
+nothing to commit
+
+"
+		}
+		OperatingSystem::Other => {
+			"
 🏢 some_git_folder> git status
 On branch master
 
@@ -681,7 +709,9 @@ No commits yet
 
 nothing to commit (create/copy files and use \"git add\" to track)
 
-";
+"
+		}
+	};
 	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--tag", "some_tag", "--", "git", "status"]) // filter exec to tag otherwise it runs on repos that don't yet exists https://github.com/timabell/gitopolis/issues/29
