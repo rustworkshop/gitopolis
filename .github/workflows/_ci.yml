@@ -23,7 +23,7 @@ jobs:
     - name: Build
       run: cargo build --verbose --release
     - name: Test
-      run: cargo test --verbose --release -- --test-threads=1 --format=json | cargo2junit > results.xml
+      run: cargo test --verbose --release -- --test-threads=1 | cargo2junit > results.xml
     - name: Upload Test Report
       uses: actions/upload-artifact@v2
       if: always()
