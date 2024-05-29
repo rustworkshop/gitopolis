@@ -1,6 +1,6 @@
 use assert_cmd::Command as AssertCommand;
 use predicates::prelude::predicate;
-use std::fs;
+use std::{env, fs};
 use std::process::Command;
 use tempfile::{tempdir, TempDir};
 
@@ -369,14 +369,40 @@ fn exec_non_zero() {
 🏢 some_other_git_folder> ls non-existent
 
 ";
-
+	let context = context();
+	let expected_stderr = match context {
+		TestContext::WindowsBash => {
+			"ls: cannot access \'non-existent\': No such file or directory
+Command exited with code exit code: 2
+ls: cannot access \'non-existent\': No such file or directory
+Command exited with code exit code: 2
+2 commands exited with non-zero status code
+"
+		}
+		TestContext::WindowsCmd => {
+			"File Not Found\r
+Command exited with code exit code: 1
+File Not Found\r
+Command exited with code exit code: 1
+2 commands exited with non-zero status code
+"
+		}
+		_ => {
+			"ls: cannot access \'non-existent\': No such file or directory
+Command exited with code exit status: 2
+ls: cannot access \'non-existent\': No such file or directory
+Command exited with code exit status: 2
+2 commands exited with non-zero status code
+"
+		}
+	};
 	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--", "ls", "non-existent"])
 		.assert()
 		.success()
 		.stdout(expected_stdout)
-		.stderr(predicate::str::contains("No such file or directory"));
+		.stderr(expected_stderr);
 }
 
 #[test]
@@ -711,4 +737,31 @@ fn read_gitopolis_state_toml(temp: &TempDir) -> String {
 }
 fn temp_folder() -> TempDir {
 	tempdir().expect("get tmp dir failed")
+}
+
+enum TestContext {
+	Linux,
+	WindowsBash,
+	WindowsCmd,
+}
+
+fn context() -> TestContext {
+	let test_shell = match env::var("GITOPOLIS_TEST_SHELL") {
+		Ok(val) => match val.as_str() {
+			"cmd" => Some(TestContext::WindowsCmd),
+			_ => None,
+		},
+		Err(_) => None,
+	};
+
+	match test_shell {
+		Some(v) => v,
+		None => {
+			if cfg!(windows) {
+				return TestContext::WindowsBash;
+			}
+
+			return TestContext::Linux;
+		}
+	}
 }
