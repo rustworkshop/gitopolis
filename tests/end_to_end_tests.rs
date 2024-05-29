@@ -14,7 +14,8 @@ fn help() {
 		.stdout(predicate::str::contains("Usage: gitopolis"));
 }
 
-#[cfg(target_os = "windows")] // only windows (cmd/powerhell) needs to have globs expanded for it, real OS's do it for you in the shell
+// only windows (cmd/powerhell) needs to have globs expanded for it, real OS's do it for you in the shell
+#[cfg(target_os = "windows")]
 #[test]
 fn add_glob() {
 	// Linux has shell globbing built in, but that's not available for windows/cmd so "add *" is passed
@@ -372,7 +373,7 @@ fn exec_non_zero() {
 ";
 	let expected_stderr = match get_operating_system() {
 		OperatingSystem::MacOSX => {
-"ls: non-existent: No such file or directory
+			"ls: non-existent: No such file or directory
 Command exited with code 1
 ls: non-existent: No such file or directory
 Command exited with code 1
