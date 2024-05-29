@@ -1,7 +1,8 @@
-use assert_cmd::Command as AssertCommand;
-use predicates::prelude::predicate;
 use std::fs;
 use std::process::Command;
+
+use assert_cmd::Command as AssertCommand;
+use predicates::prelude::predicate;
 use tempfile::{tempdir, TempDir};
 
 #[test]
@@ -13,7 +14,8 @@ fn help() {
 		.stdout(predicate::str::contains("Usage: gitopolis"));
 }
 
-#[cfg(target_os = "windows")] // only windows (cmd/powerhell) needs to have globs expanded for it, real OS's do it for you in the shell
+// only windows (cmd/powerhell) needs to have globs expanded for it, real OS's do it for you in the shell
+#[cfg(target_os = "windows")]
 #[test]
 fn add_glob() {
 	// Linux has shell globbing built in, but that's not available for windows/cmd so "add *" is passed
@@ -369,12 +371,24 @@ fn exec_non_zero() {
 🏢 some_other_git_folder> ls non-existent
 
 ";
-	let expected_stderr = "ls: cannot access \'non-existent\': No such file or directory
+	let expected_stderr = match get_operating_system() {
+		OperatingSystem::MacOSX => {
+			"ls: non-existent: No such file or directory
+Command exited with code 1
+ls: non-existent: No such file or directory
+Command exited with code 1
+2 commands exited with non-zero status code
+"
+		}
+		OperatingSystem::Other => {
+			"ls: cannot access \'non-existent\': No such file or directory
 Command exited with code 2
 ls: cannot access \'non-existent\': No such file or directory
 Command exited with code 2
 2 commands exited with non-zero status code
-";
+"
+		}
+	};
 
 	gitopolis_executable()
 		.current_dir(&temp)
@@ -595,7 +609,20 @@ done.
 		.stdout(expected_clone_stdout);
 
 	// check repo has been successfully cloned by running a git command on it via exec
-	let expected_exec_stdout = "
+	let expected_exec_stdout = match get_operating_system() {
+		OperatingSystem::MacOSX => {
+			"
+🏢 some_git_folder> git status
+On branch master
+
+No commits yet
+
+nothing to commit
+
+"
+		}
+		OperatingSystem::Other => {
+			"
 🏢 some_git_folder> git status
 On branch master
 
@@ -603,7 +630,9 @@ No commits yet
 
 nothing to commit (create/copy files and use \"git add\" to track)
 
-";
+"
+		}
+	};
 
 	gitopolis_executable()
 		.current_dir(&temp)
@@ -659,7 +688,20 @@ done.
 		.stdout(expected_clone_stdout);
 
 	// check repo has been successfully cloned by running a git command on it via exec
-	let expected_exec_stdout = "
+	let expected_exec_stdout = match get_operating_system() {
+		OperatingSystem::MacOSX => {
+			"
+🏢 some_git_folder> git status
+On branch master
+
+No commits yet
+
+nothing to commit
+
+"
+		}
+		OperatingSystem::Other => {
+			"
 🏢 some_git_folder> git status
 On branch master
 
@@ -667,7 +709,9 @@ No commits yet
 
 nothing to commit (create/copy files and use \"git add\" to track)
 
-";
+"
+		}
+	};
 	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--tag", "some_tag", "--", "git", "status"]) // filter exec to tag otherwise it runs on repos that don't yet exists https://github.com/timabell/gitopolis/issues/29
@@ -736,4 +780,19 @@ fn read_gitopolis_state_toml(temp: &TempDir) -> String {
 }
 fn temp_folder() -> TempDir {
 	tempdir().expect("get tmp dir failed")
+}
+
+enum OperatingSystem {
+	MacOSX,
+	Other,
+}
+
+#[cfg(target_os = "macos")]
+fn get_operating_system() -> OperatingSystem {
+	OperatingSystem::MacOSX
+}
+
+#[cfg(not(target_os = "macos"))]
+fn get_operating_system() -> OperatingSystem {
+	OperatingSystem::Other
 }
