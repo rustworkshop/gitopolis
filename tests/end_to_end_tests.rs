@@ -1,7 +1,8 @@
+use std::fs;
+use std::process::Command;
+
 use assert_cmd::Command as AssertCommand;
 use predicates::prelude::predicate;
-use std::{env, fs};
-use std::process::Command;
 use tempfile::{tempdir, TempDir};
 
 #[test]
@@ -369,33 +370,25 @@ fn exec_non_zero() {
 🏢 some_other_git_folder> ls non-existent
 
 ";
-	let context = context();
-	let expected_stderr = match context {
-		TestContext::WindowsBash => {
-			"ls: cannot access \'non-existent\': No such file or directory
-Command exited with code exit code: 2
-ls: cannot access \'non-existent\': No such file or directory
-Command exited with code exit code: 2
+	let expected_stderr = match get_operating_system() {
+		OperatingSystem::MacOSX => {
+"ls: non-existent: No such file or directory
+Command exited with code 1
+ls: non-existent: No such file or directory
+Command exited with code 1
 2 commands exited with non-zero status code
 "
 		}
-		TestContext::WindowsCmd => {
-			"File Not Found\r
-Command exited with code exit code: 1
-File Not Found\r
-Command exited with code exit code: 1
-2 commands exited with non-zero status code
-"
-		}
-		_ => {
+		OperatingSystem::Other => {
 			"ls: cannot access \'non-existent\': No such file or directory
-Command exited with code exit status: 2
+Command exited with code 2
 ls: cannot access \'non-existent\': No such file or directory
-Command exited with code exit status: 2
+Command exited with code 2
 2 commands exited with non-zero status code
 "
 		}
 	};
+
 	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--", "ls", "non-existent"])
@@ -739,29 +732,17 @@ fn temp_folder() -> TempDir {
 	tempdir().expect("get tmp dir failed")
 }
 
-enum TestContext {
-	Linux,
-	WindowsBash,
-	WindowsCmd,
+enum OperatingSystem {
+	MacOSX,
+	Other,
 }
 
-fn context() -> TestContext {
-	let test_shell = match env::var("GITOPOLIS_TEST_SHELL") {
-		Ok(val) => match val.as_str() {
-			"cmd" => Some(TestContext::WindowsCmd),
-			_ => None,
-		},
-		Err(_) => None,
-	};
+#[cfg(target_os = "macos")]
+fn get_operating_system() -> OperatingSystem {
+	OperatingSystem::MacOSX
+}
 
-	match test_shell {
-		Some(v) => v,
-		None => {
-			if cfg!(windows) {
-				return TestContext::WindowsBash;
-			}
-
-			return TestContext::Linux;
-		}
-	}
+#[cfg(not(target_os = "macos"))]
+fn get_operating_system() -> OperatingSystem {
+	OperatingSystem::Other
 }
