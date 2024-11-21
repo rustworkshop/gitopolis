@@ -782,6 +782,7 @@ fn temp_folder() -> TempDir {
 	tempdir().expect("get tmp dir failed")
 }
 
+#[allow(dead_code)] // each value only used on one OS so get dead code warning on others
 enum OperatingSystem {
 	MacOSX,
 	Other,
