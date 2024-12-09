@@ -1,0 +1,17 @@
+{
+  "name": "Rust",
+  "image": "mcr.microsoft.com/devcontainers/rust:1-1-bullseye",
+  "customizations": {
+    "jetbrains": {
+      "backend": "RustRover"
+    },
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "vadimcn.vscode-lldb",
+        "Swellaby.vscode-rust-test-adapter"
+      ]
+    }
+  }
+}
