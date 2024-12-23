@@ -84,17 +84,17 @@ jobs:
     needs: [build-linux, build-windows, build-osx]
     steps:
     - name: Download Linux Artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: gitopolis-linux-x86_64
         path: .
     - name: Download Windows Artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: gitopolis-windows-x86_64
         path: .
     - name: Download OSX Artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: gitopolis-osx-x86_64
         path: .
