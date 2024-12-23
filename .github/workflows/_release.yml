@@ -11,7 +11,7 @@ jobs:
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup
       run: cargo install -f cross
     - name: Version
@@ -36,7 +36,7 @@ jobs:
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup
       run: cargo install -f cross
     - name: Version
@@ -59,7 +59,7 @@ jobs:
   build-osx:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Version
       shell: bash
       env:
