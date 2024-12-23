@@ -26,7 +26,7 @@ jobs:
     - name: Package Linux
       run: tar -czvf gitopolis-linux-x86_64.tar.gz -C target/x86_64-unknown-linux-gnu/release/ gitopolis
     - name: Upload Linux Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: gitopolis-linux-x86_64
         path: gitopolis-linux-x86_64.tar.gz
@@ -51,7 +51,7 @@ jobs:
     - name: Package Windows
       run: zip gitopolis-windows-x86_64.zip target/x86_64-pc-windows-gnu/release/gitopolis.exe
     - name: Upload Windows Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: gitopolis-windows-x86_64
         path: gitopolis-windows-x86_64.zip
@@ -74,7 +74,7 @@ jobs:
     - name: Package OSX
       run: zip gitopolis-osx-x86_64.zip target/x86_64-apple-darwin/release/gitopolis
     - name: Upload OSX Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: gitopolis-osx-x86_64
         path: gitopolis-osx-x86_64.zip
