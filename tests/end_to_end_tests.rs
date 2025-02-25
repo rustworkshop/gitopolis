@@ -756,7 +756,7 @@ fn create_git_repo(temp: &TempDir, repo_name: &str, remote_url: &str) {
 
 	Command::new("git")
 		.current_dir(path)
-		.args(vec!["init"])
+		.args(vec!["init", "--initial-branch", "master"])
 		.output()
 		.expect("git command failed");
 
