@@ -6,4 +6,8 @@ on:
 
 jobs:
   ci:
+    uses: ./.github/workflows/_ci.yml
+
+  release:
+    needs: ci
     uses: ./.github/workflows/_release.yml

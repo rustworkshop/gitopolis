@@ -6,14 +6,65 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  vet:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install cargo-vet
+      run: cargo install cargo-vet
+    - name: Verify Dependencies
+      run: cargo vet
+
+  deny:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install cargo-deny
+      run: cargo install cargo-deny
+    - name: Check Licenses
+      run: cargo deny check licenses
+
   build:
     strategy:
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            artifact_name: gitopolis-linux-x86_64
+            binary_name: gitopolis
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: gitopolis-windows-x86_64
+            binary_name: gitopolis.exe
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: gitopolis-macos-x86_64
+            binary_name: gitopolis
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
+    - name: Install musl tools
+      if: matrix.target == 'x86_64-unknown-linux-musl'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y musl-tools
+    - name: Add Target
+      run: rustup target add ${{ matrix.target }}
     - name: Build
-      run: cargo build --verbose --release
+      run: cargo build --target ${{ matrix.target }} --release
     - name: Test
       run: cargo test --verbose --release
+    - name: Package Binary
+      shell: bash
+      run: |
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          7z a ${{ matrix.artifact_name }}.zip "target/${{ matrix.target }}/release/${{ matrix.binary_name }}"
+        else
+          tar -czvf ${{ matrix.artifact_name }}.tar.gz -C "target/${{ matrix.target }}/release" "${{ matrix.binary_name }}"
+        fi
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: ${{ matrix.artifact_name }}.*
+        retention-days: 1
