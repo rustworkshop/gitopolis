@@ -613,7 +613,7 @@ done.
 		OperatingSystem::MacOSX => {
 			"
 🏢 some_git_folder> git status
-On branch master
+On branch main
 
 No commits yet
 
@@ -624,7 +624,7 @@ nothing to commit
 		OperatingSystem::Other => {
 			"
 🏢 some_git_folder> git status
-On branch master
+On branch main
 
 No commits yet
 
@@ -692,7 +692,7 @@ done.
 		OperatingSystem::MacOSX => {
 			"
 🏢 some_git_folder> git status
-On branch master
+On branch main
 
 No commits yet
 
@@ -703,7 +703,7 @@ nothing to commit
 		OperatingSystem::Other => {
 			"
 🏢 some_git_folder> git status
-On branch master
+On branch main
 
 No commits yet
 
@@ -756,7 +756,7 @@ fn create_git_repo(temp: &TempDir, repo_name: &str, remote_url: &str) {
 
 	Command::new("git")
 		.current_dir(path)
-		.args(vec!["init", "--initial-branch", "master"])
+		.args(vec!["init", "--initial-branch", "main"])
 		.output()
 		.expect("git command failed");
 
