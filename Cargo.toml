@@ -20,3 +20,9 @@ wild = "2.2.1"
 assert_cmd = "2.0"
 predicates = "3.1"
 tempfile = "3.17.1"
+
+[package.metadata.cargo-machete]
+ignored = [
+    "serde",     # Used via serde_derive macro
+    "openssl",   # Required by git2 for SSL support
+]
