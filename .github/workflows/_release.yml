@@ -1,6 +1,11 @@
 name: _release
 on:
   workflow_call:
+    inputs:
+      release_tag:
+        description: 'The release tag (e.g. v1.0.0)'
+        required: true
+        type: string
 
 env:
   CARGO_TERM_COLOR: always
@@ -21,14 +26,6 @@ jobs:
       with:
         config: cliff.toml
         args: --latest --strip header
-
-    - name: Version
-      shell: bash
-      env:
-        RELEASE_TAG: ${{ github.ref }}
-      run: |
-        sed -i "s/0\\.0\\.0-git/${RELEASE_TAG##*\/v}/" Cargo.toml
-        sed -i "s/0\\.0\\.0-git/${RELEASE_TAG##*\/v}/" Cargo.lock
 
     - name: Download Linux Build
       uses: actions/download-artifact@v4

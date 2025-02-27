@@ -1,6 +1,12 @@
 name: _ci
 on:
   workflow_call:
+    inputs:
+      release_tag:
+        description: 'The release tag (e.g. v1.0.0)'
+        required: false
+        type: string
+        default: ''
 
 env:
   CARGO_TERM_COLOR: always
@@ -59,6 +65,12 @@ jobs:
         sudo apt-get install -y musl-tools
     - name: Add Target
       run: rustup target add ${{ matrix.target }}
+    - name: Update Version
+      if: inputs.release_tag != ''
+      shell: bash
+      run: |
+        sed -i "s/0\\.0\\.0-git/${{ inputs.release_tag }}/" Cargo.toml
+        sed -i "s/0\\.0\\.0-git/${{ inputs.release_tag }}/" Cargo.lock
     - name: Build
       run: cargo build --target ${{ matrix.target }} --release
     - name: Test

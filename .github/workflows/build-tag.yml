@@ -7,7 +7,11 @@ on:
 jobs:
   ci:
     uses: ./.github/workflows/_ci.yml
+    with:
+      release_tag: ${{ github.ref_name }}
 
   release:
     needs: ci
     uses: ./.github/workflows/_release.yml
+    with:
+      release_tag: ${{ github.ref_name }}
