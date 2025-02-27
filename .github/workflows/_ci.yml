@@ -69,14 +69,20 @@ jobs:
       if: inputs.release_tag != '' && matrix.os != 'macos-latest'
       shell: bash
       run: |
-        sed -i "s/0\\.0\\.0-git/${{ inputs.release_tag }}/" Cargo.toml
-        sed -i "s/0\\.0\\.0-git/${{ inputs.release_tag }}/" Cargo.lock
+        VERSION="${{ inputs.release_tag }}"
+        # Strip the 'v' prefix if present
+        VERSION="${VERSION#v}"
+        sed -i "s/0\\.0\\.0-git/$VERSION/" Cargo.toml
+        sed -i "s/0\\.0\\.0-git/$VERSION/" Cargo.lock
     - name: Update Version (macOS)
       if: inputs.release_tag != '' && matrix.os == 'macos-latest'
       shell: bash
       run: |
-        sed -i '' "s/0\\.0\\.0-git/${{ inputs.release_tag }}/" Cargo.toml
-        sed -i '' "s/0\\.0\\.0-git/${{ inputs.release_tag }}/" Cargo.lock
+        VERSION="${{ inputs.release_tag }}"
+        # Strip the 'v' prefix if present
+        VERSION="${VERSION#v}"
+        sed -i '' "s/0\\.0\\.0-git/$VERSION/" Cargo.toml
+        sed -i '' "s/0\\.0\\.0-git/$VERSION/" Cargo.lock
     - name: Build
       run: cargo build --target ${{ matrix.target }} --release
     - name: Test
