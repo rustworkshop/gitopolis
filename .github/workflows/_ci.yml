@@ -65,12 +65,18 @@ jobs:
         sudo apt-get install -y musl-tools
     - name: Add Target
       run: rustup target add ${{ matrix.target }}
-    - name: Update Version
-      if: inputs.release_tag != ''
+    - name: Update Version (Linux/Windows)
+      if: inputs.release_tag != '' && matrix.os != 'macos-latest'
       shell: bash
       run: |
         sed -i "s/0\\.0\\.0-git/${{ inputs.release_tag }}/" Cargo.toml
         sed -i "s/0\\.0\\.0-git/${{ inputs.release_tag }}/" Cargo.lock
+    - name: Update Version (macOS)
+      if: inputs.release_tag != '' && matrix.os == 'macos-latest'
+      shell: bash
+      run: |
+        sed -i '' "s/0\\.0\\.0-git/${{ inputs.release_tag }}/" Cargo.toml
+        sed -i '' "s/0\\.0\\.0-git/${{ inputs.release_tag }}/" Cargo.lock
     - name: Build
       run: cargo build --target ${{ matrix.target }} --release
     - name: Test
