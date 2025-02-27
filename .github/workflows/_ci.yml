@@ -24,6 +24,15 @@ jobs:
     - name: Check Licenses
       run: cargo deny check licenses
 
+  machete:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install cargo-machete
+      run: cargo install cargo-machete
+    - name: Check for unused dependencies
+      run: cargo machete --with-metadata
+
   build:
     strategy:
       matrix:
