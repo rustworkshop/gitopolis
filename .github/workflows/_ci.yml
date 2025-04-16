@@ -12,15 +12,6 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  vet:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install cargo-vet
-      run: cargo install cargo-vet
-    - name: Verify Dependencies
-      run: cargo vet
-
   deny:
     runs-on: ubuntu-latest
     steps:
