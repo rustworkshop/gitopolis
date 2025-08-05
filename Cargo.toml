@@ -6,13 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.5.40", features = ["derive"] }
+clap = { version = "4.5.42", features = ["derive"] }
 env_logger = "0.11.8"
 git2 = "0.20.2"
 log = "0.4.27"
 serde = "1.0.219"
 serde_derive = "1.0.219"
-toml = "0.8.23"
+toml = "0.9.5"
 openssl = { version = "0.10", features = ["vendored"] }
 wild = "2.2.1"
 
