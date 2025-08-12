@@ -15,7 +15,7 @@ jobs:
   deny:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Install cargo-deny
       run: cargo install cargo-deny
     - name: Check Licenses
@@ -24,7 +24,7 @@ jobs:
   machete:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Install cargo-machete
       run: cargo install cargo-machete
     - name: Check for unused dependencies
@@ -48,7 +48,7 @@ jobs:
             binary_name: gitopolis
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Install musl tools
       if: matrix.target == 'x86_64-unknown-linux-musl'
       run: |
