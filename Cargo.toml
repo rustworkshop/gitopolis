@@ -19,7 +19,7 @@ wild = "2.2.1"
 [dev-dependencies]
 assert_cmd = "2.0"
 predicates = "3.1"
-tempfile = "3.20.0"
+tempfile = "3.21.0"
 
 [package.metadata.cargo-machete]
 ignored = [
