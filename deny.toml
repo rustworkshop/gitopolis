@@ -2,9 +2,9 @@
 # Only allow licenses compatible with AGPL
 clarify = []
 allow = [
-    "AGPL-3.0",
-    "GPL-3.0",
-    "LGPL-3.0",
+    "AGPL-3.0-only",
+    "GPL-3.0-only",
+    "LGPL-3.0-only",
     "MIT",          # MIT is compatible with AGPL
     "Apache-2.0",   # Apache 2.0 is compatible with AGPL
     "BSD-3-Clause", # BSD-3-Clause is compatible with AGPL
