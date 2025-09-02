@@ -6,4 +6,4 @@ echo $latest
 asdf install rust $latest
 asdf set rust $latest
 cargo test
-git commit -i .tool-versions -m "Upgrade rust to latest"
+git commit -i .tool-versions -m "chore: Upgrade build to latest rust"
