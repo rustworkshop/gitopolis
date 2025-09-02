@@ -16,6 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
+    - name: Get rust version from .tool-versions
+      id: rust-version
+      run: echo "RUST_VERSION=$(grep '^rust ' .tool-versions | awk '{print $2}')" >> $GITHUB_OUTPUT
+    - uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ steps.rust-version.outputs.RUST_VERSION }}
     - name: Install cargo-deny
       run: cargo install cargo-deny
     - name: Check Licenses
@@ -25,6 +31,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
+    - name: Get rust version from .tool-versions
+      id: rust-version
+      run: echo "RUST_VERSION=$(grep '^rust ' .tool-versions | awk '{print $2}')" >> $GITHUB_OUTPUT
+    - uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ steps.rust-version.outputs.RUST_VERSION }}
     - name: Install cargo-machete
       run: cargo install cargo-machete
     - name: Check for unused dependencies
@@ -49,13 +61,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v5
+    - name: Get rust version from .tool-versions
+      id: rust-version
+      shell: bash
+      run: echo "RUST_VERSION=$(grep '^rust ' .tool-versions | awk '{print $2}')" >> $GITHUB_OUTPUT
+    - uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ steps.rust-version.outputs.RUST_VERSION }}
+        targets: ${{ matrix.target }}
     - name: Install musl tools
       if: matrix.target == 'x86_64-unknown-linux-musl'
       run: |
         sudo apt-get update
         sudo apt-get install -y musl-tools
-    - name: Add Target
-      run: rustup target add ${{ matrix.target }}
     - name: Update Version (Linux/Windows)
       if: inputs.release_tag != '' && matrix.os != 'macos-latest'
       shell: bash
