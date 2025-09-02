@@ -28,17 +28,17 @@ impl Git for GitImpl {
 
 	fn clone(&self, path: &str, url: &str) {
 		if Path::new(path).exists() {
-			println!("🏢 {}> Already exists, skipped.", path);
+			println!("🏢 {path}> Already exists, skipped.");
 			return;
 		}
-		println!("🏢 {}> Cloning {} ...", path, url);
+		println!("🏢 {path}> Cloning {url} ...");
 		let output = Command::new("git")
-			.args(&["clone".to_string(), url.to_string(), path.to_string()].to_vec())
+			.args(["clone".to_string(), url.to_string(), path.to_string()].to_vec())
 			.output()
 			.expect("Error running git clone");
 		let stdout = String::from_utf8(output.stdout).expect("Error converting stdout to string");
 		let stderr = String::from_utf8(output.stderr).expect("Error converting stderr to string");
-		println!("{}", stdout);
-		println!("{}", stderr);
+		println!("{stdout}");
+		println!("{stderr}");
 	}
 }

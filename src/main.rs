@@ -163,7 +163,7 @@ fn list_tags(long: bool) {
 	let gitopolis = &init_gitopolis();
 	if long {
 		for tag in gitopolis.tags().expect("TODO: panic message") {
-			println!("{}", tag);
+			println!("{tag}");
 			for r in gitopolis.list(&Some(tag)).expect("TODO: panic message") {
 				println!("\t{}", r.path);
 			}
@@ -171,7 +171,7 @@ fn list_tags(long: bool) {
 		}
 	} else {
 		for tag in gitopolis.tags().expect("TODO: panic message") {
-			println!("{}", tag);
+			println!("{tag}");
 		}
 	}
 }

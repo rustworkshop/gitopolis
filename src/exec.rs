@@ -19,7 +19,7 @@ pub fn exec(mut exec_args: Vec<String>, repos: Vec<Repo>) {
 		println!();
 	}
 	if error_count > 0 {
-		eprintln!("{} commands exited with non-zero status code", error_count);
+		eprintln!("{error_count} commands exited with non-zero status code");
 	}
 }
 

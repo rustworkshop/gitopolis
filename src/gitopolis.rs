@@ -39,7 +39,7 @@ impl Gitopolis {
 		let mut repos = self.load()?;
 		let normalized_folder: String = normalize_folder(repo_folder);
 		if repos.repo_index(normalized_folder.to_owned()).is_some() {
-			info!("{} already added, ignoring.", normalized_folder);
+			info!("{normalized_folder} already added, ignoring.");
 			return Ok(());
 		}
 		let remote_name = "origin".to_string(); // todo: read all remotes, not just origin https://github.com/timabell/gitopolis/issues/7
@@ -127,14 +127,14 @@ impl Gitopolis {
 
 fn serialize(repos: &Repos) -> Result<String, GitopolisError> {
 	toml::to_string(&repos).map_err(|error| StateError {
-		message: format!("Failed to generate toml for repo list. {}", error),
+		message: format!("Failed to generate toml for repo list. {error}"),
 	})
 }
 
 fn parse(state_toml: &str) -> Result<Repos, GitopolisError> {
 	let mut named_container: BTreeMap<String, Vec<Repo>> =
 		toml::from_str(state_toml).map_err(|error| StateError {
-			message: format!("Failed to parse state data as valid TOML. {}", error),
+			message: format!("Failed to parse state data as valid TOML. {error}"),
 		})?;
 
 	let repos = named_container

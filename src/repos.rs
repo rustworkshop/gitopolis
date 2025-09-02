@@ -65,7 +65,7 @@ impl Repos {
 		let mut repo = Repo::new(repo_folder.clone());
 		repo.add_remote(remote_name, url);
 		self.repos.push(repo);
-		info!("Added {}", repo_folder);
+		info!("Added {repo_folder}");
 	}
 
 	pub fn remove(&mut self, repo_folders: Vec<String>) {
@@ -75,7 +75,7 @@ impl Repos {
 					self.repos.remove(ix);
 				}
 				None => {
-					info!("Repo already absent, skipped: {}", repo_folder)
+					info!("Repo already absent, skipped: {repo_folder}")
 				}
 			}
 		}
@@ -91,7 +91,7 @@ impl Repos {
 		for repo_folder in repo_folders {
 			let repo = self
 				.find_repo(repo_folder.to_owned())
-				.unwrap_or_else(|| panic!("Repo '{}' not found", repo_folder));
+				.unwrap_or_else(|| panic!("Repo '{repo_folder}' not found"));
 			if remove {
 				if let Some(ix) = repo.tags.iter().position(|t| t == tag_name) {
 					repo.tags.remove(ix);
