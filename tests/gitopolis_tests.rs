@@ -128,7 +128,7 @@ url = \"git://example.org/test_url\"
 	let mut gitopolis = Gitopolis::new(storage, git);
 
 	gitopolis
-		.add_tag("some_tag", &vec!["test_repo/".to_string()])
+		.add_tag("some_tag", &["test_repo/".to_string()])
 		.expect("TODO: panic message");
 }
 
@@ -161,7 +161,7 @@ url = \"git://example.org/test_url\"
 	let mut gitopolis = Gitopolis::new(storage, git);
 
 	gitopolis
-		.remove_tag("some_tag", &vec!["test_repo/".to_string()])
+		.remove_tag("some_tag", &["test_repo/".to_string()])
 		.expect("TODO: panic message");
 }
 
@@ -219,7 +219,7 @@ url = \"git://example.org/test_url\"\
 	let mut gitopolis = Gitopolis::new(storage, git);
 
 	gitopolis
-		.remove(&vec!["test_repo/".to_string()])
+		.remove(&["test_repo/".to_string()])
 		.expect("TODO: panic message");
 }
 
