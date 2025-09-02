@@ -16,3 +16,6 @@ allow = [
 # Ensure every crate has a valid license file
 private = { ignore = true }
 confidence-threshold = 0.8
+
+# Don't warn about allowed licenses that aren't currently used
+unused-allowed-license = "allow"
