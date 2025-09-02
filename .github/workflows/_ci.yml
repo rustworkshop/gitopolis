@@ -12,37 +12,43 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  deny:
+  get-rust-version:
     runs-on: ubuntu-latest
+    outputs:
+      rust-version: ${{ steps.rust-version.outputs.RUST_VERSION }}
     steps:
     - uses: actions/checkout@v5
     - name: Get rust version from .tool-versions
       id: rust-version
       run: echo "RUST_VERSION=$(grep '^rust ' .tool-versions | awk '{print $2}')" >> $GITHUB_OUTPUT
+  deny:
+    needs: get-rust-version
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
     - uses: dtolnay/rust-toolchain@master
       with:
-        toolchain: ${{ steps.rust-version.outputs.RUST_VERSION }}
+        toolchain: ${{ needs.get-rust-version.outputs.rust-version }}
     - name: Install cargo-deny
       run: cargo install cargo-deny
     - name: Check Licenses
       run: cargo deny check licenses
 
   machete:
+    needs: get-rust-version
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
-    - name: Get rust version from .tool-versions
-      id: rust-version
-      run: echo "RUST_VERSION=$(grep '^rust ' .tool-versions | awk '{print $2}')" >> $GITHUB_OUTPUT
     - uses: dtolnay/rust-toolchain@master
       with:
-        toolchain: ${{ steps.rust-version.outputs.RUST_VERSION }}
+        toolchain: ${{ needs.get-rust-version.outputs.rust-version }}
     - name: Install cargo-machete
       run: cargo install cargo-machete
     - name: Check for unused dependencies
       run: cargo machete
 
   build:
+    needs: get-rust-version
     strategy:
       matrix:
         include:
@@ -61,13 +67,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v5
-    - name: Get rust version from .tool-versions
-      id: rust-version
-      shell: bash
-      run: echo "RUST_VERSION=$(grep '^rust ' .tool-versions | awk '{print $2}')" >> $GITHUB_OUTPUT
     - uses: dtolnay/rust-toolchain@master
       with:
-        toolchain: ${{ steps.rust-version.outputs.RUST_VERSION }}
+        toolchain: ${{ needs.get-rust-version.outputs.rust-version }}
         targets: ${{ matrix.target }}
     - name: Install musl tools
       if: matrix.target == 'x86_64-unknown-linux-musl'
