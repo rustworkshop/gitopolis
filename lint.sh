@@ -1,3 +1,5 @@
 #!/bin/sh -v
-cargo clippy
+set -e # exit on error
+cargo fmt
+./clippy-harsh.sh
 cargo deny check licenses
