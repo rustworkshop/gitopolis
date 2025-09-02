@@ -36,13 +36,13 @@ commit_preprocessors = [
 commit_parsers = [
     { message = "^feat", group = "Features"},
     { message = "^fix", group = "Bug Fixes"},
+    { message = "^refactor", group = "Refactor"},
+    { message = "^test", group = "Tests"},
+    { message = "^chore", group = "Chores"},
     { message = "^doc", group = "Documentation"},
     { message = "^perf", group = "Performance"},
-    { message = "^refactor", group = "Refactor"},
     { message = "^style", group = "Styling"},
-    { message = "^test", group = "Testing"},
-    { message = "^chore\\(release\\): ", skip = true},
-    { message = "^chore", group = "Miscellaneous Tasks"},
+    { message = "^security", group = "Security"},
     { body = ".*security", group = "Security"},
 ]
 # protect breaking changes from being skipped due to matching a skipped commit_parser
@@ -51,8 +51,8 @@ protect_breaking_commits = false
 filter_commits = false
 # glob pattern for matching git tags
 tag_pattern = "v[0-9]*"
-# regex for skipping tags
-skip_tags = "v0.1.0-beta.1"
+# regex for skipping pre-release tags, e.g. v1.2.3-beta2
+skip_tags = "v[0-9]*-.*"
 # regex for ignoring tags
 ignore_tags = ""
 # sort the tags topologically
