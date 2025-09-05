@@ -412,6 +412,61 @@ fn exec_invalid_command() {
 }
 
 #[test]
+fn exec_oneline() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_url");
+	add_a_repo(&temp, "repo_b", "git://example.org/test_url2");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--oneline", "--", "echo", "hello"])
+		.assert()
+		.success()
+		.stdout("🏢 repo_a> hello\n🏢 repo_b> hello\n");
+}
+
+#[test]
+fn exec_oneline_multiline_output() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_url");
+
+	// Create a test file with multiple lines in the repo
+	let repo_path = temp.path().join("repo_a");
+	fs::write(repo_path.join("test.txt"), "line1\nline2\nline3").unwrap();
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--oneline", "--", "cat", "test.txt"])
+		.assert()
+		.success()
+		.stdout("🏢 repo_a> line1 line2 line3\n");
+}
+
+#[test]
+fn exec_oneline_non_zero() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_url");
+	add_a_repo(&temp, "repo_b", "git://example.org/test_url2");
+
+	let expected_stdout = match get_operating_system() {
+		OperatingSystem::MacOSX => {
+			"🏢 repo_a> ls: non-existent: No such file or directory\n🏢 repo_b> ls: non-existent: No such file or directory\n"
+		}
+		OperatingSystem::Other => {
+			"🏢 repo_a> ls: cannot access 'non-existent': No such file or directory\n🏢 repo_b> ls: cannot access 'non-existent': No such file or directory\n"
+		}
+	};
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--oneline", "--", "ls", "non-existent"])
+		.assert()
+		.success()
+		.stdout(expected_stdout)
+		.stderr("2 commands exited with non-zero status code\n");
+}
+
+#[test]
 fn tag() {
 	let temp = temp_folder();
 	add_a_repo(&temp, "some_git_folder", "git://example.org/test_url");

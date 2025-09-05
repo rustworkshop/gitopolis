@@ -29,6 +29,16 @@ gitopolis add *
 gitopolis exec -- git pull
 ```
 
+### Getting output as single lines
+
+For compact, parsable output that's easy to sort and analyze use `--oneline`, this will put all the output on a single line for each repo (removing newlines).
+
+e.g. to see the latest commit for all the repos, with the most recently touched repo first:
+
+```sh
+gitopolis exec --oneline -- git log --format=format:'%cd "%s" 📝 %an' --date='format:%Y-%m-%d' -n 1 | awk '{print $3 " " $0}' | sort -r
+```
+
 ### Tagging
 
 ```sh

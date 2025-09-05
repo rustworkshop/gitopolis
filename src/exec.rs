@@ -1,9 +1,9 @@
 use crate::repos::Repo;
 use std::env;
-use std::io::Error;
-use std::process::{Child, Command, ExitStatus};
+use std::io::{Error, Read};
+use std::process::{Child, Command, ExitStatus, Stdio};
 
-pub fn exec(mut exec_args: Vec<String>, repos: Vec<Repo>) {
+pub fn exec(mut exec_args: Vec<String>, repos: Vec<Repo>, oneline: bool) {
 	let args = exec_args.split_off(1);
 	let cmd = &exec_args[0]; // only cmd remaining after split_off above
 	let mut error_count = 0;
@@ -12,11 +12,24 @@ pub fn exec(mut exec_args: Vec<String>, repos: Vec<Repo>) {
 			println!("🏢 {}> Repo folder missing, skipped.", &repo.path);
 			return;
 		}
-		let exit_status = repo_exec(&repo.path, cmd, &args).expect("Failed to execute command.");
-		if !exit_status.success() {
-			error_count += 1
+		if oneline {
+			let (output, success) =
+				repo_exec_oneline(&repo.path, cmd, &args).expect("Failed to execute command.");
+			match output {
+				Some(output_text) => println!("🏢 {}> {}", &repo.path, output_text),
+				None => println!("🏢 {}> ", &repo.path),
+			}
+			if !success {
+				error_count += 1;
+			}
+		} else {
+			let exit_status =
+				repo_exec(&repo.path, cmd, &args).expect("Failed to execute command.");
+			if !exit_status.success() {
+				error_count += 1
+			}
+			println!();
 		}
-		println!();
 	}
 	if error_count > 0 {
 		eprintln!("{error_count} commands exited with non-zero status code");
@@ -44,4 +57,53 @@ fn repo_exec(path: &str, cmd: &str, args: &Vec<String>) -> Result<ExitStatus, Er
 		);
 	}
 	Ok(*exit_code)
+}
+
+fn repo_exec_oneline(
+	path: &str,
+	cmd: &str,
+	args: &Vec<String>,
+) -> Result<(Option<String>, bool), Error> {
+	let mut child_process: Child = Command::new(cmd)
+		.args(args)
+		.current_dir(path)
+		.stdout(Stdio::piped())
+		.stderr(Stdio::piped())
+		.spawn()?;
+
+	let mut stdout = String::new();
+	if let Some(mut stdout_pipe) = child_process.stdout.take() {
+		stdout_pipe.read_to_string(&mut stdout)?;
+	}
+
+	let mut stderr = String::new();
+	if let Some(mut stderr_pipe) = child_process.stderr.take() {
+		stderr_pipe.read_to_string(&mut stderr)?;
+	}
+
+	let exit_code = child_process.wait()?;
+	let success = exit_code.success();
+
+	// Flatten multi-line output to single line by replacing newlines with spaces
+	let stdout_clean = stdout.trim().replace('\n', " ");
+	let stderr_clean = stderr.trim().replace('\n', " ");
+
+	// Combine stdout and stderr, with stderr included when command fails
+	let output = if !success && !stderr_clean.is_empty() {
+		if stdout_clean.is_empty() {
+			stderr_clean
+		} else {
+			format!("{} {}", stdout_clean, stderr_clean)
+		}
+	} else if !stdout_clean.is_empty() {
+		stdout_clean
+	} else {
+		String::new()
+	};
+
+	if output.is_empty() {
+		Ok((None, success))
+	} else {
+		Ok((Some(output), success))
+	}
 }
