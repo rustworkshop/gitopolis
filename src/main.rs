@@ -40,6 +40,8 @@ enum Commands {
 	Exec {
 		#[arg(short, long)]
 		tag: Option<String>,
+		#[arg(long)]
+		oneline: bool,
 		exec_args: Vec<String>,
 	},
 	/// Add/remove repo tags. Use tags to organise repos and allow running commands against subsets of the repo list.
@@ -89,6 +91,7 @@ fn main() {
 		Some(Commands::Clone { tag: tag_name }) => clone(tag_name),
 		Some(Commands::Exec {
 			tag: tag_name,
+			oneline,
 			exec_args,
 		}) => {
 			exec(
@@ -96,6 +99,7 @@ fn main() {
 				init_gitopolis()
 					.list(tag_name)
 					.expect("TODO: panic message"),
+				*oneline,
 			);
 		}
 		Some(Commands::Tag {
