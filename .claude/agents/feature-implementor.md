@@ -31,6 +31,7 @@ Key technical guidelines:
 - Avoid mocking in favor of testing real integrations where practical
 - Ensure all code is formatted with `cargo fmt` and passes `cargo clippy`
 - Make atomic commits with clear conventional commit messages
+- When you are ready to commit, exit and tell the calling agent that the code is ready, do not make any git commits.
 
 Quality standards:
 - All tests must pass before considering implementation complete
