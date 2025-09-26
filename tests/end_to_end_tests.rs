@@ -935,7 +935,12 @@ fn windows_diagnostics() {
 	println!("=== Testing problematic find command ===");
 	let result = gitopolis_executable()
 		.current_dir(&temp)
-		.args(vec!["exec", "--oneline", "--", "dir *.txt /b | find /c /v \"\""])
+		.args(vec![
+			"exec",
+			"--oneline",
+			"--",
+			"dir *.txt /b | find /c /v \"\"",
+		])
 		.output()
 		.expect("Failed to run gitopolis");
 
@@ -970,7 +975,7 @@ fn exec_shell_gold_standard_external_piping() {
 	// Execute gitopolis with shell command and pipe its output through sort
 	// This tests that the oneline output is parseable by external tools
 	let command = if cfg!(windows) {
-		"echo test"  // Simplified for GitHub Actions restrictions
+		"echo test" // Simplified for GitHub Actions restrictions
 	} else {
 		"ls *.txt 2>/dev/null | wc -l"
 	};
@@ -1012,7 +1017,7 @@ fn exec_shell_piping() {
 
 	// Test piping to count files
 	let (command, command_display, expected_a, expected_b) = if cfg!(windows) {
-		("echo 2", "echo 2", "2", "2")  // Simplified for GitHub Actions
+		("echo 2", "echo 2", "2", "2") // Simplified for GitHub Actions
 	} else {
 		("ls *.txt | wc -l", "ls *.txt | wc -l", "2", "1")
 	};
@@ -1052,7 +1057,7 @@ fn exec_shell_piping_oneline() {
 
 	// Test with --oneline for parsable output
 	let (command, expected_output) = if cfg!(windows) {
-		("echo 3 && echo 1", "🏢 repo_a> 3  1\n🏢 repo_b> 3  1\n")  // Windows has extra space due to CR
+		("echo 3 && echo 1", "🏢 repo_a> 3  1\n🏢 repo_b> 3  1\n") // Windows has extra space due to CR
 	} else {
 		("ls *.txt | wc -l", "🏢 repo_a> 3\n🏢 repo_b> 1\n")
 	};
