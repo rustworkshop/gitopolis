@@ -895,7 +895,7 @@ fn exec_shell_gold_standard_external_piping() {
 	// Execute gitopolis with shell command and pipe its output through sort
 	// This tests that the oneline output is parseable by external tools
 	let command = if cfg!(windows) {
-		"powershell -Command \"(Get-ChildItem *.txt 2>$null).Count\""
+		"for /f %i in ('dir /b *.txt 2^>nul ^| find /c /v \"\"') do echo %i"
 	} else {
 		"ls *.txt 2>/dev/null | wc -l"
 	};
@@ -932,8 +932,8 @@ fn exec_shell_piping() {
 	// Test piping to count files
 	let (command, command_display) = if cfg!(windows) {
 		(
-			"powershell -Command \"(Get-ChildItem *.txt 2>$null).Count\"",
-			"powershell -Command \"(Get-ChildItem *.txt 2>$null).Count\"",
+			"for /f %i in ('dir /b *.txt 2^>nul ^| find /c /v \"\"') do echo %i",
+			"for /f %i in ('dir /b *.txt 2^>nul ^| find /c /v \"\"') do echo %i",
 		)
 	} else {
 		("ls *.txt | wc -l", "ls *.txt | wc -l")
@@ -974,7 +974,7 @@ fn exec_shell_piping_oneline() {
 
 	// Test with --oneline for parsable output
 	let command = if cfg!(windows) {
-		"powershell -Command \"(Get-ChildItem *.txt 2>$null).Count\""
+		"for /f %i in ('dir /b *.txt 2^>nul ^| find /c /v \"\"') do echo %i"
 	} else {
 		"ls *.txt | wc -l"
 	};
