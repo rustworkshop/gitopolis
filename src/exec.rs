@@ -3,9 +3,7 @@ use std::env;
 use std::io::{Error, Read};
 use std::process::{Child, Command, ExitStatus, Stdio};
 
-pub fn exec(mut exec_args: Vec<String>, repos: Vec<Repo>, oneline: bool) {
-	let args = exec_args.split_off(1);
-	let cmd = &exec_args[0]; // only cmd remaining after split_off above
+pub fn exec(exec_args: Vec<String>, repos: Vec<Repo>, oneline: bool) {
 	let mut error_count = 0;
 	for repo in &repos {
 		if !exists(&repo.path) {
@@ -14,7 +12,7 @@ pub fn exec(mut exec_args: Vec<String>, repos: Vec<Repo>, oneline: bool) {
 		}
 		if oneline {
 			let (output, success) =
-				repo_exec_oneline(&repo.path, cmd, &args).expect("Failed to execute command.");
+				repo_exec_oneline(&repo.path, &exec_args).expect("Failed to execute command.");
 			match output {
 				Some(output_text) => println!("🏢 {}> {}", &repo.path, output_text),
 				None => println!("🏢 {}> ", &repo.path),
@@ -24,7 +22,7 @@ pub fn exec(mut exec_args: Vec<String>, repos: Vec<Repo>, oneline: bool) {
 			}
 		} else {
 			let exit_status =
-				repo_exec(&repo.path, cmd, &args).expect("Failed to execute command.");
+				repo_exec(&repo.path, &exec_args).expect("Failed to execute command.");
 			if !exit_status.success() {
 				error_count += 1
 			}
@@ -42,12 +40,25 @@ fn exists(repo_path: &String) -> bool {
 	path.exists() && path.is_dir()
 }
 
-fn repo_exec(path: &str, cmd: &str, args: &Vec<String>) -> Result<ExitStatus, Error> {
+fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
+	let command_string = exec_args.join(" ");
 	println!();
-	println!("🏢 {}> {} {}", path, cmd, args.join(" "));
+	println!("🏢 {}> {}", path, command_string);
 
-	// defaults to piping stdout/stderr to parent process output, so no need to specify
-	let mut child_process: Child = Command::new(cmd).args(args).current_dir(path).spawn()?;
+	// Execute through shell to support piping, redirection, etc.
+	#[cfg(unix)]
+	let mut child_process: Child = Command::new("sh")
+		.arg("-c")
+		.arg(&command_string)
+		.current_dir(path)
+		.spawn()?;
+
+	#[cfg(windows)]
+	let mut child_process: Child = Command::new("cmd")
+		.arg("/C")
+		.arg(&command_string)
+		.current_dir(path)
+		.spawn()?;
 
 	let exit_code = &child_process.wait()?;
 	if !exit_code.success() {
@@ -59,13 +70,23 @@ fn repo_exec(path: &str, cmd: &str, args: &Vec<String>) -> Result<ExitStatus, Er
 	Ok(*exit_code)
 }
 
-fn repo_exec_oneline(
-	path: &str,
-	cmd: &str,
-	args: &Vec<String>,
-) -> Result<(Option<String>, bool), Error> {
-	let mut child_process: Child = Command::new(cmd)
-		.args(args)
+fn repo_exec_oneline(path: &str, exec_args: &[String]) -> Result<(Option<String>, bool), Error> {
+	let command_string = exec_args.join(" ");
+
+	// Execute through shell to support piping, redirection, etc.
+	#[cfg(unix)]
+	let mut child_process: Child = Command::new("sh")
+		.arg("-c")
+		.arg(&command_string)
+		.current_dir(path)
+		.stdout(Stdio::piped())
+		.stderr(Stdio::piped())
+		.spawn()?;
+
+	#[cfg(windows)]
+	let mut child_process: Child = Command::new("cmd")
+		.arg("/C")
+		.arg(&command_string)
 		.current_dir(path)
 		.stdout(Stdio::piped())
 		.stderr(Stdio::piped())

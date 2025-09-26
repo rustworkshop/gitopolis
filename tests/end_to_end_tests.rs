@@ -404,11 +404,18 @@ fn exec_invalid_command() {
 	let temp = temp_folder();
 	add_a_repo(&temp, "some_git_folder", "git://example.org/test_url");
 
+	// With shell execution, invalid commands are handled by the shell
+	// The shell returns an error but gitopolis itself succeeds
 	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--", "not-a-command"])
 		.assert()
-		.failure();
+		.success()
+		.stderr(predicate::str::contains("not-a-command"))
+		.stderr(predicate::str::contains("not found"))
+		.stderr(predicate::str::contains(
+			"1 commands exited with non-zero status code",
+		));
 }
 
 #[test]
@@ -851,4 +858,151 @@ fn get_operating_system() -> OperatingSystem {
 #[cfg(not(target_os = "macos"))]
 fn get_operating_system() -> OperatingSystem {
 	OperatingSystem::Other
+}
+
+// Shell execution tests for issue #170
+#[test]
+fn exec_shell_gold_standard_external_piping() {
+	// The gold standard test: gitopolis output can be piped to external commands
+	// e.g., gitopolis exec --oneline -- 'git branch -r | wc -l' | sort -n
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+	add_a_repo(&temp, "repo_b", "git://example.org/test_b");
+	add_a_repo(&temp, "repo_c", "git://example.org/test_c");
+
+	// Create different numbers of files in each repo to get different counts
+	let repo_a_path = temp.path().join("repo_a");
+	fs::write(repo_a_path.join("file1.txt"), "content").unwrap();
+
+	let repo_b_path = temp.path().join("repo_b");
+	fs::write(repo_b_path.join("file1.txt"), "content").unwrap();
+	fs::write(repo_b_path.join("file2.txt"), "content").unwrap();
+	fs::write(repo_b_path.join("file3.txt"), "content").unwrap();
+
+	let repo_c_path = temp.path().join("repo_c");
+	fs::write(repo_c_path.join("file1.txt"), "content").unwrap();
+	fs::write(repo_c_path.join("file2.txt"), "content").unwrap();
+
+	// Execute gitopolis with shell command and pipe its output through sort
+	// This tests that the oneline output is parseable by external tools
+	let output = Command::new(gitopolis_executable().get_program())
+		.current_dir(&temp)
+		.args(vec![
+			"exec",
+			"--oneline",
+			"--",
+			"ls *.txt 2>/dev/null | wc -l",
+		])
+		.output()
+		.expect("failed to execute gitopolis");
+
+	let stdout = String::from_utf8(output.stdout).unwrap();
+
+	// The output should contain the counts for each repo
+	assert!(stdout.contains("repo_a> 1"));
+	assert!(stdout.contains("repo_b> 3"));
+	assert!(stdout.contains("repo_c> 2"));
+}
+
+#[test]
+fn exec_shell_piping() {
+	// Test basic piping within each repo
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+	add_a_repo(&temp, "repo_b", "git://example.org/test_b");
+
+	// Create some files to count
+	let repo_a_path = temp.path().join("repo_a");
+	fs::write(repo_a_path.join("file1.txt"), "content").unwrap();
+	fs::write(repo_a_path.join("file2.txt"), "content").unwrap();
+
+	let repo_b_path = temp.path().join("repo_b");
+	fs::write(repo_b_path.join("file1.txt"), "content").unwrap();
+
+	// Test piping with ls | wc -l to count files
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "ls *.txt | wc -l"])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("repo_a> ls *.txt | wc -l"))
+		.stdout(predicate::str::contains("2")) // repo_a has 2 txt files
+		.stdout(predicate::str::contains("repo_b> ls *.txt | wc -l"))
+		.stdout(predicate::str::contains("1")); // repo_b has 1 txt file
+}
+
+#[test]
+fn exec_shell_piping_oneline() {
+	// Test the gold standard: sortable numeric output
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+	add_a_repo(&temp, "repo_b", "git://example.org/test_b");
+
+	// Create different numbers of files in each repo
+	let repo_a_path = temp.path().join("repo_a");
+	fs::write(repo_a_path.join("file1.txt"), "content").unwrap();
+	fs::write(repo_a_path.join("file2.txt"), "content").unwrap();
+	fs::write(repo_a_path.join("file3.txt"), "content").unwrap();
+
+	let repo_b_path = temp.path().join("repo_b");
+	fs::write(repo_b_path.join("file1.txt"), "content").unwrap();
+
+	// Test with --oneline for parsable output
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--oneline", "--", "ls *.txt | wc -l"])
+		.assert()
+		.success()
+		.stdout("🏢 repo_a> 3\n🏢 repo_b> 1\n");
+}
+
+#[test]
+fn exec_shell_command_chaining() {
+	// Test command chaining with &&
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	// Create a test file
+	let repo_path = temp.path().join("repo_a");
+	fs::write(repo_path.join("test.txt"), "hello").unwrap();
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "echo 'First' && echo 'Second'"])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("First\nSecond"));
+}
+
+#[test]
+fn exec_shell_redirection() {
+	// Test output redirection
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	// Test redirecting output to a file
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "echo 'test content' > output.txt"])
+		.assert()
+		.success();
+
+	// Verify the file was created with the right content
+	let output_file = temp.path().join("repo_a").join("output.txt");
+	let content = fs::read_to_string(output_file).unwrap();
+	assert_eq!(content.trim(), "test content");
+}
+
+#[test]
+fn exec_shell_quoted_args() {
+	// Test that quoted arguments work properly with shell execution
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "echo 'hello world'"])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("hello world"));
 }
