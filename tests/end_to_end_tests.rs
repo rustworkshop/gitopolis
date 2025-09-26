@@ -869,6 +869,81 @@ fn get_operating_system() -> OperatingSystem {
 	OperatingSystem::Other
 }
 
+// Windows diagnostics for GitHub Actions debugging
+#[cfg(windows)]
+#[test]
+fn windows_diagnostics() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "test_repo", "git://example.org/test");
+
+	// Test 1: Basic echo
+	println!("=== Testing basic echo ===");
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--oneline", "--", "echo hello"])
+		.assert()
+		.success();
+
+	// Test 2: What shell are we using?
+	println!("=== Testing shell detection ===");
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--oneline", "--", "echo %COMSPEC%"])
+		.assert()
+		.success();
+
+	// Test 3: Basic dir command
+	println!("=== Testing dir command ===");
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--oneline", "--", "dir"])
+		.assert()
+		.success();
+
+	// Test 4: Dir with filter
+	println!("=== Testing dir with filter ===");
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--oneline", "--", "dir *.txt"])
+		.assert()
+		.code(predicate::in_iter(vec![0, 1])); // May fail if no txt files
+
+	// Test 5: Find command availability
+	println!("=== Testing find command ===");
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--oneline", "--", "find /?"])
+		.assert()
+		.code(predicate::in_iter(vec![0, 1])); // May fail
+
+	// Test 6: Create files and try to count them
+	println!("=== Testing file creation and counting ===");
+	let repo_path = temp.path().join("test_repo");
+	std::fs::write(repo_path.join("test1.txt"), "content").unwrap();
+	std::fs::write(repo_path.join("test2.txt"), "content").unwrap();
+
+	let result = gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--oneline", "--", "dir *.txt /b"])
+		.output()
+		.expect("Failed to run gitopolis");
+
+	println!("Dir output: {:?}", String::from_utf8_lossy(&result.stdout));
+	println!("Dir stderr: {:?}", String::from_utf8_lossy(&result.stderr));
+
+	// Test 7: Try the problematic find command
+	println!("=== Testing problematic find command ===");
+	let result = gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--oneline", "--", "dir *.txt /b | find /c /v \"\""])
+		.output()
+		.expect("Failed to run gitopolis");
+
+	println!("Find output: {:?}", String::from_utf8_lossy(&result.stdout));
+	println!("Find stderr: {:?}", String::from_utf8_lossy(&result.stderr));
+	println!("Find exit code: {:?}", result.status.code());
+}
+
 // Shell execution tests for issue #170
 #[test]
 fn exec_shell_gold_standard_external_piping() {
