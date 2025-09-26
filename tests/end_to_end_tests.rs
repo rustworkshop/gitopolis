@@ -1052,7 +1052,7 @@ fn exec_shell_piping_oneline() {
 
 	// Test with --oneline for parsable output
 	let (command, expected_output) = if cfg!(windows) {
-		("echo 3 && echo 1", "🏢 repo_a> 3 1\n🏢 repo_b> 3 1\n")  // Simplified for GitHub Actions
+		("echo 3 && echo 1", "🏢 repo_a> 3  1\n🏢 repo_b> 3  1\n")  // Windows has extra space due to CR
 	} else {
 		("ls *.txt | wc -l", "🏢 repo_a> 3\n🏢 repo_b> 1\n")
 	};
