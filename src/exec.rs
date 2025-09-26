@@ -31,6 +31,7 @@ pub fn exec(exec_args: Vec<String>, repos: Vec<Repo>, oneline: bool) {
 	}
 	if error_count > 0 {
 		eprintln!("{error_count} commands exited with non-zero status code");
+		std::process::exit(1);
 	}
 }
 

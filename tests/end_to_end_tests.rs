@@ -394,7 +394,8 @@ Command exited with code 2
 		.current_dir(&temp)
 		.args(vec!["exec", "--", "ls", "non-existent"])
 		.assert()
-		.success()
+		.failure()
+		.code(1)
 		.stdout(expected_stdout)
 		.stderr(expected_stderr);
 }
@@ -405,12 +406,13 @@ fn exec_invalid_command() {
 	add_a_repo(&temp, "some_git_folder", "git://example.org/test_url");
 
 	// With shell execution, invalid commands are handled by the shell
-	// The shell returns an error but gitopolis itself succeeds
+	// Gitopolis should exit with failure when shell commands fail
 	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--", "not-a-command"])
 		.assert()
-		.success()
+		.failure()
+		.code(1)
 		.stderr(predicate::str::contains("not-a-command"))
 		.stderr(predicate::str::contains("not found"))
 		.stderr(predicate::str::contains(
@@ -468,7 +470,8 @@ fn exec_oneline_non_zero() {
 		.current_dir(&temp)
 		.args(vec!["exec", "--oneline", "--", "ls", "non-existent"])
 		.assert()
-		.success()
+		.failure()
+		.code(1)
 		.stdout(expected_stdout)
 		.stderr("2 commands exited with non-zero status code\n");
 }
