@@ -407,6 +407,12 @@ fn exec_invalid_command() {
 
 	// With shell execution, invalid commands are handled by the shell
 	// Gitopolis should exit with failure when shell commands fail
+	let expected_error = if cfg!(windows) {
+		"not recognized as an internal or external command"
+	} else {
+		"not found"
+	};
+
 	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--", "not-a-command"])
@@ -414,7 +420,7 @@ fn exec_invalid_command() {
 		.failure()
 		.code(1)
 		.stderr(predicate::str::contains("not-a-command"))
-		.stderr(predicate::str::contains("not found"))
+		.stderr(predicate::str::contains(expected_error))
 		.stderr(predicate::str::contains(
 			"1 commands exited with non-zero status code",
 		));
@@ -888,14 +894,15 @@ fn exec_shell_gold_standard_external_piping() {
 
 	// Execute gitopolis with shell command and pipe its output through sort
 	// This tests that the oneline output is parseable by external tools
+	let command = if cfg!(windows) {
+		"dir *.txt /b 2>nul | find /c /v \"\""
+	} else {
+		"ls *.txt 2>/dev/null | wc -l"
+	};
+
 	let output = Command::new(gitopolis_executable().get_program())
 		.current_dir(&temp)
-		.args(vec![
-			"exec",
-			"--oneline",
-			"--",
-			"ls *.txt 2>/dev/null | wc -l",
-		])
+		.args(vec!["exec", "--oneline", "--", command])
 		.output()
 		.expect("failed to execute gitopolis");
 
@@ -922,15 +929,30 @@ fn exec_shell_piping() {
 	let repo_b_path = temp.path().join("repo_b");
 	fs::write(repo_b_path.join("file1.txt"), "content").unwrap();
 
-	// Test piping with ls | wc -l to count files
+	// Test piping to count files
+	let (command, command_display) = if cfg!(windows) {
+		(
+			"dir *.txt /b 2>nul | find /c /v \"\"",
+			"dir *.txt /b 2>nul | find /c /v \"\"",
+		)
+	} else {
+		("ls *.txt | wc -l", "ls *.txt | wc -l")
+	};
+
 	gitopolis_executable()
 		.current_dir(&temp)
-		.args(vec!["exec", "--", "ls *.txt | wc -l"])
+		.args(vec!["exec", "--", command])
 		.assert()
 		.success()
-		.stdout(predicate::str::contains("repo_a> ls *.txt | wc -l"))
+		.stdout(predicate::str::contains(format!(
+			"repo_a> {}",
+			command_display
+		)))
 		.stdout(predicate::str::contains("2")) // repo_a has 2 txt files
-		.stdout(predicate::str::contains("repo_b> ls *.txt | wc -l"))
+		.stdout(predicate::str::contains(format!(
+			"repo_b> {}",
+			command_display
+		)))
 		.stdout(predicate::str::contains("1")); // repo_b has 1 txt file
 }
 
@@ -951,9 +973,15 @@ fn exec_shell_piping_oneline() {
 	fs::write(repo_b_path.join("file1.txt"), "content").unwrap();
 
 	// Test with --oneline for parsable output
+	let command = if cfg!(windows) {
+		"dir *.txt /b 2>nul | find /c /v \"\""
+	} else {
+		"ls *.txt | wc -l"
+	};
+
 	gitopolis_executable()
 		.current_dir(&temp)
-		.args(vec!["exec", "--oneline", "--", "ls *.txt | wc -l"])
+		.args(vec!["exec", "--oneline", "--", command])
 		.assert()
 		.success()
 		.stdout("🏢 repo_a> 3\n🏢 repo_b> 1\n");
@@ -969,12 +997,19 @@ fn exec_shell_command_chaining() {
 	let repo_path = temp.path().join("repo_a");
 	fs::write(repo_path.join("test.txt"), "hello").unwrap();
 
+	// Use different echo syntax for Windows vs Unix
+	let (command, expected_output) = if cfg!(windows) {
+		("echo First && echo Second", "First\nSecond")
+	} else {
+		("echo 'First' && echo 'Second'", "First\nSecond")
+	};
+
 	gitopolis_executable()
 		.current_dir(&temp)
-		.args(vec!["exec", "--", "echo 'First' && echo 'Second'"])
+		.args(vec!["exec", "--", command])
 		.assert()
 		.success()
-		.stdout(predicate::str::contains("First\nSecond"));
+		.stdout(predicate::str::contains(expected_output));
 }
 
 #[test]
@@ -983,17 +1018,24 @@ fn exec_shell_redirection() {
 	let temp = temp_folder();
 	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
 
+	// Use different echo syntax for Windows vs Unix
+	let (command, expected_content) = if cfg!(windows) {
+		("echo test content > output.txt", "test content")
+	} else {
+		("echo 'test content' > output.txt", "test content")
+	};
+
 	// Test redirecting output to a file
 	gitopolis_executable()
 		.current_dir(&temp)
-		.args(vec!["exec", "--", "echo 'test content' > output.txt"])
+		.args(vec!["exec", "--", command])
 		.assert()
 		.success();
 
 	// Verify the file was created with the right content
 	let output_file = temp.path().join("repo_a").join("output.txt");
 	let content = fs::read_to_string(output_file).unwrap();
-	assert_eq!(content.trim(), "test content");
+	assert_eq!(content.trim(), expected_content);
 }
 
 #[test]
