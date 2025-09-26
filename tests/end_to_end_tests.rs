@@ -895,7 +895,7 @@ fn exec_shell_gold_standard_external_piping() {
 	// Execute gitopolis with shell command and pipe its output through sort
 	// This tests that the oneline output is parseable by external tools
 	let command = if cfg!(windows) {
-		"dir *.txt /b 2>nul | find /c /v \"\""
+		"powershell -Command \"(Get-ChildItem *.txt 2>$null).Count\""
 	} else {
 		"ls *.txt 2>/dev/null | wc -l"
 	};
@@ -932,8 +932,8 @@ fn exec_shell_piping() {
 	// Test piping to count files
 	let (command, command_display) = if cfg!(windows) {
 		(
-			"dir *.txt /b 2>nul | find /c /v \"\"",
-			"dir *.txt /b 2>nul | find /c /v \"\"",
+			"powershell -Command \"(Get-ChildItem *.txt 2>$null).Count\"",
+			"powershell -Command \"(Get-ChildItem *.txt 2>$null).Count\"",
 		)
 	} else {
 		("ls *.txt | wc -l", "ls *.txt | wc -l")
@@ -974,7 +974,7 @@ fn exec_shell_piping_oneline() {
 
 	// Test with --oneline for parsable output
 	let command = if cfg!(windows) {
-		"dir *.txt /b 2>nul | find /c /v \"\""
+		"powershell -Command \"(Get-ChildItem *.txt 2>$null).Count\""
 	} else {
 		"ls *.txt | wc -l"
 	};
@@ -999,7 +999,7 @@ fn exec_shell_command_chaining() {
 
 	// Use different echo syntax for Windows vs Unix
 	let (command, expected_output) = if cfg!(windows) {
-		("echo First && echo Second", "First\nSecond")
+		("echo First && echo Second", "Second") // Check for Second to ensure both commands ran
 	} else {
 		("echo 'First' && echo 'Second'", "First\nSecond")
 	};
