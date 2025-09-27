@@ -71,6 +71,11 @@ jobs:
       with:
         toolchain: ${{ needs.get-rust-version.outputs.rust-version }}
         targets: ${{ matrix.target }}
+    - name: Debug - Test shell commands availability
+      shell: bash
+      run: |
+        echo "=== Testing shell commands used in gitopolis tests ==="
+        echo "hello" | sort
     - name: Install musl tools
       if: matrix.target == 'x86_64-unknown-linux-musl'
       run: |

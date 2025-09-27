@@ -394,7 +394,8 @@ Command exited with code 2
 		.current_dir(&temp)
 		.args(vec!["exec", "--", "ls", "non-existent"])
 		.assert()
-		.success()
+		.failure()
+		.code(1)
 		.stdout(expected_stdout)
 		.stderr(expected_stderr);
 }
@@ -404,11 +405,25 @@ fn exec_invalid_command() {
 	let temp = temp_folder();
 	add_a_repo(&temp, "some_git_folder", "git://example.org/test_url");
 
+	// With shell execution, invalid commands are handled by the shell
+	// Gitopolis should exit with failure when shell commands fail
+	let expected_error = if cfg!(windows) {
+		"not recognized as an internal or external command"
+	} else {
+		"not found"
+	};
+
 	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--", "not-a-command"])
 		.assert()
-		.failure();
+		.failure()
+		.code(1)
+		.stderr(predicate::str::contains("not-a-command"))
+		.stderr(predicate::str::contains(expected_error))
+		.stderr(predicate::str::contains(
+			"1 commands exited with non-zero status code",
+		));
 }
 
 #[test]
@@ -461,7 +476,8 @@ fn exec_oneline_non_zero() {
 		.current_dir(&temp)
 		.args(vec!["exec", "--oneline", "--", "ls", "non-existent"])
 		.assert()
-		.success()
+		.failure()
+		.code(1)
 		.stdout(expected_stdout)
 		.stderr("2 commands exited with non-zero status code\n");
 }
@@ -851,4 +867,54 @@ fn get_operating_system() -> OperatingSystem {
 #[cfg(not(target_os = "macos"))]
 fn get_operating_system() -> OperatingSystem {
 	OperatingSystem::Other
+}
+
+#[test]
+fn exec_command_oneline_with_piping() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+	add_a_repo(&temp, "repo_b", "git://example.org/test_b");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--oneline", "--", "echo hello | sort"]) // Use echo piped to sort which works on both platforms
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("repo_a> hello"))
+		.stdout(predicate::str::contains("repo_b> hello"));
+}
+
+#[test]
+fn exec_shell_piping() {
+	// Test that shell pipes work within each repository (non-oneline)
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+	add_a_repo(&temp, "repo_b", "git://example.org/test_b");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "echo test output | sort"])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains(
+			"🏢 repo_a> echo test output | sort",
+		))
+		.stdout(predicate::str::contains("test output"))
+		.stdout(predicate::str::contains(
+			"🏢 repo_b> echo test output | sort",
+		));
+}
+
+#[test]
+fn exec_shell_quoted_args() {
+	// Test that quoted arguments work properly with shell execution
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "echo 'hello world'"])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("hello world"));
 }
