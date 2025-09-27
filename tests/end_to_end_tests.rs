@@ -896,9 +896,13 @@ fn exec_shell_piping() {
 		.args(vec!["exec", "--", "echo test output | sort"])
 		.assert()
 		.success()
-		.stdout(predicate::str::contains("🏢 repo_a> echo test output | sort"))
+		.stdout(predicate::str::contains(
+			"🏢 repo_a> echo test output | sort",
+		))
 		.stdout(predicate::str::contains("test output"))
-		.stdout(predicate::str::contains("🏢 repo_b> echo test output | sort"));
+		.stdout(predicate::str::contains(
+			"🏢 repo_b> echo test output | sort",
+		));
 }
 
 #[test]
