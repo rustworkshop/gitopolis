@@ -24,7 +24,7 @@ jobs:
       id: changelog
       uses: orhun/git-cliff-action@v4
       with:
-        config: cliff.toml
+        config: .github/cliff.toml
         args: --latest --strip header
 
     - name: Download Linux Build
