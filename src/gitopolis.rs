@@ -42,11 +42,8 @@ impl Gitopolis {
 			info!("{normalized_folder} already added, ignoring.");
 			return Ok(());
 		}
-		let remote_name = "origin".to_string(); // todo: read all remotes, not just origin https://github.com/timabell/gitopolis/issues/7
-		let url = self
-			.git
-			.read_url(normalized_folder.to_owned(), remote_name.to_owned())?;
-		repos.add(normalized_folder, url, remote_name);
+		let remotes = self.git.read_all_remotes(normalized_folder.to_owned())?;
+		repos.add(normalized_folder, remotes);
 		self.save(repos)?;
 		Ok(())
 	}
@@ -90,9 +87,24 @@ impl Gitopolis {
 	}
 	pub fn clone(&self, repos: Vec<Repo>) {
 		for repo in repos {
-			// todo: multiple remote support https://github.com/timabell/gitopolis/issues/7
-			let url = &repo.remotes["origin"].url;
-			self.git.clone(repo.path.as_str(), url);
+			// Determine which remote to use for cloning (prefer origin)
+			let clone_remote_name = if repo.remotes.contains_key("origin") {
+				"origin"
+			} else {
+				repo.remotes.keys().next().map(|s| s.as_str()).unwrap_or("")
+			};
+
+			if let Some(clone_remote) = repo.remotes.get(clone_remote_name) {
+				// Clone the repo
+				self.git.clone(repo.path.as_str(), &clone_remote.url);
+
+				// Add all other remotes
+				for (name, remote) in &repo.remotes {
+					if name != clone_remote_name {
+						self.git.add_remote(&repo.path, name, &remote.url);
+					}
+				}
+			}
 		}
 	}
 	pub fn tags(&self) -> Result<Vec<String>, GitopolisError> {

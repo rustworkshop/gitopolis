@@ -151,12 +151,13 @@ fn list(repos: Vec<Repo>, long: bool) {
 	}
 	for repo in &repos {
 		if long {
-			println!(
-				"{}\t{}\t{}",
-				repo.path,
-				repo.tags.join(","),
-				repo.remotes["origin"].url
-			);
+			let remotes_str = repo
+				.remotes
+				.iter()
+				.map(|(name, remote)| format!("{}={}", name, remote.url))
+				.collect::<Vec<_>>()
+				.join(",");
+			println!("{}\t{}\t{}", repo.path, repo.tags.join(","), remotes_str);
 		} else {
 			println!("{}", repo.path);
 		}

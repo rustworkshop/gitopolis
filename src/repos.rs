@@ -61,9 +61,11 @@ impl Repos {
 		self.repos.iter().position(|r| r.path == *folder_name)
 	}
 
-	pub fn add(&mut self, repo_folder: String, url: String, remote_name: String) {
+	pub fn add(&mut self, repo_folder: String, remotes: BTreeMap<String, String>) {
 		let mut repo = Repo::new(repo_folder.clone());
-		repo.add_remote(remote_name, url);
+		for (name, url) in remotes {
+			repo.add_remote(name, url);
+		}
 		self.repos.push(repo);
 		info!("Added {repo_folder}");
 	}
@@ -107,7 +109,9 @@ impl Repos {
 fn idempotent_tag() {
 	let mut repos = Repos::new();
 	let path = "repo_path".to_string();
-	repos.add(path.to_string(), "url".to_string(), "origin".to_string());
+	let mut remotes = BTreeMap::new();
+	remotes.insert("origin".to_string(), "url".to_string());
+	repos.add(path.to_string(), remotes);
 	let tag = "tag_name";
 	repos.add_tag(tag, vec![path.to_owned()]);
 	repos.add_tag(tag, vec![path.to_owned()]);

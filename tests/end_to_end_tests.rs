@@ -203,8 +203,9 @@ fn list_long() {
 		"git://example.org/test_url2",
 	);
 
-	let expected_long_output = "some_git_folder\tsome_tag,another_tag\tgit://example.org/test_url
-some_other_git_folder\t\tgit://example.org/test_url2
+	let expected_long_output =
+		"some_git_folder\tsome_tag,another_tag\torigin=git://example.org/test_url
+some_other_git_folder\t\torigin=git://example.org/test_url2
 ";
 
 	gitopolis_executable()
@@ -917,4 +918,176 @@ fn exec_shell_quoted_args() {
 		.assert()
 		.success()
 		.stdout(predicate::str::contains("hello world"));
+}
+
+#[test]
+fn add_multiple_remotes() {
+	let temp = temp_folder();
+	let path = &temp.path().join("test_repo");
+	fs::create_dir_all(path).expect("create repo dir failed");
+
+	// Initialize git repo
+	Command::new("git")
+		.current_dir(path)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+
+	// Add multiple remotes
+	Command::new("git")
+		.current_dir(path)
+		.args(vec![
+			"remote",
+			"add",
+			"origin",
+			"git://example.org/origin_url",
+		])
+		.output()
+		.expect("git remote add origin failed");
+
+	Command::new("git")
+		.current_dir(path)
+		.args(vec![
+			"remote",
+			"add",
+			"upstream",
+			"git://example.org/upstream_url",
+		])
+		.output()
+		.expect("git remote add upstream failed");
+
+	// Run gitopolis add
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["add", "test_repo"])
+		.assert()
+		.success()
+		.stderr(predicate::str::contains("Added test_repo\n"));
+
+	// Verify TOML contains both remotes
+	let expected_toml = "[[repos]]
+path = \"test_repo\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/origin_url\"
+
+[repos.remotes.upstream]
+name = \"upstream\"
+url = \"git://example.org/upstream_url\"
+";
+	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
+}
+
+#[test]
+fn list_long_multiple_remotes() {
+	let temp = temp_folder();
+	let path = &temp.path().join("test_repo");
+	fs::create_dir_all(path).expect("create repo dir failed");
+
+	// Initialize git repo
+	Command::new("git")
+		.current_dir(path)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+
+	// Add multiple remotes
+	Command::new("git")
+		.current_dir(path)
+		.args(vec![
+			"remote",
+			"add",
+			"origin",
+			"git://example.org/origin_url",
+		])
+		.output()
+		.expect("git remote add origin failed");
+
+	Command::new("git")
+		.current_dir(path)
+		.args(vec![
+			"remote",
+			"add",
+			"upstream",
+			"git://example.org/upstream_url",
+		])
+		.output()
+		.expect("git remote add upstream failed");
+
+	// Run gitopolis add
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["add", "test_repo"])
+		.output()
+		.expect("Failed to add repo");
+
+	// Test list --long shows both remotes
+	let expected_output = "test_repo\t\torigin=git://example.org/origin_url,upstream=git://example.org/upstream_url\n";
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["list", "--long"])
+		.assert()
+		.success()
+		.stdout(expected_output);
+}
+
+#[test]
+fn clone_multiple_remotes() {
+	let temp = temp_folder();
+
+	// Create source repos
+	create_local_repo(&temp, "source_origin");
+	create_local_repo(&temp, "source_upstream");
+
+	// Create state with multiple remotes
+	let initial_state_toml = "[[repos]]
+path = \"cloned_repo\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"source_origin\"
+
+[repos.remotes.upstream]
+name = \"upstream\"
+url = \"source_upstream\"
+";
+	write_gitopolis_state_toml(&temp, initial_state_toml);
+
+	// Run clone
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["clone"])
+		.assert()
+		.success();
+
+	// Verify both remotes exist in cloned repo
+	let cloned_path = temp.path().join("cloned_repo");
+
+	let origin_output = Command::new("git")
+		.current_dir(&cloned_path)
+		.args(vec!["config", "remote.origin.url"])
+		.output()
+		.expect("git config failed");
+	assert!(origin_output.status.success());
+	let origin_url = String::from_utf8(origin_output.stdout)
+		.expect("utf8 conversion failed")
+		.trim()
+		.to_string();
+	assert!(origin_url.ends_with("source_origin"));
+
+	let upstream_output = Command::new("git")
+		.current_dir(&cloned_path)
+		.args(vec!["config", "remote.upstream.url"])
+		.output()
+		.expect("git config failed");
+	assert!(upstream_output.status.success());
+	let upstream_url = String::from_utf8(upstream_output.stdout)
+		.expect("utf8 conversion failed")
+		.trim()
+		.to_string();
+	assert!(upstream_url.ends_with("source_upstream"));
 }
