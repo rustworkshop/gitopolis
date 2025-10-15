@@ -56,6 +56,10 @@ wget https://gist.githubusercontent.com/timabell/87add070a8a44db4985586efe380757
 gitopolis clone
 ```
 
+### Getting many repos from github / azure-devops etc
+
+Take a look at the python scripts at [github.com/timabell/cloner](https://github.com/timabell/cloner) that can read repo lists from github and azure devops and write them to a gitopolis config file ready for cloning.
+
 ### Using shell aliases
 
 You can't currently use shell aliases because commands are executed directly rather than passing through a shell such as bash/zsh/fish. See <https://github.com/rustworkshop/gitopolis/issues/13>.
@@ -98,10 +102,6 @@ url = "git@github.com:timabell/database-diagram-scm.git"
 [View as gist](https://gist.github.com/timabell/87add070a8a44db4985586efe380757d).
 
 [TOML](https://toml.io/) is a well-supported config markup with parsers for many programming languages.
-
----
-
----
 
 ## The name
 
