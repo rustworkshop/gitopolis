@@ -64,6 +64,18 @@ enum Commands {
 		#[arg(short, long)]
 		tag: Option<String>,
 	},
+	/// Sync remotes between git repositories and .gitopolis.toml configuration
+	Sync {
+		/// Update .gitopolis.toml from remotes in git repositories
+		#[arg(long, conflicts_with = "write_remotes")]
+		read_remotes: bool,
+		/// Update git repositories with remotes from .gitopolis.toml
+		#[arg(long, conflicts_with = "read_remotes")]
+		write_remotes: bool,
+		/// Filter to repos with this tag
+		#[arg(short, long)]
+		tag: Option<String>,
+	},
 }
 
 fn main() {
@@ -118,6 +130,24 @@ fn main() {
 			}
 		}
 		Some(Commands::Tags { long }) => list_tags(*long),
+		Some(Commands::Sync {
+			read_remotes,
+			write_remotes,
+			tag,
+		}) => {
+			if *read_remotes {
+				init_gitopolis()
+					.sync_read_remotes(tag)
+					.expect("Sync read failed");
+			} else if *write_remotes {
+				init_gitopolis()
+					.sync_write_remotes(tag)
+					.expect("Sync write failed");
+			} else {
+				eprintln!("Error: Must specify either --read-remotes or --write-remotes");
+				std::process::exit(1);
+			}
+		}
 		None => {
 			panic!("no command") // this doesn't happen because help shows instead
 		}

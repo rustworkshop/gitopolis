@@ -2,7 +2,7 @@ use std::fs;
 use std::process::Command;
 
 use assert_cmd::Command as AssertCommand;
-use predicates::prelude::predicate;
+use predicates::prelude::{predicate, PredicateBooleanExt};
 use tempfile::{tempdir, TempDir};
 
 #[test]
@@ -1090,4 +1090,360 @@ url = \"source_upstream\"
 		.trim()
 		.to_string();
 	assert!(upstream_url.ends_with("source_upstream"));
+}
+
+#[test]
+fn sync_read_remotes() {
+	let temp = temp_folder();
+	let path = &temp.path().join("test_repo");
+	fs::create_dir_all(path).expect("create repo dir failed");
+
+	// Initialize git repo with multiple remotes
+	Command::new("git")
+		.current_dir(path)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+
+	Command::new("git")
+		.current_dir(path)
+		.args(vec![
+			"remote",
+			"add",
+			"origin",
+			"git://example.org/origin_url",
+		])
+		.output()
+		.expect("git remote add origin failed");
+
+	Command::new("git")
+		.current_dir(path)
+		.args(vec![
+			"remote",
+			"add",
+			"upstream",
+			"git://example.org/upstream_url",
+		])
+		.output()
+		.expect("git remote add upstream failed");
+
+	// Create initial gitopolis state with just the repo path (no remotes)
+	let initial_state_toml = "[[repos]]
+path = \"test_repo\"
+tags = []
+
+[repos.remotes]
+";
+	write_gitopolis_state_toml(&temp, initial_state_toml);
+
+	// Run sync --read-remotes
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["sync", "--read-remotes"])
+		.assert()
+		.success()
+		.stderr(predicate::str::contains(
+			"Updated test_repo with remotes from git",
+		));
+
+	// Verify TOML now contains both remotes from git
+	let expected_toml = "[[repos]]
+path = \"test_repo\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/origin_url\"
+
+[repos.remotes.upstream]
+name = \"upstream\"
+url = \"git://example.org/upstream_url\"
+";
+	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
+}
+
+#[test]
+fn sync_write_remotes() {
+	let temp = temp_folder();
+	let path = &temp.path().join("test_repo");
+	fs::create_dir_all(path).expect("create repo dir failed");
+
+	// Initialize git repo with just origin
+	Command::new("git")
+		.current_dir(path)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+
+	Command::new("git")
+		.current_dir(path)
+		.args(vec![
+			"remote",
+			"add",
+			"origin",
+			"git://example.org/origin_url",
+		])
+		.output()
+		.expect("git remote add origin failed");
+
+	// Create gitopolis state with additional remotes
+	let initial_state_toml = "[[repos]]
+path = \"test_repo\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/origin_url\"
+
+[repos.remotes.upstream]
+name = \"upstream\"
+url = \"git://example.org/upstream_url\"
+
+[repos.remotes.fork]
+name = \"fork\"
+url = \"git://example.org/fork_url\"
+";
+	write_gitopolis_state_toml(&temp, initial_state_toml);
+
+	// Run sync --write-remotes
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["sync", "--write-remotes"])
+		.assert()
+		.success()
+		.stderr(predicate::str::contains(
+			"Added remote upstream to test_repo",
+		))
+		.stderr(predicate::str::contains("Added remote fork to test_repo"));
+
+	// Verify git now has all remotes
+	let upstream_output = Command::new("git")
+		.current_dir(path)
+		.args(vec!["config", "remote.upstream.url"])
+		.output()
+		.expect("git config failed");
+	assert!(upstream_output.status.success());
+	let upstream_url = String::from_utf8(upstream_output.stdout)
+		.expect("utf8 conversion failed")
+		.trim()
+		.to_string();
+	assert_eq!("git://example.org/upstream_url", upstream_url);
+
+	let fork_output = Command::new("git")
+		.current_dir(path)
+		.args(vec!["config", "remote.fork.url"])
+		.output()
+		.expect("git config failed");
+	assert!(fork_output.status.success());
+	let fork_url = String::from_utf8(fork_output.stdout)
+		.expect("utf8 conversion failed")
+		.trim()
+		.to_string();
+	assert_eq!("git://example.org/fork_url", fork_url);
+}
+
+#[test]
+fn sync_read_remotes_with_tag() {
+	let temp = temp_folder();
+
+	// Create first repo with tag
+	let path1 = &temp.path().join("tagged_repo");
+	fs::create_dir_all(path1).expect("create repo dir failed");
+	Command::new("git")
+		.current_dir(path1)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+	Command::new("git")
+		.current_dir(path1)
+		.args(vec![
+			"remote",
+			"add",
+			"origin",
+			"git://example.org/tagged_url",
+		])
+		.output()
+		.expect("git remote add failed");
+
+	// Create second repo without tag
+	let path2 = &temp.path().join("untagged_repo");
+	fs::create_dir_all(path2).expect("create repo dir failed");
+	Command::new("git")
+		.current_dir(path2)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+	Command::new("git")
+		.current_dir(path2)
+		.args(vec![
+			"remote",
+			"add",
+			"origin",
+			"git://example.org/untagged_url",
+		])
+		.output()
+		.expect("git remote add failed");
+
+	// Create initial state with tags
+	let initial_state_toml = "[[repos]]
+path = \"tagged_repo\"
+tags = [\"sync-tag\"]
+
+[repos.remotes]
+
+[[repos]]
+path = \"untagged_repo\"
+tags = []
+
+[repos.remotes]
+";
+	write_gitopolis_state_toml(&temp, initial_state_toml);
+
+	// Run sync --read-remotes with tag
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["sync", "--read-remotes", "--tag", "sync-tag"])
+		.assert()
+		.success()
+		.stderr(predicate::str::contains(
+			"Updated tagged_repo with remotes from git",
+		))
+		.stderr(predicate::str::contains("untagged_repo").not());
+
+	// Verify only tagged repo was updated
+	let toml = read_gitopolis_state_toml(&temp);
+	assert!(toml.contains("git://example.org/tagged_url"));
+	assert!(!toml.contains("git://example.org/untagged_url"));
+}
+
+#[test]
+fn sync_write_remotes_with_tag() {
+	let temp = temp_folder();
+
+	// Create first repo with tag
+	let path1 = &temp.path().join("tagged_repo");
+	fs::create_dir_all(path1).expect("create repo dir failed");
+	Command::new("git")
+		.current_dir(path1)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+
+	// Create second repo without tag
+	let path2 = &temp.path().join("untagged_repo");
+	fs::create_dir_all(path2).expect("create repo dir failed");
+	Command::new("git")
+		.current_dir(path2)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+
+	// Create state with remotes to add
+	let initial_state_toml = "[[repos]]
+path = \"tagged_repo\"
+tags = [\"sync-tag\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/tagged_origin\"
+
+[repos.remotes.upstream]
+name = \"upstream\"
+url = \"git://example.org/tagged_upstream\"
+
+[[repos]]
+path = \"untagged_repo\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/untagged_origin\"
+";
+	write_gitopolis_state_toml(&temp, initial_state_toml);
+
+	// Run sync --write-remotes with tag
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["sync", "--write-remotes", "--tag", "sync-tag"])
+		.assert()
+		.success()
+		.stderr(predicate::str::contains(
+			"Added remote origin to tagged_repo",
+		))
+		.stderr(predicate::str::contains(
+			"Added remote upstream to tagged_repo",
+		))
+		.stderr(predicate::str::contains("untagged_repo").not());
+
+	// Verify only tagged repo got remotes
+	let output1 = Command::new("git")
+		.current_dir(path1)
+		.args(vec!["remote", "-v"])
+		.output()
+		.expect("git remote failed");
+	let remotes1 = String::from_utf8(output1.stdout).expect("utf8 conversion failed");
+	assert!(remotes1.contains("origin"));
+	assert!(remotes1.contains("upstream"));
+
+	let output2 = Command::new("git")
+		.current_dir(path2)
+		.args(vec!["remote", "-v"])
+		.output()
+		.expect("git remote failed");
+	let remotes2 = String::from_utf8(output2.stdout).expect("utf8 conversion failed");
+	assert!(remotes2.is_empty());
+}
+
+#[test]
+fn sync_read_remotes_missing_repo() {
+	let temp = temp_folder();
+
+	// Create initial state with a missing repo
+	let initial_state_toml = "[[repos]]
+path = \"missing_repo\"
+tags = []
+
+[repos.remotes]
+";
+	write_gitopolis_state_toml(&temp, initial_state_toml);
+
+	// Run sync --read-remotes
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["sync", "--read-remotes"])
+		.assert()
+		.failure()
+		.code(1)
+		.stderr(predicate::str::contains(
+			"Warning: Could not read remotes from missing_repo",
+		))
+		.stderr(predicate::str::contains("1 repos failed to sync"));
+}
+
+#[test]
+fn sync_write_remotes_missing_repo() {
+	let temp = temp_folder();
+
+	// Create initial state with a missing repo
+	let initial_state_toml = "[[repos]]
+path = \"missing_repo\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+";
+	write_gitopolis_state_toml(&temp, initial_state_toml);
+
+	// Run sync --write-remotes
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["sync", "--write-remotes"])
+		.assert()
+		.failure()
+		.code(1)
+		.stderr(predicate::str::contains(
+			"Warning: Could not write remotes to missing_repo",
+		))
+		.stderr(predicate::str::contains("1 repos failed to sync"));
 }
