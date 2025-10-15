@@ -310,6 +310,22 @@ impl Git for FakeGit {
 		Ok("git://example.org/test_url".to_string())
 	}
 
+	fn read_all_remotes(
+		&self,
+		_path: String,
+	) -> Result<std::collections::BTreeMap<String, String>, GitopolisError> {
+		let mut remotes = std::collections::BTreeMap::new();
+		remotes.insert(
+			"origin".to_string(),
+			"git://example.org/test_url".to_string(),
+		);
+		Ok(remotes)
+	}
+
+	fn add_remote(&self, _path: &str, _remote_name: &str, _url: &str) {
+		// No-op for fake implementation
+	}
+
 	fn clone(&self, path: &str, url: &str) {
 		(self.clone_callback)(path.to_owned(), url.to_owned())
 	}

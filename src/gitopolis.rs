@@ -42,11 +42,8 @@ impl Gitopolis {
 			info!("{normalized_folder} already added, ignoring.");
 			return Ok(());
 		}
-		let remote_name = "origin".to_string(); // todo: read all remotes, not just origin https://github.com/timabell/gitopolis/issues/7
-		let url = self
-			.git
-			.read_url(normalized_folder.to_owned(), remote_name.to_owned())?;
-		repos.add(normalized_folder, url, remote_name);
+		let remotes = self.git.read_all_remotes(normalized_folder.to_owned())?;
+		repos.add(normalized_folder, remotes);
 		self.save(repos)?;
 		Ok(())
 	}
@@ -90,9 +87,24 @@ impl Gitopolis {
 	}
 	pub fn clone(&self, repos: Vec<Repo>) {
 		for repo in repos {
-			// todo: multiple remote support https://github.com/timabell/gitopolis/issues/7
-			let url = &repo.remotes["origin"].url;
-			self.git.clone(repo.path.as_str(), url);
+			// Determine which remote to use for cloning (prefer origin)
+			let clone_remote_name = if repo.remotes.contains_key("origin") {
+				"origin"
+			} else {
+				repo.remotes.keys().next().map(|s| s.as_str()).unwrap_or("")
+			};
+
+			if let Some(clone_remote) = repo.remotes.get(clone_remote_name) {
+				// Clone the repo
+				self.git.clone(repo.path.as_str(), &clone_remote.url);
+
+				// Add all other remotes
+				for (name, remote) in &repo.remotes {
+					if name != clone_remote_name {
+						self.git.add_remote(&repo.path, name, &remote.url);
+					}
+				}
+			}
 		}
 	}
 	pub fn tags(&self) -> Result<Vec<String>, GitopolisError> {
@@ -106,6 +118,72 @@ impl Gitopolis {
 		flat.sort();
 		flat.dedup();
 		Ok(flat)
+	}
+
+	pub fn sync_read_remotes(&mut self, tag_name: &Option<String>) -> Result<(), GitopolisError> {
+		let mut repos = self.load()?;
+		let repo_list = self.list(tag_name)?;
+		let mut error_count = 0;
+
+		for repo in repo_list {
+			match self.git.read_all_remotes(repo.path.clone()) {
+				Ok(remotes) => {
+					// Find the repo in the mutable repos structure and update its remotes
+					if let Some(repo_mut) = repos.find_repo(repo.path.clone()) {
+						repo_mut.remotes.clear();
+						for (name, url) in remotes {
+							repo_mut.add_remote(name, url);
+						}
+						info!("Updated {} with remotes from git", repo.path);
+					}
+				}
+				Err(_) => {
+					eprintln!("Warning: Could not read remotes from {}", repo.path);
+					error_count += 1;
+				}
+			}
+		}
+
+		self.save(repos)?;
+
+		if error_count > 0 {
+			eprintln!("{error_count} repos failed to sync");
+			std::process::exit(1);
+		}
+
+		Ok(())
+	}
+
+	pub fn sync_write_remotes(&self, tag_name: &Option<String>) -> Result<(), GitopolisError> {
+		let repo_list = self.list(tag_name)?;
+		let mut error_count = 0;
+
+		for repo in repo_list {
+			// Get current remotes from git
+			let current_remotes = match self.git.read_all_remotes(repo.path.clone()) {
+				Ok(remotes) => remotes,
+				Err(_) => {
+					eprintln!("Warning: Could not write remotes to {}", repo.path);
+					error_count += 1;
+					continue;
+				}
+			};
+
+			// Add any missing remotes from config
+			for (name, remote) in &repo.remotes {
+				if !current_remotes.contains_key(name) {
+					self.git.add_remote(&repo.path, name, &remote.url);
+					info!("Added remote {} to {}", name, repo.path);
+				}
+			}
+		}
+
+		if error_count > 0 {
+			eprintln!("{error_count} repos failed to sync");
+			std::process::exit(1);
+		}
+
+		Ok(())
 	}
 
 	fn save(&self, repos: Repos) -> Result<(), GitopolisError> {
