@@ -270,15 +270,18 @@ url = \"example_url\"
 ";
 	write_gitopolis_state_toml(&temp, initial_state_toml);
 
-	let expected_stdout = "🏢 missing_git_folder> Repo folder missing, skipped.
+	let expected_stdout = "
+🏢 missing_git_folder> Repo folder missing, skipped.
 ";
 
 	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--", "never_called"])
 		.assert()
-		.success()
-		.stdout(expected_stdout);
+		.failure()
+		.code(1)
+		.stdout(expected_stdout)
+		.stderr("1 repos skipped\n");
 }
 
 #[test]
@@ -481,6 +484,39 @@ fn exec_oneline_non_zero() {
 		.code(1)
 		.stdout(expected_stdout)
 		.stderr("2 commands exited with non-zero status code\n");
+}
+
+#[test]
+fn exec_oneline_missing() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_url");
+
+	let initial_state_toml = "[[repos]]
+path = \"missing_repo\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"example_url\"
+
+[[repos]]
+path = \"repo_a\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+";
+	write_gitopolis_state_toml(&temp, initial_state_toml);
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--oneline", "--", "echo", "hello"])
+		.assert()
+		.failure()
+		.code(1)
+		.stdout("missing_repo\tRepo folder missing, skipped.\nrepo_a\thello\n")
+		.stderr("1 repos skipped\n");
 }
 
 #[test]

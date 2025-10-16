@@ -5,10 +5,17 @@ use std::process::{Child, Command, ExitStatus, Stdio};
 
 pub fn exec(exec_args: Vec<String>, repos: Vec<Repo>, oneline: bool) {
 	let mut error_count = 0;
+	let mut skipped_count = 0;
 	for repo in &repos {
 		if !exists(&repo.path) {
-			println!("🏢 {}> Repo folder missing, skipped.", &repo.path);
-			return;
+			if oneline {
+				println!("{}\tRepo folder missing, skipped.", &repo.path);
+			} else {
+				println!();
+				println!("🏢 {}> Repo folder missing, skipped.", &repo.path);
+			}
+			skipped_count += 1;
+			continue;
 		}
 		if oneline {
 			let (output, success) =
@@ -29,8 +36,13 @@ pub fn exec(exec_args: Vec<String>, repos: Vec<Repo>, oneline: bool) {
 			println!();
 		}
 	}
-	if error_count > 0 {
-		eprintln!("{error_count} commands exited with non-zero status code");
+	if error_count > 0 || skipped_count > 0 {
+		if error_count > 0 {
+			eprintln!("{error_count} commands exited with non-zero status code");
+		}
+		if skipped_count > 0 {
+			eprintln!("{skipped_count} repos skipped");
+		}
 		std::process::exit(1);
 	}
 }
