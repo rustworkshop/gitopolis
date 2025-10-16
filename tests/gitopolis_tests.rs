@@ -198,6 +198,120 @@ url = \"git://example.org/test_url\"\
 }
 
 #[test]
+fn list_returns_repos_sorted_alphabetically() {
+	let starting_state = "[[repos]]
+path = \"zebra_repo\"
+tags = [\"zulu\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/zebra\"
+
+[[repos]]
+path = \"alpha_repo\"
+tags = [\"alpha\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/alpha\"\
+";
+
+	let storage = FakeStorage::new()
+		.with_contents(starting_state.to_string())
+		.boxed();
+
+	let git = FakeGit::new().boxed();
+	let gitopolis = Gitopolis::new(storage, git);
+
+	let repos = gitopolis.list(&None).expect("Failed to list repos");
+
+	assert_eq!(2, repos.len());
+	assert_eq!("alpha_repo", repos[0].path);
+	assert_eq!("zebra_repo", repos[1].path);
+}
+
+#[test]
+fn list_with_tag_filter_returns_sorted_repos() {
+	let starting_state = "[[repos]]
+path = \"zebra_repo\"
+tags = [\"backend\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/zebra\"
+
+[[repos]]
+path = \"middle_repo\"
+tags = [\"frontend\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/middle\"
+
+[[repos]]
+path = \"alpha_repo\"
+tags = [\"backend\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/alpha\"\
+";
+
+	let storage = FakeStorage::new()
+		.with_contents(starting_state.to_string())
+		.boxed();
+
+	let git = FakeGit::new().boxed();
+	let gitopolis = Gitopolis::new(storage, git);
+
+	let repos = gitopolis
+		.list(&Some("backend".to_string()))
+		.expect("Failed to list repos");
+
+	assert_eq!(2, repos.len());
+	assert_eq!("alpha_repo", repos[0].path);
+	assert_eq!("zebra_repo", repos[1].path);
+}
+
+#[test]
+fn tags_long_repos_sorted_within_tag() {
+	let starting_state = "[[repos]]
+path = \"zebra_repo\"
+tags = [\"backend\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/zebra\"
+
+[[repos]]
+path = \"alpha_repo\"
+tags = [\"backend\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/alpha\"\
+";
+
+	let storage = FakeStorage::new()
+		.with_contents(starting_state.to_string())
+		.boxed();
+
+	let git = FakeGit::new().boxed();
+	let gitopolis = Gitopolis::new(storage, git);
+
+	let tags = gitopolis.tags().expect("Failed to get tags");
+	assert_eq!(1, tags.len());
+	assert_eq!("backend", tags[0]);
+
+	let repos = gitopolis
+		.list(&Some("backend".to_string()))
+		.expect("Failed to list repos");
+	assert_eq!(2, repos.len());
+	assert_eq!("alpha_repo", repos[0].path);
+	assert_eq!("zebra_repo", repos[1].path);
+}
+
+#[test]
 fn remove() {
 	let starting_state = "[[repos]]
 path = \"test_repo\"

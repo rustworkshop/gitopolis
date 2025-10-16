@@ -73,14 +73,16 @@ impl Gitopolis {
 	}
 	pub fn list(&self, tag_name: &Option<String>) -> Result<Vec<Repo>, GitopolisError> {
 		let repos = self.load()?;
-		Ok(match tag_name {
+		let mut result = match tag_name {
 			None => repos.into_vec(),
 			Some(tag) => repos
 				.into_vec()
 				.into_iter()
 				.filter(|r| r.tags.contains(&tag.to_string()))
 				.collect(),
-		})
+		};
+		result.sort_by(|a, b| a.path.cmp(&b.path));
+		Ok(result)
 	}
 	pub fn read(&self) -> Result<Repos, GitopolisError> {
 		self.load()
