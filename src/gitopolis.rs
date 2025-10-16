@@ -59,7 +59,7 @@ impl Gitopolis {
 		repo_folders: &[String],
 	) -> Result<(), GitopolisError> {
 		let mut repos = self.load()?;
-		repos.add_tag(tag_name, normalize_folders(repo_folders));
+		repos.add_tag(tag_name, normalize_folders(repo_folders))?;
 		self.save(repos)
 	}
 	pub fn remove_tag(
@@ -68,7 +68,7 @@ impl Gitopolis {
 		repo_folders: &[String],
 	) -> Result<(), GitopolisError> {
 		let mut repos = self.load()?;
-		repos.remove_tag(tag_name, normalize_folders(repo_folders));
+		repos.remove_tag(tag_name, normalize_folders(repo_folders))?;
 		self.save(repos)
 	}
 	pub fn list(&self, tag_name: &Option<String>) -> Result<Vec<Repo>, GitopolisError> {

@@ -1572,3 +1572,37 @@ fn show_repo_not_found() {
 			"Repo 'nonexistent_repo' not found",
 		));
 }
+
+#[test]
+fn tag_repo_not_found() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "existing_repo", "git://example.org/test_url");
+
+	// Try to tag a repo that doesn't exist
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["tag", "some_tag", "nonexistent_repo"])
+		.assert()
+		.failure()
+		.code(1)
+		.stderr(predicate::str::contains(
+			"Repo 'nonexistent_repo' not found",
+		));
+}
+
+#[test]
+fn tag_remove_repo_not_found() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "existing_repo", "git://example.org/test_url");
+
+	// Try to remove tag from a repo that doesn't exist
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["tag", "--remove", "some_tag", "nonexistent_repo"])
+		.assert()
+		.failure()
+		.code(1)
+		.stderr(predicate::str::contains(
+			"Repo 'nonexistent_repo' not found",
+		));
+}

@@ -1,3 +1,4 @@
+use crate::gitopolis::GitopolisError;
 use log::info;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -90,17 +91,32 @@ impl Repos {
 		}
 	}
 
-	pub fn add_tag(&mut self, tag_name: &str, repo_folders: Vec<String>) {
+	pub fn add_tag(
+		&mut self,
+		tag_name: &str,
+		repo_folders: Vec<String>,
+	) -> Result<(), GitopolisError> {
 		self.tag(tag_name, repo_folders, false)
 	}
-	pub fn remove_tag(&mut self, tag_name: &str, repo_folders: Vec<String>) {
+	pub fn remove_tag(
+		&mut self,
+		tag_name: &str,
+		repo_folders: Vec<String>,
+	) -> Result<(), GitopolisError> {
 		self.tag(tag_name, repo_folders, true)
 	}
-	fn tag(&mut self, tag_name: &str, repo_folders: Vec<String>, remove: bool) {
+	fn tag(
+		&mut self,
+		tag_name: &str,
+		repo_folders: Vec<String>,
+		remove: bool,
+	) -> Result<(), GitopolisError> {
 		for repo_folder in repo_folders {
-			let repo = self
-				.find_repo(repo_folder.to_owned())
-				.unwrap_or_else(|| panic!("Repo '{repo_folder}' not found"));
+			let repo = self.find_repo(repo_folder.to_owned()).ok_or_else(|| {
+				GitopolisError::StateError {
+					message: format!("Repo '{repo_folder}' not found"),
+				}
+			})?;
 			if remove {
 				if let Some(ix) = repo.tags.iter().position(|t| t == tag_name) {
 					repo.tags.remove(ix);
@@ -109,6 +125,7 @@ impl Repos {
 				repo.tags.push(tag_name.to_string());
 			}
 		}
+		Ok(())
 	}
 }
 
@@ -120,8 +137,12 @@ fn idempotent_tag() {
 	remotes.insert("origin".to_string(), "url".to_string());
 	repos.add(path.to_string(), remotes);
 	let tag = "tag_name";
-	repos.add_tag(tag, vec![path.to_owned()]);
-	repos.add_tag(tag, vec![path.to_owned()]);
+	repos
+		.add_tag(tag, vec![path.to_owned()])
+		.expect("add_tag failed");
+	repos
+		.add_tag(tag, vec![path.to_owned()])
+		.expect("add_tag failed");
 	let repo = repos.find_repo(path).expect("repo awol");
 	assert_eq!(1, repo.tags.len());
 	assert_eq!(tag, repo.tags[0]);

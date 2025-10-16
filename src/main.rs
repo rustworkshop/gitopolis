@@ -124,14 +124,14 @@ fn main() {
 			repo_folders,
 			remove,
 		}) => {
-			if *remove {
-				init_gitopolis()
-					.remove_tag(tag_name, repo_folders)
-					.expect("TODO: panic message");
+			let result = if *remove {
+				init_gitopolis().remove_tag(tag_name, repo_folders)
 			} else {
-				init_gitopolis()
-					.add_tag(tag_name, repo_folders)
-					.expect("TODO: panic message");
+				init_gitopolis().add_tag(tag_name, repo_folders)
+			};
+			if let Err(error) = result {
+				eprintln!("Error: {}", error.message());
+				std::process::exit(1);
 			}
 		}
 		Some(Commands::Tags { long }) => list_tags(*long),
