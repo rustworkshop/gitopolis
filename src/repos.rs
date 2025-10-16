@@ -7,6 +7,13 @@ pub struct Repos {
 	repos: Vec<Repo>,
 }
 
+#[derive(Debug)]
+pub struct RepoInfo {
+	pub path: String,
+	pub tags: Vec<String>,
+	pub remotes: BTreeMap<String, Remote>,
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Repo {
 	pub path: String,
@@ -27,7 +34,7 @@ impl Repo {
 	}
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Remote {
 	pub name: String,
 	pub url: String,

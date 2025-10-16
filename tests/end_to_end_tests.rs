@@ -1483,3 +1483,92 @@ url = \"git://example.org/test_url\"
 		))
 		.stderr(predicate::str::contains("1 repos failed to sync"));
 }
+
+#[test]
+fn show() {
+	let temp = temp_folder();
+	let path = &temp.path().join("test_repo");
+	fs::create_dir_all(path).expect("create repo dir failed");
+
+	// Initialize git repo
+	Command::new("git")
+		.current_dir(path)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+
+	// Add multiple remotes
+	Command::new("git")
+		.current_dir(path)
+		.args(vec![
+			"remote",
+			"add",
+			"origin",
+			"git://example.org/origin_url",
+		])
+		.output()
+		.expect("git remote add origin failed");
+
+	Command::new("git")
+		.current_dir(path)
+		.args(vec![
+			"remote",
+			"add",
+			"upstream",
+			"git://example.org/upstream_url",
+		])
+		.output()
+		.expect("git remote add upstream failed");
+
+	// Add repo to gitopolis and tag it
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["add", "test_repo"])
+		.output()
+		.expect("Failed to add repo");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["tag", "backend", "test_repo"])
+		.output()
+		.expect("Failed to tag repo");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["tag", "rust", "test_repo"])
+		.output()
+		.expect("Failed to tag repo");
+
+	// Run show command
+	let expected_output = "Tags:
+  backend
+  rust
+
+Remotes:
+  origin: git://example.org/origin_url
+  upstream: git://example.org/upstream_url
+";
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["show", "test_repo"])
+		.assert()
+		.success()
+		.stdout(expected_output);
+}
+
+#[test]
+fn show_repo_not_found() {
+	let temp = temp_folder();
+
+	// Try to show a repo that doesn't exist
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["show", "nonexistent_repo"])
+		.assert()
+		.failure()
+		.code(1)
+		.stderr(predicate::str::contains(
+			"Repo 'nonexistent_repo' not found",
+		));
+}

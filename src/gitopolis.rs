@@ -1,6 +1,6 @@
 use crate::git::Git;
 use crate::gitopolis::GitopolisError::*;
-use crate::repos::{Repo, Repos};
+use crate::repos::{Repo, RepoInfo, Repos};
 use crate::storage::Storage;
 use log::info;
 use std::collections::BTreeMap;
@@ -186,6 +186,25 @@ impl Gitopolis {
 		}
 
 		Ok(())
+	}
+
+	pub fn show(&self, repo_path: &str) -> Result<RepoInfo, GitopolisError> {
+		let repos = self.load()?;
+		let normalized_path = normalize_folder(repo_path.to_string());
+
+		let repo = repos
+			.as_vec()
+			.iter()
+			.find(|r| r.path == normalized_path)
+			.ok_or_else(|| StateError {
+				message: format!("Repo '{}' not found", normalized_path),
+			})?;
+
+		Ok(RepoInfo {
+			path: repo.path.clone(),
+			tags: repo.tags.clone(),
+			remotes: repo.remotes.clone(),
+		})
 	}
 
 	fn save(&self, repos: Repos) -> Result<(), GitopolisError> {

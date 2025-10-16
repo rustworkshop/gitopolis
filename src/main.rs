@@ -76,6 +76,11 @@ enum Commands {
 		#[arg(short, long)]
 		tag: Option<String>,
 	},
+	/// Show detailed information about a repository including tags and remotes
+	Show {
+		#[clap(required = true)]
+		repo_folder: String,
+	},
 }
 
 fn main() {
@@ -148,6 +153,9 @@ fn main() {
 				std::process::exit(1);
 			}
 		}
+		Some(Commands::Show { repo_folder }) => {
+			show(repo_folder);
+		}
 		None => {
 			panic!("no command") // this doesn't happen because help shows instead
 		}
@@ -207,6 +215,36 @@ fn list_tags(long: bool) {
 	} else {
 		for tag in gitopolis.tags().expect("TODO: panic message") {
 			println!("{tag}");
+		}
+	}
+}
+
+fn show(repo_folder: &str) {
+	let gitopolis = init_gitopolis();
+	match gitopolis.show(repo_folder) {
+		Ok(repo_info) => {
+			println!("Tags:");
+			if repo_info.tags.is_empty() {
+				println!("  (none)");
+			} else {
+				for tag in &repo_info.tags {
+					println!("  {}", tag);
+				}
+			}
+			println!();
+
+			println!("Remotes:");
+			if repo_info.remotes.is_empty() {
+				println!("  (none)");
+			} else {
+				for (name, remote) in &repo_info.remotes {
+					println!("  {}: {}", name, remote.url);
+				}
+			}
+		}
+		Err(error) => {
+			eprintln!("Error: {}", error.message());
+			std::process::exit(1);
 		}
 	}
 }

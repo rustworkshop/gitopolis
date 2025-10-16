@@ -348,6 +348,46 @@ fn remove_unknown() {
 		.expect("Failed");
 }
 
+#[test]
+fn show_displays_repo_info() {
+	let starting_state = "[[repos]]
+path = \"test_repo\"
+tags = [\"backend\", \"rust\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+
+[repos.remotes.upstream]
+name = \"upstream\"
+url = \"git://example.org/upstream_url\"\
+";
+
+	let storage = FakeStorage::new()
+		.with_contents(starting_state.to_string())
+		.boxed();
+
+	let git = FakeGit::new().boxed();
+
+	let gitopolis = Gitopolis::new(storage, git);
+
+	let result = gitopolis.show("test_repo").expect("Show failed");
+
+	assert_eq!("test_repo", result.path);
+	assert_eq!(2, result.tags.len());
+	assert_eq!("backend", result.tags[0]);
+	assert_eq!("rust", result.tags[1]);
+	assert_eq!(2, result.remotes.len());
+	assert_eq!(
+		"git://example.org/test_url",
+		result.remotes.get("origin").unwrap().url
+	);
+	assert_eq!(
+		"git://example.org/upstream_url",
+		result.remotes.get("upstream").unwrap().url
+	);
+}
+
 struct FakeStorage {
 	exists: bool,
 	contents: String,
