@@ -438,7 +438,7 @@ fn exec_oneline() {
 		.args(vec!["exec", "--oneline", "--", "echo", "hello"])
 		.assert()
 		.success()
-		.stdout("🏢 repo_a> hello\n🏢 repo_b> hello\n");
+		.stdout("repo_a\thello\nrepo_b\thello\n");
 }
 
 #[test]
@@ -455,7 +455,7 @@ fn exec_oneline_multiline_output() {
 		.args(vec!["exec", "--oneline", "--", "cat", "test.txt"])
 		.assert()
 		.success()
-		.stdout("🏢 repo_a> line1 line2 line3\n");
+		.stdout("repo_a\tline1 line2 line3\n");
 }
 
 #[test]
@@ -466,10 +466,10 @@ fn exec_oneline_non_zero() {
 
 	let expected_stdout = match get_operating_system() {
 		OperatingSystem::MacOSX => {
-			"🏢 repo_a> ls: non-existent: No such file or directory\n🏢 repo_b> ls: non-existent: No such file or directory\n"
+			"repo_a\tls: non-existent: No such file or directory\nrepo_b\tls: non-existent: No such file or directory\n"
 		}
 		OperatingSystem::Other => {
-			"🏢 repo_a> ls: cannot access 'non-existent': No such file or directory\n🏢 repo_b> ls: cannot access 'non-existent': No such file or directory\n"
+			"repo_a\tls: cannot access 'non-existent': No such file or directory\nrepo_b\tls: cannot access 'non-existent': No such file or directory\n"
 		}
 	};
 
@@ -881,8 +881,8 @@ fn exec_command_oneline_with_piping() {
 		.args(vec!["exec", "--oneline", "--", "echo hello | sort"]) // Use echo piped to sort which works on both platforms
 		.assert()
 		.success()
-		.stdout(predicate::str::contains("repo_a> hello"))
-		.stdout(predicate::str::contains("repo_b> hello"));
+		.stdout(predicate::str::contains("repo_a\thello"))
+		.stdout(predicate::str::contains("repo_b\thello"));
 }
 
 #[test]

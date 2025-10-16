@@ -14,8 +14,8 @@ pub fn exec(exec_args: Vec<String>, repos: Vec<Repo>, oneline: bool) {
 			let (output, success) =
 				repo_exec_oneline(&repo.path, &exec_args).expect("Failed to execute command.");
 			match output {
-				Some(output_text) => println!("🏢 {}> {}", &repo.path, output_text),
-				None => println!("🏢 {}> ", &repo.path),
+				Some(output_text) => println!("{}\t{}", &repo.path, output_text),
+				None => println!("{}\t", &repo.path),
 			}
 			if !success {
 				error_count += 1;
