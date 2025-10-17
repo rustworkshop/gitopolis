@@ -88,8 +88,9 @@ fn shell_escape(arg: &str) -> String {
 fn shell_escape(arg: &str) -> String {
 	// Windows cmd.exe has different escaping rules
 	// We'll use double quotes and escape special characters
+	// In cmd.exe, double quotes are escaped by using backslash-quote
 	if arg.contains('"') {
-		format!("\"{}\"", arg.replace('"', "\"\""))
+		format!("\"{}\"", arg.replace('"', "\\\""))
 	} else {
 		format!("\"{}\"", arg)
 	}
