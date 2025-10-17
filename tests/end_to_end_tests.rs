@@ -1867,3 +1867,112 @@ fn move_repo_not_found() {
 			"Repo 'nonexistent_repo' not found",
 		));
 }
+
+#[test]
+fn exec_with_nested_quotes() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "echo", "oh \" no"])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("oh \" no"));
+}
+
+#[test]
+fn exec_single_arg_with_quotes_and_pipes() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", r#"echo "foo | bar" | grep bar"#])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("foo | bar"));
+}
+
+#[test]
+fn exec_single_arg_literal_pipe_characters() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", r#"echo "this | is | not | a | pipe""#])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("this | is | not | a | pipe"));
+}
+
+#[test]
+fn exec_multiple_args_with_single_quotes() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "echo", "argument with 'quotes'"])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("argument with 'quotes'"));
+}
+
+#[test]
+fn exec_oneline_with_nested_quotes() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+	add_a_repo(&temp, "repo_b", "git://example.org/test_b");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--oneline", "--", "echo", r#"oh " no"#])
+		.assert()
+		.success()
+		.stdout(
+			r#"repo_a	oh " no
+repo_b	oh " no
+"#,
+		);
+}
+
+#[test]
+fn exec_oneline_single_arg_with_pipes() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+	add_a_repo(&temp, "repo_b", "git://example.org/test_b");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec![
+			"exec",
+			"--oneline",
+			"--",
+			r#"echo "hey there" | wc -w"#,
+		])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("repo_a\t2"))
+		.stdout(predicate::str::contains("repo_b\t2"));
+}
+
+#[test]
+fn exec_oneline_multiple_args_with_single_quotes() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec![
+			"exec",
+			"--oneline",
+			"--",
+			"echo",
+			"argument with 'quotes'",
+		])
+		.assert()
+		.success()
+		.stdout("repo_a\targument with 'quotes'\n");
+}

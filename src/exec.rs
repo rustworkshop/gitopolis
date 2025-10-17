@@ -69,6 +69,32 @@ fn needs_quoting(arg: &str) -> bool {
 	})
 }
 
+/// Escapes a string for safe use in a shell command
+/// Uses POSIX shell single-quote escaping: wrap in single quotes and escape embedded single quotes
+#[cfg(unix)]
+fn shell_escape(arg: &str) -> String {
+	// For Unix shells, we use single quotes which prevent all interpolation
+	// To include a literal single quote, we end the single-quoted string,
+	// add an escaped single quote, and start a new single-quoted string
+	if arg.contains('\'') {
+		format!("'{}'", arg.replace('\'', "'\\''"))
+	} else {
+		format!("'{}'", arg)
+	}
+}
+
+/// Escapes a string for safe use in a Windows cmd shell
+#[cfg(windows)]
+fn shell_escape(arg: &str) -> String {
+	// Windows cmd.exe has different escaping rules
+	// We'll use double quotes and escape special characters
+	if arg.contains('"') {
+		format!("\"{}\"", arg.replace('"', "\"\""))
+	} else {
+		format!("\"{}\"", arg)
+	}
+}
+
 fn format_args_for_display(args: &[String]) -> String {
 	args.iter()
 		.map(|arg| {
@@ -89,7 +115,17 @@ fn format_args_for_display(args: &[String]) -> String {
 }
 
 fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
-	let command_string = exec_args.join(" ");
+	// If there's only one argument, pass it directly to allow shell syntax (pipes, redirection, etc.)
+	// If there are multiple arguments, escape each one to prevent injection issues
+	let command_string = if exec_args.len() == 1 {
+		exec_args[0].clone()
+	} else {
+		exec_args
+			.iter()
+			.map(|arg| shell_escape(arg))
+			.collect::<Vec<_>>()
+			.join(" ")
+	};
 	println!();
 	println!("🏢 {}> {}", path, format_args_for_display(exec_args));
 
@@ -119,7 +155,17 @@ fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
 }
 
 fn repo_exec_oneline(path: &str, exec_args: &[String]) -> Result<(Option<String>, bool), Error> {
-	let command_string = exec_args.join(" ");
+	// If there's only one argument, pass it directly to allow shell syntax (pipes, redirection, etc.)
+	// If there are multiple arguments, escape each one to prevent injection issues
+	let command_string = if exec_args.len() == 1 {
+		exec_args[0].clone()
+	} else {
+		exec_args
+			.iter()
+			.map(|arg| shell_escape(arg))
+			.collect::<Vec<_>>()
+			.join(" ")
+	};
 
 	// Execute through shell to support piping, redirection, etc.
 	#[cfg(unix)]
