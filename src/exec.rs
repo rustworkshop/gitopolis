@@ -53,10 +53,40 @@ fn exists(repo_path: &String) -> bool {
 	path.exists() && path.is_dir()
 }
 
+fn needs_quoting(arg: &str) -> bool {
+	arg.chars().any(|c| {
+		c.is_whitespace()
+			|| matches!(
+				c,
+				'|' | '&' | ';' | '<' | '>' | '(' | ')' | '$' | '`' | '\\' | '"' | '\'' | '*'
+					| '?' | '[' | ']' | '{' | '}' | '!' | '#'
+			)
+	})
+}
+
+fn format_args_for_display(args: &[String]) -> String {
+	args.iter()
+		.map(|arg| {
+			if needs_quoting(arg) {
+				// Use single quotes for simplicity, escape any single quotes in the string
+				if arg.contains('\'') {
+					// For strings containing single quotes, use double quotes and escape
+					format!("\"{}\"", arg.replace('\\', "\\\\").replace('"', "\\\""))
+				} else {
+					format!("'{}'", arg)
+				}
+			} else {
+				arg.clone()
+			}
+		})
+		.collect::<Vec<_>>()
+		.join(" ")
+}
+
 fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
 	let command_string = exec_args.join(" ");
 	println!();
-	println!("🏢 {}> {}", path, command_string);
+	println!("🏢 {}> {}", path, format_args_for_display(exec_args));
 
 	// Execute through shell to support piping, redirection, etc.
 	#[cfg(unix)]

@@ -934,11 +934,11 @@ fn exec_shell_piping() {
 		.assert()
 		.success()
 		.stdout(predicate::str::contains(
-			"🏢 repo_a> echo test output | sort",
+			"🏢 repo_a> 'echo test output | sort'",
 		))
 		.stdout(predicate::str::contains("test output"))
 		.stdout(predicate::str::contains(
-			"🏢 repo_b> echo test output | sort",
+			"🏢 repo_b> 'echo test output | sort'",
 		));
 }
 
@@ -1605,4 +1605,19 @@ fn tag_remove_repo_not_found() {
 		.stderr(predicate::str::contains(
 			"Repo 'nonexistent_repo' not found",
 		));
+}
+
+#[test]
+fn exec_displays_quoted_args() {
+	// Test that exec command display adds quotes for arguments with spaces
+	// Issue: https://github.com/rustworkshop/gitopolis/issues/86
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "echo", "oh no"])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("🏢 repo_a> echo 'oh no'"));
 }
