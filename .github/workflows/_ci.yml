@@ -52,18 +52,18 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-            artifact_name: gitopolis-linux-x86_64
-            binary_name: gitopolis
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            artifact_name: gitopolis-windows-x86_64
-            binary_name: gitopolis.exe
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            artifact_name: gitopolis-macos-x86_64
-            binary_name: gitopolis
+        - os: ubuntu-latest
+          target: x86_64-unknown-linux-musl
+          artifact_name: gitopolis-linux-x86_64
+          binary_name: gitopolis
+        - os: windows-latest
+          target: x86_64-pc-windows-msvc
+          artifact_name: gitopolis-windows-x86_64
+          binary_name: gitopolis.exe
+        - os: macos-latest
+          target: x86_64-apple-darwin
+          artifact_name: gitopolis-macos-x86_64
+          binary_name: gitopolis
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v5
@@ -71,6 +71,28 @@ jobs:
       with:
         toolchain: ${{ needs.get-rust-version.outputs.rust-version }}
         targets: ${{ matrix.target }}
+    - name: Cache Cargo registry
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/registry/index
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/registry/cache
+        key: ${{ runner.os }}-cargo-deps-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-deps-
+    - name: Cache build artifacts
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ runner.os }}-${{ matrix.target }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.target }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}-
+          ${{ runner.os }}-${{ matrix.target }}-cargo-build-
     - name: Debug - Test shell commands availability
       shell: bash
       run: |
@@ -81,6 +103,15 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y musl-tools
+    - name: Setup sccache (Windows)
+      if: matrix.os == 'windows-latest'
+      uses: mozilla-actions/sccache-action@v0.0.7
+    - name: Configure sccache (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: bash
+      run: |
+        echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+        echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
     - name: Update Version (Linux/Windows)
       if: inputs.release_tag != '' && matrix.os != 'macos-latest'
       shell: bash
@@ -102,7 +133,7 @@ jobs:
     - name: Build
       run: cargo build --target ${{ matrix.target }} --release
     - name: Test
-      run: cargo test --verbose --release
+      run: cargo test --verbose --release --no-fail-fast
     - name: Package Binary
       shell: bash
       run: |
