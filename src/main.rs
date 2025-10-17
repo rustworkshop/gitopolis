@@ -88,6 +88,15 @@ enum Commands {
 		#[clap(required = true)]
 		repo_folder: String,
 	},
+	/// Move a repository to a new location, updating gitopolis configuration
+	Move {
+		/// Entity type to move (currently only 'repo' is supported)
+		entity_type: String,
+		/// Current path of the repository
+		old_path: String,
+		/// New path for the repository
+		new_path: String,
+	},
 }
 
 fn main() {
@@ -166,6 +175,25 @@ fn main() {
 		}
 		Some(Commands::Show { repo_folder }) => {
 			show(repo_folder);
+		}
+		Some(Commands::Move {
+			entity_type,
+			old_path,
+			new_path,
+		}) => {
+			if entity_type != "repo" {
+				eprintln!("Error: Only 'repo' entity type is currently supported");
+				std::process::exit(1);
+			}
+			match init_gitopolis().move_repo(old_path, new_path) {
+				Ok(_) => {
+					eprintln!("Moved {} to {}", old_path, new_path);
+				}
+				Err(error) => {
+					eprintln!("Error: {}", error.message());
+					std::process::exit(1);
+				}
+			}
 		}
 		None => {
 			panic!("no command") // this doesn't happen because help shows instead

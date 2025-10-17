@@ -1737,3 +1737,133 @@ fn clone_with_url_and_target_dir() {
 		.success()
 		.stdout("my_custom_name\n");
 }
+
+#[test]
+fn move_repo() {
+	// Test basic move operation
+	// Issue: https://github.com/rustworkshop/gitopolis/issues/157
+	let temp = temp_folder();
+	add_a_repo(&temp, "old_location", "git://example.org/test_url");
+
+	// Move the repo
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["move", "repo", "old_location", "new_location"])
+		.assert()
+		.success()
+		.stderr(predicate::str::contains(
+			"Moved old_location to new_location",
+		));
+
+	// Verify old location doesn't exist
+	assert!(!temp.path().join("old_location").exists());
+
+	// Verify new location exists
+	assert!(temp.path().join("new_location").exists());
+
+	// Verify config is updated
+	let expected_toml = "[[repos]]
+path = \"new_location\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+";
+	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
+
+	// Verify repo is listed with new name
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["list"])
+		.assert()
+		.success()
+		.stdout("new_location\n");
+}
+
+#[test]
+fn move_repo_with_nested_path() {
+	// Test move operation with nested source and target paths, creating parent directories
+	// Issue: https://github.com/rustworkshop/gitopolis/issues/157
+	let temp = temp_folder();
+	add_a_repo(&temp, "services/backend", "git://example.org/test_url");
+
+	// Move to nested path (parent directories don't exist yet)
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["move", "repo", "services/backend", "apps/auth"])
+		.assert()
+		.success()
+		.stderr(predicate::str::contains(
+			"Moved services/backend to apps/auth",
+		));
+
+	// Verify old location doesn't exist
+	assert!(!temp.path().join("services/backend").exists());
+
+	// Verify new location exists
+	assert!(temp.path().join("apps/auth").exists());
+
+	// Verify new parent directory was created
+	assert!(temp.path().join("apps").exists());
+
+	// Verify config is updated
+	let expected_toml = "[[repos]]
+path = \"apps/auth\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+";
+	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
+}
+
+#[test]
+fn move_repo_preserves_tags() {
+	// Test that move preserves tags
+	// Issue: https://github.com/rustworkshop/gitopolis/issues/157
+	let temp = temp_folder();
+	add_a_repo_with_tags(
+		&temp,
+		"tagged_repo",
+		"git://example.org/test_url",
+		vec!["backend", "rust"],
+	);
+
+	// Move the repo
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["move", "repo", "tagged_repo", "new_tagged_repo"])
+		.assert()
+		.success();
+
+	// Verify tags are preserved
+	let expected_toml = "[[repos]]
+path = \"new_tagged_repo\"
+tags = [\"backend\", \"rust\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+";
+	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
+}
+
+#[test]
+fn move_repo_not_found() {
+	// Test that move fails when repo doesn't exist
+	// Issue: https://github.com/rustworkshop/gitopolis/issues/157
+	let temp = temp_folder();
+	add_a_repo(&temp, "existing_repo", "git://example.org/test_url");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["move", "repo", "nonexistent_repo", "new_location"])
+		.assert()
+		.failure()
+		.code(1)
+		.stderr(predicate::str::contains(
+			"Repo 'nonexistent_repo' not found",
+		));
+}

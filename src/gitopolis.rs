@@ -237,6 +237,39 @@ impl Gitopolis {
 		Ok(folder_name)
 	}
 
+	pub fn move_repo(&mut self, old_path: &str, new_path: &str) -> Result<(), GitopolisError> {
+		let mut repos = self.load()?;
+		let normalized_old = normalize_folder(old_path.to_string());
+		let normalized_new = normalize_folder(new_path.to_string());
+
+		// Find the repo in the config
+		let repo = repos
+			.as_vec()
+			.iter()
+			.find(|r| r.path == normalized_old)
+			.ok_or_else(|| StateError {
+				message: format!("Repo '{}' not found", normalized_old),
+			})?
+			.clone();
+
+		// Create parent directories if they don't exist
+		if let Some(parent) = std::path::Path::new(&normalized_new).parent() {
+			if !parent.as_os_str().is_empty() {
+				std::fs::create_dir_all(parent).map_err(|e| IoError { inner: e })?;
+			}
+		}
+
+		// Move the actual folder on the filesystem
+		std::fs::rename(&normalized_old, &normalized_new).map_err(|e| IoError { inner: e })?;
+
+		// Update the config: remove old entry and add new one with same tags/remotes
+		repos.remove(vec![normalized_old]);
+		repos.add_with_tags_and_remotes(normalized_new, repo.tags, repo.remotes);
+
+		self.save(repos)?;
+		Ok(())
+	}
+
 	fn save(&self, repos: Repos) -> Result<(), GitopolisError> {
 		let state_toml = serialize(&repos)?;
 		self.storage.save(state_toml);

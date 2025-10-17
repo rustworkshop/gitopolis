@@ -15,7 +15,7 @@ pub struct RepoInfo {
 	pub remotes: BTreeMap<String, Remote>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Repo {
 	pub path: String,
 	pub tags: Vec<String>,
@@ -74,6 +74,21 @@ impl Repos {
 		for (name, url) in remotes {
 			repo.add_remote(name, url);
 		}
+		self.repos.push(repo);
+		info!("Added {repo_folder}");
+	}
+
+	pub fn add_with_tags_and_remotes(
+		&mut self,
+		repo_folder: String,
+		tags: Vec<String>,
+		remotes: BTreeMap<String, Remote>,
+	) {
+		let repo = Repo {
+			path: repo_folder.clone(),
+			tags,
+			remotes,
+		};
 		self.repos.push(repo);
 		info!("Added {repo_folder}");
 	}
