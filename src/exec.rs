@@ -3,6 +3,33 @@ use std::env;
 use std::io::{Error, Read};
 use std::process::{Child, Command, ExitStatus, Stdio};
 
+/// Detects the appropriate shell to use and returns the command with arguments
+/// Implements ADR-0003: Full subshell support
+/// Note: TTY/interactive handling is deferred to issue #209
+fn detect_shell() -> Vec<String> {
+	// Check for SHELL environment variable first
+	if let Ok(shell) = env::var("SHELL") {
+		return vec![shell, "-c".to_string()];
+	}
+
+	// Windows-specific fallbacks
+	#[cfg(windows)]
+	{
+		// Check if we're in PowerShell environment
+		if env::var("PSModulePath").is_ok() {
+			return vec!["pwsh".to_string(), "-NoLogo".to_string(), "-c".to_string()];
+		}
+		// Default to cmd on Windows
+		return vec!["cmd".to_string(), "/s".to_string(), "/c".to_string()];
+	}
+
+	// POSIX fallback to /bin/sh
+	#[cfg(not(windows))]
+	{
+		vec!["/bin/sh".to_string(), "-c".to_string()]
+	}
+}
+
 pub fn exec(exec_args: Vec<String>, repos: Vec<Repo>, oneline: bool) {
 	let mut error_count = 0;
 	let mut skipped_count = 0;
@@ -131,20 +158,21 @@ fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
 	println!();
 	println!("🏢 {}> {}", path, format_args_for_display(exec_args));
 
-	// Execute through shell to support piping, redirection, etc.
-	#[cfg(unix)]
-	let mut child_process: Child = Command::new("sh")
-		.arg("-c")
-		.arg(&command_string)
-		.current_dir(path)
-		.spawn()?;
+	// Detect the appropriate shell and execute through it
+	let shell_cmd = detect_shell();
+	let mut cmd = Command::new(&shell_cmd[0]);
 
-	#[cfg(windows)]
-	let mut child_process: Child = Command::new("cmd")
-		.arg("/C")
-		.arg(&command_string)
-		.current_dir(path)
-		.spawn()?;
+	// Add all flags except the last one (which should be -c or /c)
+	for arg in &shell_cmd[1..shell_cmd.len() - 1] {
+		cmd.arg(arg);
+	}
+
+	// Add the -c or /c flag and the command string
+	cmd.arg(&shell_cmd[shell_cmd.len() - 1]);
+	cmd.arg(&command_string);
+	cmd.current_dir(path);
+
+	let mut child_process: Child = cmd.spawn()?;
 
 	let exit_code = &child_process.wait()?;
 	if !exit_code.success() {
@@ -169,24 +197,23 @@ fn repo_exec_oneline(path: &str, exec_args: &[String]) -> Result<(Option<String>
 			.join(" ")
 	};
 
-	// Execute through shell to support piping, redirection, etc.
-	#[cfg(unix)]
-	let mut child_process: Child = Command::new("sh")
-		.arg("-c")
-		.arg(&command_string)
-		.current_dir(path)
-		.stdout(Stdio::piped())
-		.stderr(Stdio::piped())
-		.spawn()?;
+	// Detect the appropriate shell and execute through it
+	let shell_cmd = detect_shell();
+	let mut cmd = Command::new(&shell_cmd[0]);
 
-	#[cfg(windows)]
-	let mut child_process: Child = Command::new("cmd")
-		.arg("/C")
-		.arg(&command_string)
-		.current_dir(path)
-		.stdout(Stdio::piped())
-		.stderr(Stdio::piped())
-		.spawn()?;
+	// Add all flags except the last one (which should be -c or /c)
+	for arg in &shell_cmd[1..shell_cmd.len() - 1] {
+		cmd.arg(arg);
+	}
+
+	// Add the -c or /c flag and the command string
+	cmd.arg(&shell_cmd[shell_cmd.len() - 1]);
+	cmd.arg(&command_string);
+	cmd.current_dir(path);
+	cmd.stdout(Stdio::piped());
+	cmd.stderr(Stdio::piped());
+
+	let mut child_process: Child = cmd.spawn()?;
 
 	let mut stdout = String::new();
 	if let Some(mut stdout_pipe) = child_process.stdout.take() {
