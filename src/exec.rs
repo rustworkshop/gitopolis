@@ -87,13 +87,15 @@ fn shell_escape(arg: &str) -> String {
 #[cfg(windows)]
 fn shell_escape(arg: &str) -> String {
 	// Windows cmd.exe has different escaping rules than Unix shells
-	// Only quote if the argument contains special characters
+	// Single quotes are NOT special in cmd.exe (unlike Unix) - they're just literal characters
+	// Only quote if the argument contains special characters (NOT including single quotes)
 	// Inside quotes, double quotes are escaped by doubling: "" not \"
 	let needs_quotes = arg
 		.chars()
-		.any(|c| c.is_whitespace() || matches!(c, '|' | '&' | '<' | '>' | '(' | ')' | '^' | '"'));
+		.any(|c| c.is_whitespace() || matches!(c, '|' | '&' | '<' | '>' | '(' | ')' | '^'));
 
-	if needs_quotes {
+	if needs_quotes || arg.contains('"') {
+		// Need quotes - either due to special chars or because we need to escape double quotes
 		if arg.contains('"') {
 			format!("\"{}\"", arg.replace('"', "\"\""))
 		} else {
