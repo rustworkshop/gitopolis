@@ -66,6 +66,8 @@ enum Commands {
 		/// Optional git URL to clone from (e.g., git@github.com:user/repo.git, https://github.com/user/repo).
 		/// If omitted, clones all repos from .gitopolis.toml
 		url: Option<String>,
+		/// Optional target directory name (like git clone). If omitted, extracts name from URL
+		target_dir: Option<String>,
 		#[arg(short, long)]
 		tag: Option<String>,
 	},
@@ -110,7 +112,11 @@ fn main() {
 				.expect("TODO: panic message"),
 			*long,
 		),
-		Some(Commands::Clone { url, tag: tag_name }) => clone(url, tag_name),
+		Some(Commands::Clone {
+			url,
+			target_dir,
+			tag: tag_name,
+		}) => clone(url, target_dir, tag_name),
 		Some(Commands::Exec {
 			tag: tag_name,
 			oneline,
@@ -167,13 +173,13 @@ fn main() {
 	}
 }
 
-fn clone(url: &Option<String>, tag_name: &Option<String>) {
+fn clone(url: &Option<String>, target_dir: &Option<String>, tag_name: &Option<String>) {
 	let mut gitopolis = init_gitopolis();
 	match url {
 		Some(git_url) => {
 			// Clone from URL and add to gitopolis
 			let tags: Vec<String> = tag_name.iter().map(|s| s.to_string()).collect();
-			match gitopolis.clone_and_add(git_url, &tags) {
+			match gitopolis.clone_and_add(git_url, target_dir.as_deref(), &tags) {
 				Ok(folder_name) => {
 					println!("Successfully cloned and added {}", folder_name);
 				}

@@ -207,11 +207,19 @@ impl Gitopolis {
 		})
 	}
 
-	pub fn clone_and_add(&mut self, url: &str, tags: &[String]) -> Result<String, GitopolisError> {
-		// Extract the folder name from the URL
-		let folder_name = extract_repo_name_from_url(url).ok_or_else(|| StateError {
-			message: format!("Could not extract repository name from URL: {}", url),
-		})?;
+	pub fn clone_and_add(
+		&mut self,
+		url: &str,
+		target_dir: Option<&str>,
+		tags: &[String],
+	) -> Result<String, GitopolisError> {
+		// Use target_dir if provided, otherwise extract from URL
+		let folder_name = match target_dir {
+			Some(dir) => dir.to_string(),
+			None => extract_repo_name_from_url(url).ok_or_else(|| StateError {
+				message: format!("Could not extract repository name from URL: {}", url),
+			})?,
+		};
 
 		// Clone the repository
 		self.git.clone(&folder_name, url);
