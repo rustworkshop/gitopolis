@@ -328,9 +328,10 @@ fn normalize_folder(repo_folder: String) -> String {
 /// - https://github.com/user/repo -> repo
 /// - https://dev.azure.com/org/project/_git/myrepo -> myrepo
 /// - source_repo -> source_repo
+/// - C:\path\to\repo.git -> repo (Windows)
 fn extract_repo_name_from_url(url: &str) -> Option<String> {
-	// Split by either / or :
-	let parts: Vec<&str> = url.split(&['/', ':'][..]).collect();
+	// Split by /, :, and \ (for Windows paths)
+	let parts: Vec<&str> = url.split(&['/', ':', '\\'][..]).collect();
 
 	// Get the last non-empty part
 	parts
@@ -366,6 +367,16 @@ fn test_extract_repo_name_from_url() {
 	assert_eq!(
 		extract_repo_name_from_url("source_repo"),
 		Some("source_repo".to_string())
+	);
+	// Windows path
+	assert_eq!(
+		extract_repo_name_from_url("C:\\Users\\test\\repo.git"),
+		Some("repo".to_string())
+	);
+	// Windows path without .git extension
+	assert_eq!(
+		extract_repo_name_from_url("C:\\Temp\\myrepo"),
+		Some("myrepo".to_string())
 	);
 }
 
