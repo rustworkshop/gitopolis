@@ -5,7 +5,7 @@ Manage multiple git repositories with ease.
 * 🤓 -> Run any shell or git command on multiple `git` repositories.
 * 🤓 -> Re-clone all your repos on new machines.
 * 🤓 -> Limit actions to custom tags.
-* 🤓 -> Easy to remember and use command list (`add` / `exec` / `clone` / `tag`).
+* 🤓 -> Easy to remember and use command list (`add`, `exec`, `clone`, `tag` etc.).
 * 🤓 -> A-GPL v3 licensed labour of love ❤️.
 
 ## Installation
@@ -16,65 +16,157 @@ Manage multiple git repositories with ease.
 
 I suggest adding a shorter shell alias to save typing. Perhaps `gm` for git many or `gop`.
 
-## Usage
+## Built in help
 
-### Initial setup
+gitopolis has a fully documented command system, so use `-h` to get help for each command:
+
+```sh
+gitopolis -h
+gitopolis clone -h
+```
+
+## Initial setup
+
+There are several ways to get started:
+
+### 1. Add your existing local repos
+
 ```sh
 cd ~/repos/
 gitopolis add *
 ```
 
-### Running shell / git commands in many repos
+### 2. Clone new repos
+
 ```sh
-gitopolis exec -- git pull
+gitopolis clone https://github.com/username/repo1.git
 ```
 
-### Getting output as single lines
+### 3. Start from an existing gitopolis config
+
+```sh
+# Decide where to put the repos
+mkdir ~/repos/
+cd ~/repos/
+
+# Grab a config file from somewhere (maybe a colleage) and add to the folder you'll keep the repos in
+wget https://gist.githubusercontent.com/timabell/87add070a8a44db4985586efe380757d/raw/08be5b3c38190eeed4fda0060818fa39f3c67ee3/.gitopolis.toml
+
+# Clone all the repos held in the downloaded config file to the current folder
+gitopolis clone
+```
+
+### 4. Configure many repos from the github or azure-devops api
+
+Take a look at the python scripts at [github.com/timabell/cloner](https://github.com/timabell/cloner)
+
+This script can read repo lists from github and azure devops and write them to a gitopolis config file ready for cloning, including some sensible default tags.
+
+## Usage
+
+### Running shell / git commands in many repos
+
+```sh
+gitopolis exec -- git pull
+gitopolis exec -- git status
+```
+
+#### Getting output as single lines
 
 For compact, parsable output that's easy to sort and analyze use `--oneline`, this will put all the output on a single line for each repo (removing newlines).
 
 e.g. to see the latest commit for all the repos, with the most recently touched repo first:
 
 ```sh
-gitopolis exec --oneline -- git log --format=format:'%cd "%s" 📝 %an' --date='format:%Y-%m-%d' -n 1 | awk '{print $3 " " $0}' | sort -r
+gitopolis exec --oneline -- git log --oneline -n 1
 ```
 
 ### Tagging
+
+When dealing with many git repos, it can be cumbersome and slow to have to run commands on every repo every time, so you can use tags to filter down what's relevant to you in the moment, e.g. `backend`, `my-team`, `rust` or any other way of categorizing you can thing of.
 
 ```sh
 gitopolis tag some_tag repo1 repo2
 gitopolis exec -t some_tag -- git pull
 ```
 
-### Re-cloning repos on a new machine
+### Viewing repository information
+
+Show the recorded information about a specific repository:
 
 ```sh
-mkdir ~/repos/ && cd ~/repos/
+$ gitopolis show 0x5.uk
 
-wget https://gist.githubusercontent.com/timabell/87add070a8a44db4985586efe380757d/raw/08be5b3c38190eeed4fda0060818fa39f3c67ee3/.gitopolis.toml
+Tags:
+  public
+  github
+  blog
+  rust
 
-gitopolis clone
+Remotes:
+  origin: git@github.com:timabell/0x5.uk
 ```
 
-### Getting many repos from github / azure-devops etc
+List all repositories with tags and remote URLs:
 
-Take a look at the python scripts at [github.com/timabell/cloner](https://github.com/timabell/cloner) that can read repo lists from github and azure devops and write them to a gitopolis config file ready for cloning.
+```sh
+gitopolis list --long
+```
 
-### Using shell aliases
+List all tags and the repositories they're applied to:
 
-You can't currently use shell aliases because commands are executed directly rather than passing through a shell such as bash/zsh/fish. See <https://github.com/rustworkshop/gitopolis/issues/13>.
+```sh
+gitopolis tags --long
+```
 
-As a workaround you can create git aliases that run arbitrary shell commands. See <https://github.com/rustworkshop/gitopolis/issues/80#issuecomment-1803344802>
+### Moving repositories
 
-### Using chained commands
+Move a repository to a new location and update the configuration:
 
-You can't chain commands together with `&&` or `||` like this `gitopolis exec -- git branch && git pull` because the shell (bash etc) will parse the `&&` before it ever gets to gitopolis.
+```sh
+gitopolis move repo old-path new-path
+```
 
-As a workaround you can create git aliases that run arbitrary shell commands. See <https://github.com/rustworkshop/gitopolis/issues/80#issuecomment-1803344802>
+### Managing multiple remotes
+
+Gitopolis supports multiple git remotes per repository. Sync remotes from your git repositories into the `.gitopolis.toml` file:
+
+```sh
+gitopolis sync --read-remotes
+```
+
+Sync remotes from `.gitopolis.toml` back to your git repositories:
+
+```sh
+gitopolis sync --write-remotes
+```
+
+Note there is no automatic sync, gitopolis will never fiddle with the remotes in the managed repos or its own config unless relevant commands are invoked.
+
+### Using complex shell commands
+
+Gitopolis supports executing complex shell commands for each repository - including pipes, redirection, and chaining with `&&` and `||`.
+
+To use these features, pass your entire command as a single quoted string to avoid the shell you are using processing them before they get to gitopolis:
+
+```sh
+gitopolis exec -- 'git status && git pull'
+gitopolis exec -- 'git log -1 | grep "feat:"'
+```
+
+You can combine this with normal shell piping/redirection of the entire gitopolis output, e.g.:
+
+```sh
+gitopolis exec -- 'git log -1 | grep "feat:"' | wc -l
+```
 
 ### State file
 
-Creates a single simple `.gitopolis.toml` file that you can edit, read, share with others and copy to other machines.
+Gitopolis creates and manages all its state in a single simple `.gitopolis.toml` file in the working directory that you can edit, read, share with others and copy to other machines.
+
+It is stored in [TOML](https://toml.io/) format which is a well-supported config markup with parsers for many programming languages.
+
+Here's an example of the contents:
 
 ```toml
 [[repos]]
@@ -98,10 +190,9 @@ tags = ["databases"]
 name = "origin"
 url = "git@github.com:timabell/database-diagram-scm.git"
 ```
-
 [View as gist](https://gist.github.com/timabell/87add070a8a44db4985586efe380757d).
 
-[TOML](https://toml.io/) is a well-supported config markup with parsers for many programming languages.
+The TOML array format takes a little getting used to, but other than that it's pretty easy to follow and edit by hand, and it allows clean round-trips of data, and is supported in just about every programming language.
 
 ## The name
 
@@ -116,19 +207,16 @@ It's a lot to type as a name, but it's nice and unique, and if you use it a lot 
 * Tried [gita](https://github.com/nosarthur/gita) but found command layout hard to remember, and didn't like having to install python.
 * To help others with their microservices.
 
-## Social
+More recently I've been adding more features to help with other clients, and enjoying the benefits of high-quality end-to-end tests as I increasingly work with claude code on shipping features considerably more rapidly (though not always more easily lol, crazy LLMs).
 
-Help others discover gitopolis:
+## Spread the word
 
-### Twitter
+If you find this useful, or just think it's cool, please do help spread the word.
 
-[Tweet about gitopolis](http://twitter.com/share?text=Gitopolis%20is%20fab,%20check%20it%20out%20-%20made%20by%20@tim_abell&url=https://github.com/timabell/gitopolis)
-
-### Product Hunt
-
-Vote for gitopolis:
-
-<a href="https://www.producthunt.com/posts/gitopolis?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-gitopolis" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=392942&theme=light" alt="Gitopolis - Manage&#0032;multiple&#0032;git&#0032;repositories&#0032;with&#0032;ease&#0046; | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+- Star the repo
+- Tell your friends
+- Share your gitopolis config with colleagues and use it to help onboard new developers to your team
+- Post on social media, youtube, reddit etc about your experiences, (good or bad), and don't forget to tag me!
 
 ## Contributing
 
@@ -138,7 +226,7 @@ I'm happy for people to open issues that are actually just questions and support
 
 Rough internal design and ambitions can be found at [Design.md](Design.md).
 
-PRs are appreciated but bear in mind I have my own plans and this is a side project for me to learn rust in a useful way, so worth talking to me before investing too much time in anything that might not fit yet. I hope to make this smoother with better CI tests etc. Start by opening an issue with your thoughts, or ping me some other way (I'm easy to find for better or worse).
+PRs are appreciated though it might be best to open an issue first to discuss the design.
 
 ### Builds
 
