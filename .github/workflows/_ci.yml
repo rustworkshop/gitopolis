@@ -103,15 +103,6 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y musl-tools
-    - name: Setup sccache (Windows)
-      if: matrix.os == 'windows-latest'
-      uses: mozilla-actions/sccache-action@v0.0.7
-    - name: Configure sccache (Windows)
-      if: matrix.os == 'windows-latest'
-      shell: bash
-      run: |
-        echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
-        echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
     - name: Update Version (Linux/Windows)
       if: inputs.release_tag != '' && matrix.os != 'macos-latest'
       shell: bash
