@@ -59,8 +59,13 @@ enum Commands {
 		#[clap(short, long)]
 		long: bool,
 	},
-	/// Use an existing .gitopolis.toml state file to clone any/all missing repositories.
+	/// Clone repository from URL and add to gitopolis, or clone all configured repos from .gitopolis.toml.
+	/// If URL is provided: clones from that URL, extracts repo name, adds to gitopolis (optionally with tags).
+	/// If URL is omitted: clones all repos from .gitopolis.toml (filtered by --tag if specified, skipping existing folders).
 	Clone {
+		/// Optional git URL to clone from (e.g., git@github.com:user/repo.git, https://github.com/user/repo).
+		/// If omitted, clones all repos from .gitopolis.toml
+		url: Option<String>,
 		#[arg(short, long)]
 		tag: Option<String>,
 	},
@@ -105,7 +110,7 @@ fn main() {
 				.expect("TODO: panic message"),
 			*long,
 		),
-		Some(Commands::Clone { tag: tag_name }) => clone(tag_name),
+		Some(Commands::Clone { url, tag: tag_name }) => clone(url, tag_name),
 		Some(Commands::Exec {
 			tag: tag_name,
 			oneline,
@@ -162,9 +167,27 @@ fn main() {
 	}
 }
 
-fn clone(tag_name: &Option<String>) {
-	let gitopolis = init_gitopolis();
-	gitopolis.clone(gitopolis.list(tag_name).expect("TODO: panic message"))
+fn clone(url: &Option<String>, tag_name: &Option<String>) {
+	let mut gitopolis = init_gitopolis();
+	match url {
+		Some(git_url) => {
+			// Clone from URL and add to gitopolis
+			let tags: Vec<String> = tag_name.iter().map(|s| s.to_string()).collect();
+			match gitopolis.clone_and_add(git_url, &tags) {
+				Ok(folder_name) => {
+					println!("Successfully cloned and added {}", folder_name);
+				}
+				Err(error) => {
+					eprintln!("Error: {}", error.message());
+					std::process::exit(1);
+				}
+			}
+		}
+		None => {
+			// Clone from .gitopolis.toml
+			gitopolis.clone(gitopolis.list(tag_name).expect("TODO: panic message"));
+		}
+	}
 }
 
 const STATE_FILE: &str = ".gitopolis.toml";

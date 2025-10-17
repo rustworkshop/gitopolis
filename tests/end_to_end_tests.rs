@@ -1621,3 +1621,77 @@ fn exec_displays_quoted_args() {
 		.success()
 		.stdout(predicate::str::contains("🏢 repo_a> echo 'oh no'"));
 }
+
+#[test]
+fn clone_with_url() {
+	// Test cloning a repository from a URL and automatically adding it to gitopolis
+	// Issue: https://github.com/rustworkshop/gitopolis/issues/193
+	let temp = temp_folder();
+
+	// Create a source repo in a subdirectory
+	let sources_dir = temp.path().join("_sources");
+	fs::create_dir(&sources_dir).unwrap();
+	let source_temp = TempDir::new_in(&sources_dir).unwrap();
+	create_local_repo(&source_temp, "myrepo");
+	let source_path = source_temp
+		.path()
+		.join("myrepo")
+		.to_str()
+		.unwrap()
+		.to_string();
+
+	// Run clone with URL - clone into temp directory
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["clone", &source_path])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("🏢 myrepo> Cloning"))
+		.stdout(predicate::str::contains("Cloning into 'myrepo'"));
+
+	// Verify repo was added to .gitopolis.toml
+	let toml = read_gitopolis_state_toml(&temp);
+	assert!(toml.contains("path = \"myrepo\""));
+
+	// Verify repo is listed
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["list"])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("myrepo"));
+}
+
+#[test]
+fn clone_with_url_extracts_folder_name() {
+	// Test that clone extracts the correct folder name from various URL formats
+	// Issue: https://github.com/rustworkshop/gitopolis/issues/193
+	let temp = temp_folder();
+
+	// Create a source repo with .git in the name to test extraction
+	let sources_dir = temp.path().join("_sources");
+	fs::create_dir(&sources_dir).unwrap();
+	let source_temp = TempDir::new_in(&sources_dir).unwrap();
+	// Create repo named "myrepo.git" to simulate typical git URL structure
+	create_local_repo(&source_temp, "myrepo.git");
+	let source_path = source_temp
+		.path()
+		.join("myrepo.git")
+		.to_str()
+		.unwrap()
+		.to_string();
+
+	// Clone - should extract "myrepo" without the .git extension
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["clone", &source_path])
+		.assert()
+		.success();
+
+	// Verify folder name is without .git
+	let toml = read_gitopolis_state_toml(&temp);
+	assert!(toml.contains("path = \"myrepo\""));
+
+	// Verify the cloned repo exists
+	assert!(temp.path().join("myrepo").exists());
+}

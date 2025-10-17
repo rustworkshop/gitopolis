@@ -207,6 +207,28 @@ impl Gitopolis {
 		})
 	}
 
+	pub fn clone_and_add(&mut self, url: &str, tags: &[String]) -> Result<String, GitopolisError> {
+		// Extract the folder name from the URL
+		let folder_name = extract_repo_name_from_url(url).ok_or_else(|| StateError {
+			message: format!("Could not extract repository name from URL: {}", url),
+		})?;
+
+		// Clone the repository
+		self.git.clone(&folder_name, url);
+
+		// Add the repository to gitopolis
+		self.add(folder_name.clone())?;
+
+		// Add tags if any were specified
+		if !tags.is_empty() {
+			for tag in tags {
+				self.add_tag(tag.as_str(), std::slice::from_ref(&folder_name))?;
+			}
+		}
+
+		Ok(folder_name)
+	}
+
 	fn save(&self, repos: Repos) -> Result<(), GitopolisError> {
 		let state_toml = serialize(&repos)?;
 		self.storage.save(state_toml);
@@ -254,6 +276,56 @@ fn normalize_folder(repo_folder: String) -> String {
 		.trim_end_matches('/')
 		.trim_end_matches('\\')
 		.to_string()
+}
+
+/// Extracts the repository name from a git URL to determine the folder name
+/// that git clone would use. Handles SSH, HTTPS URLs, and local paths.
+///
+/// Examples:
+/// - git@github.com:user/repo.git -> repo
+/// - https://github.com/user/repo.git -> repo
+/// - https://github.com/user/repo -> repo
+/// - https://dev.azure.com/org/project/_git/myrepo -> myrepo
+/// - source_repo -> source_repo
+fn extract_repo_name_from_url(url: &str) -> Option<String> {
+	// Split by either / or :
+	let parts: Vec<&str> = url.split(&['/', ':'][..]).collect();
+
+	// Get the last non-empty part
+	parts
+		.iter()
+		.rev()
+		.find(|s| !s.is_empty())
+		.map(|s| s.trim_end_matches(".git").to_string())
+}
+
+#[test]
+fn test_extract_repo_name_from_url() {
+	assert_eq!(
+		extract_repo_name_from_url("git@github.com:user/repo.git"),
+		Some("repo".to_string())
+	);
+	assert_eq!(
+		extract_repo_name_from_url("https://github.com/user/repo.git"),
+		Some("repo".to_string())
+	);
+	assert_eq!(
+		extract_repo_name_from_url("https://github.com/user/repo"),
+		Some("repo".to_string())
+	);
+	assert_eq!(
+		extract_repo_name_from_url("git@gitlab.com:group/subgroup/project.git"),
+		Some("project".to_string())
+	);
+	assert_eq!(
+		extract_repo_name_from_url("https://dev.azure.com/org/project/_git/myrepo"),
+		Some("myrepo".to_string())
+	);
+	// Simple local path
+	assert_eq!(
+		extract_repo_name_from_url("source_repo"),
+		Some("source_repo".to_string())
+	);
 }
 
 #[test]
