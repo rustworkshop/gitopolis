@@ -1878,7 +1878,7 @@ fn exec_with_special_chars() {
 	// Windows cmd.exe echo outputs escaped quotes for the outer quotes
 	let expected_stdout = if cfg!(windows) {
 		r#"
-🏢 repo_a> echo "test \" ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars"
+🏢 repo_a> echo "test \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars"
 \"test \"\" ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars\"
 
 "#
