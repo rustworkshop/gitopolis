@@ -1869,16 +1869,20 @@ fn move_repo_not_found() {
 }
 
 #[test]
-fn exec_with_nested_quotes() {
+fn exec_with_special_chars() {
 	let temp = temp_folder();
 	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
 
+	// Test with all special characters that need quoting: whitespace, quotes, and shell metacharacters
+	// From needs_quoting(): | & ; < > ( ) $ ` \ " ' * ? [ ] { } ! #
+	let test_str = r#"test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars"#;
+
 	gitopolis_executable()
 		.current_dir(&temp)
-		.args(vec!["exec", "--", "echo", "oh \" no"])
+		.args(vec!["exec", "--", "echo", test_str])
 		.assert()
 		.success()
-		.stdout(predicate::str::contains("oh \" no"));
+		.stdout(predicate::str::contains(test_str));
 }
 
 #[test]
@@ -1929,26 +1933,24 @@ fn exec_multiple_args_with_single_quotes() {
 }
 
 #[test]
-fn exec_oneline_with_nested_quotes() {
+fn exec_oneline_with_special_chars() {
 	let temp = temp_folder();
 	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
 	add_a_repo(&temp, "repo_b", "git://example.org/test_b");
 
+	// Test with all special characters: | & ; < > ( ) $ ` \ " ' * ? [ ] { } ! #
+	let test_str = r#"test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars"#;
+
 	// Windows cmd.exe echo behaves differently - it prints the quotes we add
-	// and escapes inner quotes by doubling them, plus backslash-escapes in output
 	let expected_stdout = if cfg!(windows) {
-		r#"repo_a	\"oh \"\" no\"
-repo_b	\"oh \"\" no\"
-"#
+		"repo_a\t\"test \"\" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars\"\nrepo_b\t\"test \"\" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars\"\n"
 	} else {
-		r#"repo_a	oh " no
-repo_b	oh " no
-"#
+		"repo_a\ttest \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars\nrepo_b\ttest \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars\n"
 	};
 
 	gitopolis_executable()
 		.current_dir(&temp)
-		.args(vec!["exec", "--oneline", "--", "echo", r#"oh " no"#])
+		.args(vec!["exec", "--oneline", "--", "echo", test_str])
 		.assert()
 		.success()
 		.stdout(expected_stdout);
