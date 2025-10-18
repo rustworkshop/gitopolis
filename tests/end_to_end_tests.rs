@@ -1912,12 +1912,20 @@ fn exec_multiple_args_with_single_quotes() {
 	let temp = temp_folder();
 	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
 
+	// Windows cmd.exe echo behaves differently - it prints the quotes we add
+	// Unix shells strip quotes before passing to echo
+	let expected_output = if cfg!(windows) {
+		"\"argument with 'quotes'\""
+	} else {
+		"argument with 'quotes'"
+	};
+
 	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--", "echo", "argument with 'quotes'"])
 		.assert()
 		.success()
-		.stdout(predicate::str::contains("argument with 'quotes'"));
+		.stdout(predicate::str::contains(expected_output));
 }
 
 #[test]
@@ -1926,16 +1934,24 @@ fn exec_oneline_with_nested_quotes() {
 	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
 	add_a_repo(&temp, "repo_b", "git://example.org/test_b");
 
+	// Windows cmd.exe echo behaves differently - it prints the quotes we add
+	// and escapes inner quotes by doubling them
+	let expected_stdout = if cfg!(windows) {
+		r#"repo_a	"oh "" no"
+repo_b	"oh "" no"
+"#
+	} else {
+		r#"repo_a	oh " no
+repo_b	oh " no
+"#
+	};
+
 	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec!["exec", "--oneline", "--", "echo", r#"oh " no"#])
 		.assert()
 		.success()
-		.stdout(
-			r#"repo_a	oh " no
-repo_b	oh " no
-"#,
-		);
+		.stdout(expected_stdout);
 }
 
 #[test]
@@ -1963,6 +1979,13 @@ fn exec_oneline_multiple_args_with_single_quotes() {
 	let temp = temp_folder();
 	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
 
+	// Windows cmd.exe echo behaves differently - it prints the quotes we add
+	let expected_stdout = if cfg!(windows) {
+		"repo_a\t\"argument with 'quotes'\"\n"
+	} else {
+		"repo_a\targument with 'quotes'\n"
+	};
+
 	gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec![
@@ -1974,5 +1997,5 @@ fn exec_oneline_multiple_args_with_single_quotes() {
 		])
 		.assert()
 		.success()
-		.stdout("repo_a\targument with 'quotes'\n");
+		.stdout(expected_stdout);
 }
