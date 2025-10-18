@@ -76,11 +76,7 @@ fn shell_escape(arg: &str) -> String {
 	// For Unix shells, we use single quotes which prevent all interpolation
 	// To include a literal single quote, we end the single-quoted string,
 	// add an escaped single quote, and start a new single-quoted string
-	if arg.contains('\'') {
-		format!("'{}'", arg.replace('\'', "'\\''"))
-	} else {
-		format!("'{}'", arg)
-	}
+	format!("'{}'", arg.replace('\'', "'\\''"))
 }
 
 /// Escapes a string for safe use in a Windows cmd shell
@@ -90,17 +86,12 @@ fn shell_escape(arg: &str) -> String {
 	// Single quotes are NOT special in cmd.exe (unlike Unix) - they're just literal characters
 	// Only quote if the argument contains special characters (NOT including single quotes)
 	// Inside quotes, double quotes are escaped by doubling: "" not \"
-	let needs_quotes = arg
+	let needs_quoting = arg
 		.chars()
-		.any(|c| c.is_whitespace() || matches!(c, '|' | '&' | '<' | '>' | '(' | ')' | '^'));
+		.any(|c| c.is_whitespace() || matches!(c, '|' | '&' | '<' | '>' | '(' | ')' | '^' | '"'));
 
-	if needs_quotes || arg.contains('"') {
-		// Need quotes - either due to special chars or because we need to escape double quotes
-		if arg.contains('"') {
-			format!("\"{}\"", arg.replace('"', "\"\""))
-		} else {
-			format!("\"{}\"", arg)
-		}
+	if needs_quoting {
+		format!("\"{}\"", arg.replace('"', "\"\""))
 	} else {
 		arg.to_string()
 	}
