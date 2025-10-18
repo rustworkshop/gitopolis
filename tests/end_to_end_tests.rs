@@ -1875,14 +1875,32 @@ fn exec_with_special_chars() {
 
 	// Test with all special characters that need quoting: whitespace, quotes, and shell metacharacters
 	// From needs_quoting(): | & ; < > ( ) $ ` \ " ' * ? [ ] { } ! #
-	let test_str = r#"test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars"#;
+	// Windows cmd.exe echo outputs escaped quotes for the outer quotes
+	let expected_stdout = if cfg!(windows) {
+		r#"
+🏢 repo_a> echo "test \" ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars"
+\"test \"\" ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars\"
+
+"#
+	} else {
+		r#"
+🏢 repo_a> echo "test \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars"
+test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars
+
+"#
+	};
 
 	gitopolis_executable()
 		.current_dir(&temp)
-		.args(vec!["exec", "--", "echo", test_str])
+		.args(vec![
+			"exec",
+			"--",
+			"echo",
+			r#"test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars"#,
+		])
 		.assert()
 		.success()
-		.stdout(predicate::str::contains(test_str));
+		.stdout(expected_stdout);
 }
 
 #[test]
@@ -1939,18 +1957,26 @@ fn exec_oneline_with_special_chars() {
 	add_a_repo(&temp, "repo_b", "git://example.org/test_b");
 
 	// Test with all special characters: | & ; < > ( ) $ ` \ " ' * ? [ ] { } ! #
-	let test_str = r#"test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars"#;
-
-	// Windows cmd.exe echo behaves differently - it prints the quotes we add
+	// Windows cmd.exe echo behaves differently - it escapes the outer quotes with backslashes
 	let expected_stdout = if cfg!(windows) {
-		"repo_a\t\"test \"\" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars\"\nrepo_b\t\"test \"\" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars\"\n"
+		r#"repo_a	\"test \"\" ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars\"
+repo_b	\"test \"\" ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars\"
+"#
 	} else {
-		"repo_a\ttest \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars\nrepo_b\ttest \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars\n"
+		r#"repo_a	test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars
+repo_b	test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars
+"#
 	};
 
 	gitopolis_executable()
 		.current_dir(&temp)
-		.args(vec!["exec", "--oneline", "--", "echo", test_str])
+		.args(vec![
+			"exec",
+			"--oneline",
+			"--",
+			"echo",
+			r#"test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars"#,
+		])
 		.assert()
 		.success()
 		.stdout(expected_stdout);
