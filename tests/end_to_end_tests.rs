@@ -1876,18 +1876,21 @@ fn exec_with_special_chars() {
 	// Test with all special characters that need quoting: whitespace, quotes, and shell metacharacters
 	// From needs_quoting(): | & ; < > ( ) $ ` \ " ' * ? [ ] { } ! #
 	// Windows cmd.exe echo outputs escaped quotes for the outer quotes
+	// Windows also uses \r\n line endings
 	let expected_stdout = if cfg!(windows) {
 		r#"
 🏢 repo_a> echo "test \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars"
 \"test \"\" ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars\"
 
 "#
+		.replace('\n', "\r\n")
 	} else {
 		r#"
 🏢 repo_a> echo "test \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars"
 test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars
 
 "#
+		.to_string()
 	};
 
 	gitopolis_executable()
