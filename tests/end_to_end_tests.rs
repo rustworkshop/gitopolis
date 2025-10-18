@@ -1935,10 +1935,10 @@ fn exec_oneline_with_nested_quotes() {
 	add_a_repo(&temp, "repo_b", "git://example.org/test_b");
 
 	// Windows cmd.exe echo behaves differently - it prints the quotes we add
-	// and escapes inner quotes by doubling them
+	// and escapes inner quotes by doubling them, plus backslash-escapes in output
 	let expected_stdout = if cfg!(windows) {
-		r#"repo_a	"oh "" no"
-repo_b	"oh "" no"
+		r#"repo_a	\"oh \"\" no\"
+repo_b	\"oh \"\" no\"
 "#
 	} else {
 		r#"repo_a	oh " no
@@ -1980,8 +1980,10 @@ fn exec_oneline_multiple_args_with_single_quotes() {
 	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
 
 	// Windows cmd.exe echo behaves differently - it prints the quotes we add
+	// Note: Windows also escapes the quotes with backslashes in the output
 	let expected_stdout = if cfg!(windows) {
-		"repo_a\t\"argument with 'quotes'\"\n"
+		r#"repo_a	\"argument with 'quotes'\"
+"#
 	} else {
 		"repo_a\targument with 'quotes'\n"
 	};
