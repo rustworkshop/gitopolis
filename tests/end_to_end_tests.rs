@@ -1893,7 +1893,7 @@ test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars
 		.to_string()
 	};
 
-	gitopolis_executable()
+	let result = gitopolis_executable()
 		.current_dir(&temp)
 		.args(vec![
 			"exec",
@@ -1902,8 +1902,22 @@ test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars
 			r#"test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars"#,
 		])
 		.assert()
-		.success()
-		.stdout(expected_stdout);
+		.success();
+
+	let actual_stdout = String::from_utf8_lossy(&result.get_output().stdout);
+
+	// Debug output for diagnosing line ending issues on Windows
+	if cfg!(windows) && actual_stdout != expected_stdout {
+		eprintln!("\n=== MISMATCH DETECTED ===");
+		eprintln!("Expected length: {}", expected_stdout.len());
+		eprintln!("Actual length: {}", actual_stdout.len());
+		eprintln!("\nExpected bytes: {:?}", expected_stdout.as_bytes());
+		eprintln!("\nActual bytes: {:?}", actual_stdout.as_bytes());
+		eprintln!("\nExpected (escaped): {}", expected_stdout.escape_debug());
+		eprintln!("\nActual (escaped): {}", actual_stdout.escape_debug());
+	}
+
+	result.stdout(expected_stdout);
 }
 
 #[test]
