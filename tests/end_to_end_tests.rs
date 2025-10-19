@@ -1867,3 +1867,178 @@ fn move_repo_not_found() {
 			"Repo 'nonexistent_repo' not found",
 		));
 }
+
+#[test]
+fn exec_with_special_chars() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	// Test with all special characters that need quoting: whitespace, quotes, and shell metacharacters
+	// From needs_quoting(): | & ; < > ( ) $ ` \ " ' * ? [ ] { } ! #
+	// Windows cmd.exe echo outputs escaped quotes for the outer quotes
+	// Windows has mixed line endings: LF from println!(), CRLF from cmd.exe output
+	let expected_stdout = if cfg!(windows) {
+		// Manual construction to match actual output with mixed line endings
+		"\n🏢 repo_a> echo \"test \\\" ' | & ; < > ( ) $ ` \\\\ * ? [ ] { } ! # chars\"\n\\\"test \\\"\\\" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars\\\"\r\n\n".to_string()
+	} else {
+		r#"
+🏢 repo_a> echo "test \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars"
+test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars
+
+"#
+		.to_string()
+	};
+
+	let result = gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec![
+			"exec",
+			"--",
+			"echo",
+			r#"test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars"#,
+		])
+		.assert()
+		.success();
+
+	let actual_stdout = String::from_utf8_lossy(&result.get_output().stdout);
+
+	// Debug output for diagnosing line ending issues on Windows
+	if cfg!(windows) && actual_stdout != expected_stdout {
+		eprintln!("\n=== MISMATCH DETECTED ===");
+		eprintln!("Expected length: {}", expected_stdout.len());
+		eprintln!("Actual length: {}", actual_stdout.len());
+		eprintln!("\nExpected bytes: {:?}", expected_stdout.as_bytes());
+		eprintln!("\nActual bytes: {:?}", actual_stdout.as_bytes());
+		eprintln!("\nExpected (escaped): {}", expected_stdout.escape_debug());
+		eprintln!("\nActual (escaped): {}", actual_stdout.escape_debug());
+	}
+
+	result.stdout(expected_stdout);
+}
+
+#[test]
+fn exec_single_arg_with_quotes_and_pipes() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", r#"echo "foo | bar" | grep bar"#])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("foo | bar"));
+}
+
+#[test]
+fn exec_single_arg_literal_pipe_characters() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", r#"echo "this | is | not | a | pipe""#])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("this | is | not | a | pipe"));
+}
+
+#[test]
+fn exec_multiple_args_with_single_quotes() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	// Windows cmd.exe echo behaves differently - it prints the quotes we add
+	// Unix shells strip quotes before passing to echo
+	let expected_output = if cfg!(windows) {
+		"\"argument with 'quotes'\""
+	} else {
+		"argument with 'quotes'"
+	};
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["exec", "--", "echo", "argument with 'quotes'"])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains(expected_output));
+}
+
+#[test]
+fn exec_oneline_with_special_chars() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+	add_a_repo(&temp, "repo_b", "git://example.org/test_b");
+
+	// Test with all special characters: | & ; < > ( ) $ ` \ " ' * ? [ ] { } ! #
+	// Windows cmd.exe echo behaves differently - it escapes the outer quotes with backslashes
+	let expected_stdout = if cfg!(windows) {
+		r#"repo_a	\"test \"\" ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars\"
+repo_b	\"test \"\" ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars\"
+"#
+	} else {
+		r#"repo_a	test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars
+repo_b	test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars
+"#
+	};
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec![
+			"exec",
+			"--oneline",
+			"--",
+			"echo",
+			r#"test " ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars"#,
+		])
+		.assert()
+		.success()
+		.stdout(expected_stdout);
+}
+
+#[test]
+fn exec_oneline_single_arg_with_pipes() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+	add_a_repo(&temp, "repo_b", "git://example.org/test_b");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec![
+			"exec",
+			"--oneline",
+			"--",
+			r#"echo "hey there" | wc -w"#,
+		])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("repo_a\t2"))
+		.stdout(predicate::str::contains("repo_b\t2"));
+}
+
+#[test]
+fn exec_oneline_multiple_args_with_single_quotes() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	// Windows cmd.exe echo behaves differently - it prints the quotes we add
+	// Note: Windows also escapes the quotes with backslashes in the output
+	let expected_stdout = if cfg!(windows) {
+		r#"repo_a	\"argument with 'quotes'\"
+"#
+	} else {
+		"repo_a\targument with 'quotes'\n"
+	};
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec![
+			"exec",
+			"--oneline",
+			"--",
+			"echo",
+			"argument with 'quotes'",
+		])
+		.assert()
+		.success()
+		.stdout(expected_stdout);
+}
