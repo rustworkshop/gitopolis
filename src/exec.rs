@@ -89,24 +89,56 @@ fn format_args_for_display(args: &[String]) -> String {
 }
 
 fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
-	let command_string = exec_args.join(" ");
 	println!();
 	println!("🏢 {}> {}", path, format_args_for_display(exec_args));
 
-	// Execute through shell to support piping, redirection, etc.
+	// If single argument, pass directly to shell for interpretation (supports pipes, etc.)
+	// If multiple arguments, pass via positional parameters to avoid quoting issues
 	#[cfg(unix)]
-	let mut child_process: Child = Command::new("sh")
-		.arg("-c")
-		.arg(&command_string)
-		.current_dir(path)
-		.spawn()?;
+	let mut child_process: Child = if exec_args.len() == 1 {
+		Command::new("sh")
+			.arg("-c")
+			.arg(&exec_args[0]) // Single arg passed directly for shell interpretation
+			.current_dir(path)
+			.spawn()?
+	} else {
+		Command::new("sh")
+			.arg("-c")
+			.arg(r#""$@""#) // Execute all positional parameters
+			.arg("--") // $0 placeholder (ignored)
+			.args(exec_args) // These become $1, $2, $3, etc.
+			.current_dir(path)
+			.spawn()?
+	};
 
 	#[cfg(windows)]
-	let mut child_process: Child = Command::new("cmd")
-		.arg("/C")
-		.arg(&command_string)
-		.current_dir(path)
-		.spawn()?;
+	let mut child_process: Child = if exec_args.len() == 1 {
+		Command::new("cmd")
+			.arg("/C")
+			.arg(&exec_args[0]) // Single arg passed directly for shell interpretation
+			.current_dir(path)
+			.spawn()?
+	} else {
+		// Windows cmd doesn't have an equivalent to sh -c "$@"
+		// We need to join args with proper quoting
+		let command_string = exec_args
+			.iter()
+			.map(|arg| {
+				// Quote if contains spaces or special chars
+				if arg.contains(' ') || arg.contains('"') || arg.contains('&') || arg.contains('|') {
+					format!("\"{}\"", arg.replace('"', "\"\""))
+				} else {
+					arg.clone()
+				}
+			})
+			.collect::<Vec<_>>()
+			.join(" ");
+		Command::new("cmd")
+			.arg("/C")
+			.arg(command_string)
+			.current_dir(path)
+			.spawn()?
+	};
 
 	let exit_code = &child_process.wait()?;
 	if !exit_code.success() {
@@ -119,26 +151,61 @@ fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
 }
 
 fn repo_exec_oneline(path: &str, exec_args: &[String]) -> Result<(Option<String>, bool), Error> {
-	let command_string = exec_args.join(" ");
-
-	// Execute through shell to support piping, redirection, etc.
+	// If single argument, pass directly to shell for interpretation (supports pipes, etc.)
+	// If multiple arguments, pass via positional parameters to avoid quoting issues
 	#[cfg(unix)]
-	let mut child_process: Child = Command::new("sh")
-		.arg("-c")
-		.arg(&command_string)
-		.current_dir(path)
-		.stdout(Stdio::piped())
-		.stderr(Stdio::piped())
-		.spawn()?;
+	let mut child_process: Child = if exec_args.len() == 1 {
+		Command::new("sh")
+			.arg("-c")
+			.arg(&exec_args[0]) // Single arg passed directly for shell interpretation
+			.current_dir(path)
+			.stdout(Stdio::piped())
+			.stderr(Stdio::piped())
+			.spawn()?
+	} else {
+		Command::new("sh")
+			.arg("-c")
+			.arg(r#""$@""#) // Execute all positional parameters
+			.arg("--") // $0 placeholder (ignored)
+			.args(exec_args) // These become $1, $2, $3, etc.
+			.current_dir(path)
+			.stdout(Stdio::piped())
+			.stderr(Stdio::piped())
+			.spawn()?
+	};
 
 	#[cfg(windows)]
-	let mut child_process: Child = Command::new("cmd")
-		.arg("/C")
-		.arg(&command_string)
-		.current_dir(path)
-		.stdout(Stdio::piped())
-		.stderr(Stdio::piped())
-		.spawn()?;
+	let mut child_process: Child = if exec_args.len() == 1 {
+		Command::new("cmd")
+			.arg("/C")
+			.arg(&exec_args[0]) // Single arg passed directly for shell interpretation
+			.current_dir(path)
+			.stdout(Stdio::piped())
+			.stderr(Stdio::piped())
+			.spawn()?
+	} else {
+		// Windows cmd doesn't have an equivalent to sh -c "$@"
+		// We need to join args with proper quoting
+		let command_string = exec_args
+			.iter()
+			.map(|arg| {
+				// Quote if contains spaces or special chars
+				if arg.contains(' ') || arg.contains('"') || arg.contains('&') || arg.contains('|') {
+					format!("\"{}\"", arg.replace('"', "\"\""))
+				} else {
+					arg.clone()
+				}
+			})
+			.collect::<Vec<_>>()
+			.join(" ");
+		Command::new("cmd")
+			.arg("/C")
+			.arg(command_string)
+			.current_dir(path)
+			.stdout(Stdio::piped())
+			.stderr(Stdio::piped())
+			.spawn()?
+	};
 
 	let mut stdout = String::new();
 	if let Some(mut stdout_pipe) = child_process.stdout.take() {
