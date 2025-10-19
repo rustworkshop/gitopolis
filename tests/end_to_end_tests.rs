@@ -1876,14 +1876,10 @@ fn exec_with_special_chars() {
 	// Test with all special characters that need quoting: whitespace, quotes, and shell metacharacters
 	// From needs_quoting(): | & ; < > ( ) $ ` \ " ' * ? [ ] { } ! #
 	// Windows cmd.exe echo outputs escaped quotes for the outer quotes
-	// Windows also uses \r\n line endings
+	// Windows has mixed line endings: LF from println!(), CRLF from cmd.exe output
 	let expected_stdout = if cfg!(windows) {
-		r#"
-🏢 repo_a> echo "test \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars"
-\"test \"\" ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars\"
-
-"#
-		.replace('\n', "\r\n")
+		// Manual construction to match actual output with mixed line endings
+		"\n🏢 repo_a> echo \"test \\\" ' | & ; < > ( ) $ ` \\\\ * ? [ ] { } ! # chars\"\n\\\"test \\\"\\\" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars\\\"\r\n\n".to_string()
 	} else {
 		r#"
 🏢 repo_a> echo "test \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars"
