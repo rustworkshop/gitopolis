@@ -2091,3 +2091,65 @@ fn exec_oneline_multiple_args_with_single_quotes() {
 		.success()
 		.stdout(expected_stdout);
 }
+
+#[cfg(unix)]
+#[test]
+fn exec_respects_shell_env_var() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.env("SHELL", "/bin/bash")
+		.args(vec!["exec", "--oneline", "--", "type type"]) // type is only available on bash
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("repo_a\ttype is a shell builtin"));
+}
+
+#[cfg(windows)]
+#[test]
+fn exec_respects_shell_env_var_windows() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.env("SHELL", "C:\\Program Files\\Git\\bin\\bash.exe")
+		.args(vec!["exec", "--oneline", "--", "type type"]) // type is only available on bash
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("shell builtin"));
+}
+
+#[cfg(windows)]
+#[test]
+fn exec_uses_cmd_when_no_shell() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.env_remove("SHELL")
+		.env_remove("PSModulePath")
+		.args(vec!["exec", "--oneline", "--", "ver"]) // ver is only available on cmd
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("Microsoft Windows"));
+}
+
+#[cfg(windows)]
+#[test]
+fn exec_uses_powershell_when_psmodulepath_set() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "repo_a", "git://example.org/test_a");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.env_remove("SHELL")
+		.env("PSModulePath", "C:\\Program Files\\PowerShell\\Modules")
+		.args(vec!["exec", "--oneline", "--", "Get-Command Get-Command"]) // Get-Command is only available on PowerShell
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("Get-Command"));
+}
