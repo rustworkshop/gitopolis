@@ -119,10 +119,23 @@ fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
 			.current_dir(path)
 			.spawn()?
 	} else {
+		// Windows cmd doesn't have an equivalent to sh -c "$@"
+		// We need to join args with proper quoting
+		let command_string = exec_args
+			.iter()
+			.map(|arg| {
+				// Quote if contains spaces or special chars
+				if arg.contains(' ') || arg.contains('"') || arg.contains('&') || arg.contains('|') {
+					format!("\"{}\"", arg.replace('"', "\"\""))
+				} else {
+					arg.clone()
+				}
+			})
+			.collect::<Vec<_>>()
+			.join(" ");
 		Command::new("cmd")
 			.arg("/C")
-			.arg("%*") // All arguments
-			.args(exec_args)
+			.arg(command_string)
 			.current_dir(path)
 			.spawn()?
 	};
@@ -171,10 +184,23 @@ fn repo_exec_oneline(path: &str, exec_args: &[String]) -> Result<(Option<String>
 			.stderr(Stdio::piped())
 			.spawn()?
 	} else {
+		// Windows cmd doesn't have an equivalent to sh -c "$@"
+		// We need to join args with proper quoting
+		let command_string = exec_args
+			.iter()
+			.map(|arg| {
+				// Quote if contains spaces or special chars
+				if arg.contains(' ') || arg.contains('"') || arg.contains('&') || arg.contains('|') {
+					format!("\"{}\"", arg.replace('"', "\"\""))
+				} else {
+					arg.clone()
+				}
+			})
+			.collect::<Vec<_>>()
+			.join(" ");
 		Command::new("cmd")
 			.arg("/C")
-			.arg("%*") // All arguments
-			.args(exec_args)
+			.arg(command_string)
 			.current_dir(path)
 			.stdout(Stdio::piped())
 			.stderr(Stdio::piped())
