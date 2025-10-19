@@ -1,7 +1,7 @@
 use crate::repos::Repo;
 use std::env;
 use std::io::{Error, Read};
-use std::process::{Child, Command, ExitStatus, Stdio};
+use std::process::{Command, ExitStatus, Stdio};
 
 enum ShellType {
 	PosixLike, // bash, zsh, sh, etc. - supports positional parameters
@@ -139,52 +139,37 @@ fn format_args_for_display(args: &[String]) -> String {
 		.join(" ")
 }
 
-fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
-	println!();
-	println!("🏢 {}> {}", path, format_args_for_display(exec_args));
-
-	// Detect the appropriate shell and execute through it
-	let shell = detect_shell();
+/// Builds a Command for executing args in the detected shell
+fn build_shell_command(shell: &Shell, exec_args: &[String], path: &str) -> Command {
 	let shell_cmd = &shell.shell_invocation;
-
-	// If single argument, pass directly to shell for interpretation (supports pipes, etc.)
-	// If multiple arguments, pass via positional parameters to avoid quoting issues
-	let mut child_process: Child = match shell.shell_type {
+	let mut cmd = match shell.shell_type {
 		ShellType::PosixLike => {
+			let mut cmd = Command::new(&shell_cmd[0]);
+			for arg in &shell_cmd[1..shell_cmd.len() - 1] {
+				cmd.arg(arg);
+			}
+			cmd.arg(&shell_cmd[shell_cmd.len() - 1]);
+
 			if exec_args.len() == 1 {
-				let mut cmd = Command::new(&shell_cmd[0]);
-				for arg in &shell_cmd[1..shell_cmd.len() - 1] {
-					cmd.arg(arg);
-				}
-				cmd.arg(&shell_cmd[shell_cmd.len() - 1]);
 				cmd.arg(&exec_args[0]); // Single arg passed directly for shell interpretation
-				cmd.current_dir(path);
-				cmd.spawn()?
 			} else {
 				// Unix-like shells: use positional parameters
-				let mut cmd = Command::new(&shell_cmd[0]);
-				for arg in &shell_cmd[1..shell_cmd.len() - 1] {
-					cmd.arg(arg);
-				}
-				cmd.arg(&shell_cmd[shell_cmd.len() - 1]);
 				cmd.arg(r#""$@""#); // Execute all positional parameters
 				cmd.arg("--"); // $0 placeholder (ignored)
 				cmd.args(exec_args); // These become $1, $2, $3, etc.
-				cmd.current_dir(path);
-				cmd.spawn()?
 			}
+			cmd
 		}
 		#[cfg(windows)]
 		ShellType::Windows => {
+			let mut cmd = Command::new(&shell_cmd[0]);
+			for arg in &shell_cmd[1..shell_cmd.len() - 1] {
+				cmd.arg(arg);
+			}
+			cmd.arg(&shell_cmd[shell_cmd.len() - 1]);
+
 			if exec_args.len() == 1 {
-				let mut cmd = Command::new(&shell_cmd[0]);
-				for arg in &shell_cmd[1..shell_cmd.len() - 1] {
-					cmd.arg(arg);
-				}
-				cmd.arg(&shell_cmd[shell_cmd.len() - 1]);
 				cmd.arg(&exec_args[0]); // Single arg passed directly for shell interpretation
-				cmd.current_dir(path);
-				cmd.spawn()?
 			} else {
 				// Windows cmd/pwsh doesn't have an equivalent to sh -c "$@"
 				// We need to join args with proper quoting
@@ -203,17 +188,22 @@ fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
 					})
 					.collect::<Vec<_>>()
 					.join(" ");
-				let mut cmd = Command::new(&shell_cmd[0]);
-				for arg in &shell_cmd[1..shell_cmd.len() - 1] {
-					cmd.arg(arg);
-				}
-				cmd.arg(&shell_cmd[shell_cmd.len() - 1]);
 				cmd.arg(command_string);
-				cmd.current_dir(path);
-				cmd.spawn()?
 			}
+			cmd
 		}
 	};
+	cmd.current_dir(path);
+	cmd
+}
+
+fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
+	println!();
+	println!("🏢 {}> {}", path, format_args_for_display(exec_args));
+
+	let shell = detect_shell();
+	let mut cmd = build_shell_command(&shell, exec_args, path);
+	let mut child_process = cmd.spawn()?;
 
 	let exit_code = &child_process.wait()?;
 	if !exit_code.success() {
@@ -226,85 +216,11 @@ fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
 }
 
 fn repo_exec_oneline(path: &str, exec_args: &[String]) -> Result<(Option<String>, bool), Error> {
-	// Detect the appropriate shell and execute through it
 	let shell = detect_shell();
-	let shell_cmd = &shell.shell_invocation;
-
-	// If single argument, pass directly to shell for interpretation (supports pipes, etc.)
-	// If multiple arguments, pass via positional parameters to avoid quoting issues
-	let mut child_process: Child = match shell.shell_type {
-		ShellType::PosixLike => {
-			if exec_args.len() == 1 {
-				let mut cmd = Command::new(&shell_cmd[0]);
-				for arg in &shell_cmd[1..shell_cmd.len() - 1] {
-					cmd.arg(arg);
-				}
-				cmd.arg(&shell_cmd[shell_cmd.len() - 1]);
-				cmd.arg(&exec_args[0]); // Single arg passed directly for shell interpretation
-				cmd.current_dir(path);
-				cmd.stdout(Stdio::piped());
-				cmd.stderr(Stdio::piped());
-				cmd.spawn()?
-			} else {
-				// Unix-like shells: use positional parameters
-				let mut cmd = Command::new(&shell_cmd[0]);
-				for arg in &shell_cmd[1..shell_cmd.len() - 1] {
-					cmd.arg(arg);
-				}
-				cmd.arg(&shell_cmd[shell_cmd.len() - 1]);
-				cmd.arg(r#""$@""#); // Execute all positional parameters
-				cmd.arg("--"); // $0 placeholder (ignored)
-				cmd.args(exec_args); // These become $1, $2, $3, etc.
-				cmd.current_dir(path);
-				cmd.stdout(Stdio::piped());
-				cmd.stderr(Stdio::piped());
-				cmd.spawn()?
-			}
-		}
-		#[cfg(windows)]
-		ShellType::Windows => {
-			if exec_args.len() == 1 {
-				let mut cmd = Command::new(&shell_cmd[0]);
-				for arg in &shell_cmd[1..shell_cmd.len() - 1] {
-					cmd.arg(arg);
-				}
-				cmd.arg(&shell_cmd[shell_cmd.len() - 1]);
-				cmd.arg(&exec_args[0]); // Single arg passed directly for shell interpretation
-				cmd.current_dir(path);
-				cmd.stdout(Stdio::piped());
-				cmd.stderr(Stdio::piped());
-				cmd.spawn()?
-			} else {
-				// Windows cmd/pwsh doesn't have an equivalent to sh -c "$@"
-				// We need to join args with proper quoting
-				let command_string = exec_args
-					.iter()
-					.map(|arg| {
-						// Quote if contains spaces or special chars
-						if arg.contains(' ')
-							|| arg.contains('"') || arg.contains('&')
-							|| arg.contains('|')
-						{
-							format!("\"{}\"", arg.replace('"', "\"\""))
-						} else {
-							arg.clone()
-						}
-					})
-					.collect::<Vec<_>>()
-					.join(" ");
-				let mut cmd = Command::new(&shell_cmd[0]);
-				for arg in &shell_cmd[1..shell_cmd.len() - 1] {
-					cmd.arg(arg);
-				}
-				cmd.arg(&shell_cmd[shell_cmd.len() - 1]);
-				cmd.arg(command_string);
-				cmd.current_dir(path);
-				cmd.stdout(Stdio::piped());
-				cmd.stderr(Stdio::piped());
-				cmd.spawn()?
-			}
-		}
-	};
+	let mut cmd = build_shell_command(&shell, exec_args, path);
+	cmd.stdout(Stdio::piped());
+	cmd.stderr(Stdio::piped());
+	let mut child_process = cmd.spawn()?;
 
 	let mut stdout = String::new();
 	if let Some(mut stdout_pipe) = child_process.stdout.take() {
