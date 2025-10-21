@@ -125,7 +125,8 @@ fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
 			.iter()
 			.map(|arg| {
 				// Quote if contains spaces or special chars
-				if arg.contains(' ') || arg.contains('"') || arg.contains('&') || arg.contains('|') {
+				if arg.contains(' ') || arg.contains('"') || arg.contains('&') || arg.contains('|')
+				{
 					format!("\"{}\"", arg.replace('"', "\"\""))
 				} else {
 					arg.clone()
@@ -190,7 +191,8 @@ fn repo_exec_oneline(path: &str, exec_args: &[String]) -> Result<(Option<String>
 			.iter()
 			.map(|arg| {
 				// Quote if contains spaces or special chars
-				if arg.contains(' ') || arg.contains('"') || arg.contains('&') || arg.contains('|') {
+				if arg.contains(' ') || arg.contains('"') || arg.contains('&') || arg.contains('|')
+				{
 					format!("\"{}\"", arg.replace('"', "\"\""))
 				} else {
 					arg.clone()
