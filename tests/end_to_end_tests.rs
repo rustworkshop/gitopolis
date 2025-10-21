@@ -1071,6 +1071,55 @@ fn list_long_multiple_remotes() {
 }
 
 #[test]
+fn clone_with_failures_exits_with_error_count() {
+	let temp = temp_folder();
+
+	// Create one valid source repo
+	create_local_repo(&temp, "source_repo1");
+
+	// Create state with two repos, one with valid URL and one with invalid
+	let initial_state_toml = "[[repos]]
+path = \"test_repo1\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"source_repo1\"
+
+[[repos]]
+path = \"test_repo2\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"nonexistent_source\"
+
+[repos.remotes.upstream]
+name = \"upstream\"
+url = \"also_nonexistent\"
+";
+	write_gitopolis_state_toml(&temp, initial_state_toml);
+
+	// Run clone - should fail with exit code 1
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["clone"])
+		.assert()
+		.failure()
+		.code(1)
+		.stderr(predicate::str::contains(
+			"Warning: Could not clone test_repo2",
+		))
+		.stderr(predicate::str::contains("1 repos failed to clone"));
+
+	// Verify the first repo was cloned successfully
+	assert!(temp.path().join("test_repo1").exists());
+
+	// Verify the second repo was not cloned
+	assert!(!temp.path().join("test_repo2").exists());
+}
+
+#[test]
 fn clone_multiple_remotes() {
 	let temp = temp_folder();
 

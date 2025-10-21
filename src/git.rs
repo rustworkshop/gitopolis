@@ -9,7 +9,7 @@ pub trait Git {
 	fn read_url(&self, path: String, remote_name: String) -> Result<String, GitopolisError>;
 	fn read_all_remotes(&self, path: String) -> Result<BTreeMap<String, String>, GitopolisError>;
 	fn add_remote(&self, path: &str, remote_name: &str, url: &str);
-	fn clone(&self, path: &str, url: &str);
+	fn clone(&self, path: &str, url: &str) -> Result<(), GitopolisError>;
 }
 
 pub struct GitImpl {}
@@ -69,10 +69,10 @@ impl Git for GitImpl {
 		}
 	}
 
-	fn clone(&self, path: &str, url: &str) {
+	fn clone(&self, path: &str, url: &str) -> Result<(), GitopolisError> {
 		if Path::new(path).exists() {
 			println!("🏢 {path}> Already exists, skipped.");
-			return;
+			return Ok(());
 		}
 		println!("🏢 {path}> Cloning {url} ...");
 		let output = Command::new("git")
@@ -83,5 +83,13 @@ impl Git for GitImpl {
 		let stderr = String::from_utf8(output.stderr).expect("Error converting stderr to string");
 		println!("{stdout}");
 		println!("{stderr}");
+
+		if !output.status.success() {
+			return Err(GitError {
+				message: format!("Failed to clone {} to {}", url, path),
+			});
+		}
+
+		Ok(())
 	}
 }

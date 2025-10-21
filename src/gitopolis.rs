@@ -87,7 +87,9 @@ impl Gitopolis {
 	pub fn read(&self) -> Result<Repos, GitopolisError> {
 		self.load()
 	}
-	pub fn clone(&self, repos: Vec<Repo>) {
+	pub fn clone(&self, repos: Vec<Repo>) -> usize {
+		let mut error_count = 0;
+
 		for repo in repos {
 			// Determine which remote to use for cloning (prefer origin)
 			let clone_remote_name = if repo.remotes.contains_key("origin") {
@@ -98,16 +100,29 @@ impl Gitopolis {
 
 			if let Some(clone_remote) = repo.remotes.get(clone_remote_name) {
 				// Clone the repo
-				self.git.clone(repo.path.as_str(), &clone_remote.url);
-
-				// Add all other remotes
-				for (name, remote) in &repo.remotes {
-					if name != clone_remote_name {
-						self.git.add_remote(&repo.path, name, &remote.url);
+				match self.git.clone(repo.path.as_str(), &clone_remote.url) {
+					Ok(()) => {
+						// Add all other remotes
+						for (name, remote) in &repo.remotes {
+							if name != clone_remote_name {
+								self.git.add_remote(&repo.path, name, &remote.url);
+							}
+						}
+					}
+					Err(_) => {
+						eprintln!("Warning: Could not clone {}", repo.path);
+						error_count += 1;
 					}
 				}
 			}
 		}
+
+		if error_count > 0 {
+			eprintln!("{error_count} repos failed to clone");
+			std::process::exit(1);
+		}
+
+		error_count
 	}
 	pub fn tags(&self) -> Result<Vec<String>, GitopolisError> {
 		let repos = self.load()?;
@@ -222,7 +237,7 @@ impl Gitopolis {
 		};
 
 		// Clone the repository
-		self.git.clone(&folder_name, url);
+		self.git.clone(&folder_name, url)?;
 
 		// Add the repository to gitopolis
 		self.add(folder_name.clone())?;
