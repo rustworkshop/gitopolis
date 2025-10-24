@@ -94,7 +94,8 @@ impl Repos {
 	fn add_repo(&mut self, repo: Repo) {
 		let repo_folder = repo.path.clone();
 		self.repos.push(repo);
-		self.repos.sort_by(|a, b| a.path.cmp(&b.path));
+		self.repos
+			.sort_by(|a, b| a.path.to_lowercase().cmp(&b.path.to_lowercase()));
 		info!("Added {repo_folder}");
 	}
 
@@ -143,7 +144,8 @@ impl Repos {
 				}
 			} else if !repo.tags.iter().any(|s| s == &tag_name.to_string()) {
 				repo.tags.push(tag_name.to_string());
-				repo.tags.sort();
+				repo.tags
+					.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
 			}
 		}
 		Ok(())

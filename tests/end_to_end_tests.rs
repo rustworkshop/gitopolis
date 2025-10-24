@@ -2096,11 +2096,13 @@ fn exec_oneline_multiple_args_with_single_quotes() {
 fn repos_stored_alphabetically() {
 	let temp = temp_folder();
 
-	// Add repos in reverse alphabetical order
+	// Add repos in reverse alphabetical order, with mixed case
 	add_a_repo(&temp, "zulu_repo", "git://example.org/zulu");
 	add_a_repo(&temp, "alpha_repo", "git://example.org/alpha");
+	add_a_repo(&temp, "Beta_repo", "git://example.org/beta");
 
-	// Check that they're stored sorted alphabetically
+	// Check that they're stored sorted alphabetically case-insensitively
+	// alpha < Beta < zulu (ignoring case)
 	let expected_toml = "[[repos]]
 path = \"alpha_repo\"
 tags = []
@@ -2108,6 +2110,14 @@ tags = []
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/alpha\"
+
+[[repos]]
+path = \"Beta_repo\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/beta\"
 
 [[repos]]
 path = \"zulu_repo\"
@@ -2124,15 +2134,17 @@ url = \"git://example.org/zulu\"
 fn tags_stored_alphabetically() {
 	let temp = temp_folder();
 
-	// Add a repo with tags in reverse alphabetical order
+	// Add a repo with tags in reverse alphabetical order, with mixed case
 	add_a_repo(&temp, "test_repo", "git://example.org/test");
 	tag_repo(&temp, "test_repo", "zulu");
 	tag_repo(&temp, "test_repo", "alpha");
+	tag_repo(&temp, "test_repo", "Beta");
 
-	// Check that tags are stored sorted alphabetically
+	// Check that tags are stored sorted alphabetically case-insensitively
+	// alpha < Beta < zulu (ignoring case)
 	let expected_toml = "[[repos]]
 path = \"test_repo\"
-tags = [\"alpha\", \"zulu\"]
+tags = [\"alpha\", \"Beta\", \"zulu\"]
 
 [repos.remotes.origin]
 name = \"origin\"
