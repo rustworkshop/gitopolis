@@ -81,7 +81,7 @@ impl Gitopolis {
 				.filter(|r| r.tags.contains(&tag.to_string()))
 				.collect(),
 		};
-		result.sort_by(|a, b| a.path.cmp(&b.path));
+		result.sort_by(|a, b| a.path.to_lowercase().cmp(&b.path.to_lowercase()));
 		Ok(result)
 	}
 	pub fn read(&self) -> Result<Repos, GitopolisError> {

@@ -208,6 +208,14 @@ name = \"origin\"
 url = \"git://example.org/zebra\"
 
 [[repos]]
+path = \"Beta_repo\"
+tags = [\"beta\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/beta\"
+
+[[repos]]
 path = \"alpha_repo\"
 tags = [\"alpha\"]
 
@@ -225,9 +233,11 @@ url = \"git://example.org/alpha\"\
 
 	let repos = gitopolis.list(&None).expect("Failed to list repos");
 
-	assert_eq!(2, repos.len());
+	// Verify case-insensitive sorting: alpha < Beta < zebra
+	assert_eq!(3, repos.len());
 	assert_eq!("alpha_repo", repos[0].path);
-	assert_eq!("zebra_repo", repos[1].path);
+	assert_eq!("Beta_repo", repos[1].path);
+	assert_eq!("zebra_repo", repos[2].path);
 }
 
 #[test]
@@ -249,6 +259,14 @@ name = \"origin\"
 url = \"git://example.org/middle\"
 
 [[repos]]
+path = \"Beta_repo\"
+tags = [\"backend\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/beta\"
+
+[[repos]]
 path = \"alpha_repo\"
 tags = [\"backend\"]
 
@@ -268,9 +286,11 @@ url = \"git://example.org/alpha\"\
 		.list(&Some("backend".to_string()))
 		.expect("Failed to list repos");
 
-	assert_eq!(2, repos.len());
+	// Verify case-insensitive sorting: alpha < Beta < zebra
+	assert_eq!(3, repos.len());
 	assert_eq!("alpha_repo", repos[0].path);
-	assert_eq!("zebra_repo", repos[1].path);
+	assert_eq!("Beta_repo", repos[1].path);
+	assert_eq!("zebra_repo", repos[2].path);
 }
 
 #[test]
@@ -282,6 +302,14 @@ tags = [\"backend\"]
 [repos.remotes.origin]
 name = \"origin\"
 url = \"git://example.org/zebra\"
+
+[[repos]]
+path = \"Beta_repo\"
+tags = [\"backend\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/beta\"
 
 [[repos]]
 path = \"alpha_repo\"
@@ -306,9 +334,11 @@ url = \"git://example.org/alpha\"\
 	let repos = gitopolis
 		.list(&Some("backend".to_string()))
 		.expect("Failed to list repos");
-	assert_eq!(2, repos.len());
+	// Verify case-insensitive sorting: alpha < Beta < zebra
+	assert_eq!(3, repos.len());
 	assert_eq!("alpha_repo", repos[0].path);
-	assert_eq!("zebra_repo", repos[1].path);
+	assert_eq!("Beta_repo", repos[1].path);
+	assert_eq!("zebra_repo", repos[2].path);
 }
 
 #[test]
