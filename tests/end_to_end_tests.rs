@@ -204,7 +204,7 @@ fn list_long() {
 	);
 
 	let expected_long_output =
-		"some_git_folder\tsome_tag,another_tag\torigin=git://example.org/test_url
+		"some_git_folder\tanother_tag,some_tag\torigin=git://example.org/test_url
 some_other_git_folder\t\torigin=git://example.org/test_url2
 ";
 
@@ -2090,4 +2090,65 @@ fn exec_oneline_multiple_args_with_single_quotes() {
 		.assert()
 		.success()
 		.stdout(expected_stdout);
+}
+
+#[test]
+fn repos_stored_alphabetically() {
+	let temp = temp_folder();
+
+	// Add repos in reverse alphabetical order, with mixed case
+	add_a_repo(&temp, "zulu_repo", "git://example.org/zulu");
+	add_a_repo(&temp, "alpha_repo", "git://example.org/alpha");
+	add_a_repo(&temp, "Beta_repo", "git://example.org/beta");
+
+	// Check that they're stored sorted alphabetically case-insensitively
+	// alpha < Beta < zulu (ignoring case)
+	let expected_toml = "[[repos]]
+path = \"alpha_repo\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/alpha\"
+
+[[repos]]
+path = \"Beta_repo\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/beta\"
+
+[[repos]]
+path = \"zulu_repo\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/zulu\"
+";
+	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
+}
+
+#[test]
+fn tags_stored_alphabetically() {
+	let temp = temp_folder();
+
+	// Add a repo with tags in reverse alphabetical order, with mixed case
+	add_a_repo(&temp, "test_repo", "git://example.org/test");
+	tag_repo(&temp, "test_repo", "zulu");
+	tag_repo(&temp, "test_repo", "alpha");
+	tag_repo(&temp, "test_repo", "Beta");
+
+	// Check that tags are stored sorted alphabetically case-insensitively
+	// alpha < Beta < zulu (ignoring case)
+	let expected_toml = "[[repos]]
+path = \"test_repo\"
+tags = [\"alpha\", \"Beta\", \"zulu\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test\"
+";
+	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
 }
