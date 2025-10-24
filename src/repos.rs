@@ -143,6 +143,7 @@ impl Repos {
 				}
 			} else if !repo.tags.iter().any(|s| s == &tag_name.to_string()) {
 				repo.tags.push(tag_name.to_string());
+				repo.tags.sort();
 			}
 		}
 		Ok(())
