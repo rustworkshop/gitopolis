@@ -2091,3 +2091,31 @@ fn exec_oneline_multiple_args_with_single_quotes() {
 		.success()
 		.stdout(expected_stdout);
 }
+
+#[test]
+fn repos_stored_alphabetically() {
+	let temp = temp_folder();
+
+	// Add repos in reverse alphabetical order
+	add_a_repo(&temp, "zulu_repo", "git://example.org/zulu");
+	add_a_repo(&temp, "alpha_repo", "git://example.org/alpha");
+
+	// Check that they're stored sorted alphabetically
+	let expected_toml = "[[repos]]
+path = \"alpha_repo\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/alpha\"
+
+[[repos]]
+path = \"zulu_repo\"
+tags = []
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/zulu\"
+";
+	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
+}

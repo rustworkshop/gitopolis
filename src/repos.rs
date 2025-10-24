@@ -74,8 +74,7 @@ impl Repos {
 		for (name, url) in remotes {
 			repo.add_remote(name, url);
 		}
-		self.repos.push(repo);
-		info!("Added {repo_folder}");
+		self.add_repo(repo);
 	}
 
 	pub fn add_with_tags_and_remotes(
@@ -89,7 +88,13 @@ impl Repos {
 			tags,
 			remotes,
 		};
+		self.add_repo(repo);
+	}
+
+	fn add_repo(&mut self, repo: Repo) {
+		let repo_folder = repo.path.clone();
 		self.repos.push(repo);
+		self.repos.sort_by(|a, b| a.path.cmp(&b.path));
 		info!("Added {repo_folder}");
 	}
 
