@@ -71,6 +71,14 @@ gitopolis exec -- git pull
 gitopolis exec -- git status
 ```
 
+**Note:** Commands executed with `exec` run in a non-interactive (non-TTY) environment to prevent hanging on prompts or pagers. This means:
+- Git commands won't pause for pagers (like `less` for `git log`)
+- Git will default to no-color output, but you can re-enable it with `--color` (e.g., `gitopolis exec -- git log --color`)
+- Commands won't prompt for interactive input
+- SSH/GPG keys must already be loaded and unlocked in ssh-agent or similar
+- Remote SSH host keys must already be accepted (in `~/.ssh/known_hosts`)
+- The easiest way to ensure keys and hosts are all setup and ready if you run into this problem is to run a single git fetch/clone outside gitopolis first. If this proves to be a regular hassle for new users then we could look at doing something about it so add your experience to [issue #236](https://github.com/timabell/gitopolis/issues/236).
+
 #### Getting output as single lines
 
 For compact, parsable output that's easy to sort and analyze use `--oneline`, this will put all the output on a single line for each repo (removing newlines).
