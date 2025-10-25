@@ -232,3 +232,13 @@ PRs are appreciated though it might be best to open an issue first to discuss th
 
 * [![build-main](https://github.com/timabell/gitopolis/actions/workflows/build-main.yml/badge.svg)](https://github.com/timabell/gitopolis/actions/workflows/build-main.yml) - Continuous integration build.
 * [![build-tag](https://github.com/timabell/gitopolis/actions/workflows/build-tag.yml/badge.svg)](https://github.com/timabell/gitopolis/actions/workflows/build-tag.yml) - Release build - generates binaries for download from tagged builds.
+
+## Alternatives
+
+Here's the other tools I'm aware of that have more-or-less similar capabilities
+
+* [`git for-each-repo`](https://git-scm.com/docs/git-for-each-repo) - new built-in git command for running git commands on many repos
+* [gita](https://github.com/nosarthur/gita) - requires python
+* [myrepos aka "mr"](https://myrepos.branchable.com/)
+* [GitKraken](https://www.gitkraken.com/blog/multi-repo-management-hurdles-and-solutions) - Commercial tool
+* https://stackoverflow.com/questions/816619/managing-many-git-repositories - stackoverflow question on the same
