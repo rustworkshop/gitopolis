@@ -2152,3 +2152,53 @@ url = \"git://example.org/test\"
 ";
 	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
 }
+
+#[test]
+fn tag_multiple_comma_separated() {
+	let temp = temp_folder();
+	add_a_repo(&temp, "some_git_folder", "git://example.org/test_url");
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["tag", "tag1,tag2,tag3", "some_git_folder"])
+		.assert()
+		.success();
+
+	let expected_toml = "[[repos]]
+path = \"some_git_folder\"
+tags = [\"tag1\", \"tag2\", \"tag3\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+";
+	assert_eq!(expected_toml, read_gitopolis_state_toml(&temp));
+}
+
+#[test]
+fn tag_remove_multiple_comma_separated() {
+	let temp = temp_folder();
+	add_a_repo_with_tags(
+		&temp,
+		"some_git_folder",
+		"git://example.org/test_url",
+		vec!["tag1", "tag2", "tag3", "keep_this"],
+	);
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["tag", "--remove", "tag1,tag2,tag3", "some_git_folder"])
+		.assert()
+		.success();
+
+	let actual_toml = read_gitopolis_state_toml(&temp);
+	let expected_toml = "[[repos]]
+path = \"some_git_folder\"
+tags = [\"keep_this\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/test_url\"
+";
+	assert_eq!(expected_toml, actual_toml);
+}

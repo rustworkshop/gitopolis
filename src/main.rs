@@ -44,7 +44,7 @@ enum Commands {
 		oneline: bool,
 		exec_args: Vec<String>,
 	},
-	/// Add/remove repo tags. Use tags to organise repos and allow running commands against subsets of the repo list.
+	/// Add/remove repo tags. Use tags to organise repos and allow running commands against subsets of the repo list. Supports comma-separated tag lists (e.g., "tag1,tag2,tag3").
 	Tag {
 		/// Remove this tag from these repo_folders.
 		#[clap(short, long)]
@@ -144,14 +144,17 @@ fn main() {
 			repo_folders,
 			remove,
 		}) => {
-			let result = if *remove {
-				init_gitopolis().remove_tag(tag_name, repo_folders)
-			} else {
-				init_gitopolis().add_tag(tag_name, repo_folders)
-			};
-			if let Err(error) = result {
-				eprintln!("Error: {}", error.message());
-				std::process::exit(1);
+			let tags: Vec<&str> = tag_name.split(',').map(|s| s.trim()).collect();
+			for tag in tags {
+				let result = if *remove {
+					init_gitopolis().remove_tag(tag, repo_folders)
+				} else {
+					init_gitopolis().add_tag(tag, repo_folders)
+				};
+				if let Err(error) = result {
+					eprintln!("Error: {}", error.message());
+					std::process::exit(1);
+				}
 			}
 		}
 		Some(Commands::Tags { long }) => list_tags(*long),
