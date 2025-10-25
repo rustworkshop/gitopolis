@@ -237,3 +237,8 @@ Here's the other tools I'm aware of that have more-or-less similar capabilities
 * [myrepos aka "mr"](https://myrepos.branchable.com/)
 * [GitKraken](https://www.gitkraken.com/blog/multi-repo-management-hurdles-and-solutions) - Commercial tool
 * https://stackoverflow.com/questions/816619/managing-many-git-repositories - stackoverflow question on the same
+* [gr](https://mixu.net/gr/)
+* [git-repo](https://gerrit.googlesource.com/git-repo/)
+* [git slave](https://gitslave.sourceforge.net/)
+* [mani](https://manicli.com/) a TUI (text user interface)
+* [RepoZ](https://github.com/awaescher/RepoZ) - a Windows GUI tool
