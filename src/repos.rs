@@ -144,8 +144,7 @@ impl Repos {
 				}
 			} else if !repo.tags.iter().any(|s| s == &tag_name.to_string()) {
 				repo.tags.push(tag_name.to_string());
-				repo.tags
-					.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+				repo.tags.sort_by_key(|a| a.to_lowercase());
 			}
 		}
 		Ok(())
