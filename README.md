@@ -228,11 +228,6 @@ Rough internal design and ambitions can be found at [Design.md](Design.md).
 
 PRs are appreciated though it might be best to open an issue first to discuss the design.
 
-### Builds
-
-* [![build-main](https://github.com/timabell/gitopolis/actions/workflows/build-main.yml/badge.svg)](https://github.com/timabell/gitopolis/actions/workflows/build-main.yml) - Continuous integration build.
-* [![build-tag](https://github.com/timabell/gitopolis/actions/workflows/build-tag.yml/badge.svg)](https://github.com/timabell/gitopolis/actions/workflows/build-tag.yml) - Release build - generates binaries for download from tagged builds.
-
 ## Alternatives
 
 Here's the other tools I'm aware of that have more-or-less similar capabilities
