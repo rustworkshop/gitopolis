@@ -1925,10 +1925,14 @@ fn exec_with_special_chars() {
 	// Test with all special characters that need quoting: whitespace, quotes, and shell metacharacters
 	// From needs_quoting(): | & ; < > ( ) $ ` \ " ' * ? [ ] { } ! #
 	// Windows cmd.exe echo outputs escaped quotes for the outer quotes
-	// Windows has mixed line endings: LF from println!(), CRLF from cmd.exe output
+	// Note: BufReader::lines() normalizes line endings to LF on all platforms
 	let expected_stdout = if cfg!(windows) {
-		// Manual construction to match actual output with mixed line endings
-		"\n🏢 repo_a> echo \"test \\\" ' | & ; < > ( ) $ ` \\\\ * ? [ ] { } ! # chars\"\n\\\"test \\\"\\\" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars\\\"\r\n\n".to_string()
+		r#"
+🏢 repo_a> echo "test \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars"
+\"test \"\" ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars\"
+
+"#
+		.to_string()
 	} else {
 		r#"
 🏢 repo_a> echo "test \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars"
@@ -2254,12 +2258,16 @@ fn exec_with_multiple_tag_groups() {
 	);
 	add_a_repo_with_tags(&temp, "repo3", "git://example.org/repo3", vec!["foo"]);
 
-	// Windows cmd.exe echo outputs CRLF line endings
-	let expected_stdout = if cfg!(windows) {
-		"\n🏢 repo1> echo hello\nhello\r\n\n\n🏢 repo2> echo hello\nhello\r\n\n"
-	} else {
-		"\n🏢 repo1> echo hello\nhello\n\n\n🏢 repo2> echo hello\nhello\n\n"
-	};
+	// Note: BufReader::lines() normalizes line endings to LF on all platforms
+	let expected_stdout = r#"
+🏢 repo1> echo hello
+hello
+
+
+🏢 repo2> echo hello
+hello
+
+"#;
 
 	gitopolis_executable()
 		.current_dir(&temp)

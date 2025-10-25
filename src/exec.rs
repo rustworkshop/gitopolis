@@ -1,7 +1,8 @@
 use crate::repos::Repo;
 use std::env;
-use std::io::{Error, Read};
+use std::io::{BufRead, BufReader, Error, Read};
 use std::process::{Child, Command, ExitStatus, Stdio};
+use std::thread;
 
 pub fn exec(exec_args: Vec<String>, repos: Vec<Repo>, oneline: bool) {
 	let mut error_count = 0;
@@ -100,6 +101,9 @@ fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
 			.arg("-c")
 			.arg(&exec_args[0]) // Single arg passed directly for shell interpretation
 			.current_dir(path)
+			.stdin(Stdio::null()) // Prevent interactive prompts/pagers
+			.stdout(Stdio::piped()) // Prevent TTY detection for pagers
+			.stderr(Stdio::piped())
 			.spawn()?
 	} else {
 		Command::new("sh")
@@ -108,6 +112,9 @@ fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
 			.arg("--") // $0 placeholder (ignored)
 			.args(exec_args) // These become $1, $2, $3, etc.
 			.current_dir(path)
+			.stdin(Stdio::null()) // Prevent interactive prompts/pagers
+			.stdout(Stdio::piped()) // Prevent TTY detection for pagers
+			.stderr(Stdio::piped())
 			.spawn()?
 	};
 
@@ -117,6 +124,9 @@ fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
 			.arg("/C")
 			.arg(&exec_args[0]) // Single arg passed directly for shell interpretation
 			.current_dir(path)
+			.stdin(Stdio::null()) // Prevent interactive prompts/pagers
+			.stdout(Stdio::piped()) // Prevent TTY detection for pagers
+			.stderr(Stdio::piped())
 			.spawn()?
 	} else {
 		// Windows cmd doesn't have an equivalent to sh -c "$@"
@@ -138,17 +148,47 @@ fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
 			.arg("/C")
 			.arg(command_string)
 			.current_dir(path)
+			.stdin(Stdio::null()) // Prevent interactive prompts/pagers
+			.stdout(Stdio::piped()) // Prevent TTY detection for pagers
+			.stderr(Stdio::piped())
 			.spawn()?
 	};
 
-	let exit_code = &child_process.wait()?;
+	// Stream stdout and stderr in real-time using threads
+	let stdout = child_process.stdout.take().expect("Failed to capture stdout");
+	let stderr = child_process.stderr.take().expect("Failed to capture stderr");
+
+	let stdout_thread = thread::spawn(move || {
+		let reader = BufReader::new(stdout);
+		for line in reader.lines() {
+			if let Ok(line) = line {
+				println!("{}", line);
+			}
+		}
+	});
+
+	let stderr_thread = thread::spawn(move || {
+		let reader = BufReader::new(stderr);
+		for line in reader.lines() {
+			if let Ok(line) = line {
+				eprintln!("{}", line);
+			}
+		}
+	});
+
+	let exit_code = child_process.wait()?;
+
+	// Wait for output threads to finish
+	let _ = stdout_thread.join();
+	let _ = stderr_thread.join();
+
 	if !exit_code.success() {
 		eprintln!(
 			"Command exited with code {}",
 			exit_code.code().expect("exit code missing")
 		);
 	}
-	Ok(*exit_code)
+	Ok(exit_code)
 }
 
 fn repo_exec_oneline(path: &str, exec_args: &[String]) -> Result<(Option<String>, bool), Error> {
@@ -160,6 +200,7 @@ fn repo_exec_oneline(path: &str, exec_args: &[String]) -> Result<(Option<String>
 			.arg("-c")
 			.arg(&exec_args[0]) // Single arg passed directly for shell interpretation
 			.current_dir(path)
+			.stdin(Stdio::null())
 			.stdout(Stdio::piped())
 			.stderr(Stdio::piped())
 			.spawn()?
@@ -170,6 +211,7 @@ fn repo_exec_oneline(path: &str, exec_args: &[String]) -> Result<(Option<String>
 			.arg("--") // $0 placeholder (ignored)
 			.args(exec_args) // These become $1, $2, $3, etc.
 			.current_dir(path)
+			.stdin(Stdio::null())
 			.stdout(Stdio::piped())
 			.stderr(Stdio::piped())
 			.spawn()?
@@ -181,6 +223,7 @@ fn repo_exec_oneline(path: &str, exec_args: &[String]) -> Result<(Option<String>
 			.arg("/C")
 			.arg(&exec_args[0]) // Single arg passed directly for shell interpretation
 			.current_dir(path)
+			.stdin(Stdio::null())
 			.stdout(Stdio::piped())
 			.stderr(Stdio::piped())
 			.spawn()?
@@ -204,6 +247,7 @@ fn repo_exec_oneline(path: &str, exec_args: &[String]) -> Result<(Option<String>
 			.arg("/C")
 			.arg(command_string)
 			.current_dir(path)
+			.stdin(Stdio::null())
 			.stdout(Stdio::piped())
 			.stderr(Stdio::piped())
 			.spawn()?
