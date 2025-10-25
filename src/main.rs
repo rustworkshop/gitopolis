@@ -121,7 +121,7 @@ fn main() {
 		Some(Commands::Remove { repo_folders }) => {
 			init_gitopolis()
 				.remove(repo_folders)
-				.expect("TODO: panic message");
+				.expect("Failed to remove repository");
 		}
 		Some(Commands::List {
 			tag: tag_args,
@@ -129,7 +129,9 @@ fn main() {
 		}) => {
 			let filter = TagFilter::from_cli_args(tag_args);
 			list(
-				init_gitopolis().list(&filter).expect("TODO: panic message"),
+				init_gitopolis()
+					.list(&filter)
+					.expect("Failed to list repositories"),
 				*long,
 			)
 		}
@@ -146,7 +148,9 @@ fn main() {
 			let filter = TagFilter::from_cli_args(tag_args);
 			exec(
 				exec_args.to_owned(),
-				init_gitopolis().list(&filter).expect("TODO: panic message"),
+				init_gitopolis()
+					.list(&filter)
+					.expect("Failed to list repositories for exec"),
 				*oneline,
 			);
 		}
@@ -244,7 +248,11 @@ fn clone(url: &Option<String>, target_dir: &Option<String>, tag_args: &[String])
 			// Clone from .gitopolis.toml with tag filtering
 			let gitopolis = init_gitopolis();
 			let filter = TagFilter::from_cli_args(tag_args);
-			gitopolis.clone(gitopolis.list(&filter).expect("TODO: panic message"));
+			gitopolis.clone(
+				gitopolis
+					.list(&filter)
+					.expect("Failed to list repositories for cloning"),
+			);
 		}
 	}
 }
@@ -320,16 +328,19 @@ fn list(repos: Vec<Repo>, long: bool) {
 fn list_tags(long: bool) {
 	let gitopolis = &init_gitopolis();
 	if long {
-		for tag in gitopolis.tags().expect("TODO: panic message") {
+		for tag in gitopolis.tags().expect("Failed to get tags") {
 			println!("{tag}");
 			let filter = TagFilter::from_cli_args(std::slice::from_ref(&tag));
-			for r in gitopolis.list(&filter).expect("TODO: panic message") {
+			for r in gitopolis
+				.list(&filter)
+				.expect("Failed to list repositories for tag")
+			{
 				println!("\t{}", r.path);
 			}
 			println!();
 		}
 	} else {
-		for tag in gitopolis.tags().expect("TODO: panic message") {
+		for tag in gitopolis.tags().expect("Failed to get tags") {
 			println!("{tag}");
 		}
 	}

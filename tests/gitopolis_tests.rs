@@ -40,7 +40,7 @@ url = \"git://example.org/test_url\"\
 	let git = FakeGit::new().boxed();
 	let gitopolis = Gitopolis::new(storage, git);
 	let filter = TagFilter::all();
-	let actual_repos = gitopolis.list(&filter).expect("TODO: panic message");
+	let actual_repos = gitopolis.list(&filter).expect("Failed to list repos");
 
 	let expected_repos = 1;
 	assert_eq!(expected_repos, actual_repos.len())
@@ -97,7 +97,11 @@ url = \"git://example.org/test_url\"\
 	let gitopolis = Gitopolis::new(storage, git);
 
 	let filter = TagFilter::all();
-	gitopolis.clone(gitopolis.list(&filter).expect("TODO: panic message"));
+	gitopolis.clone(
+		gitopolis
+			.list(&filter)
+			.expect("Failed to list repos for cloning"),
+	);
 }
 
 #[test]
@@ -130,7 +134,7 @@ url = \"git://example.org/test_url\"
 
 	gitopolis
 		.add_tag("some_tag", &["test_repo/".to_string()])
-		.expect("TODO: panic message");
+		.expect("Failed to add tag to repo");
 }
 
 #[test]
@@ -163,7 +167,7 @@ url = \"git://example.org/test_url\"
 
 	gitopolis
 		.remove_tag("some_tag", &["test_repo/".to_string()])
-		.expect("TODO: panic message");
+		.expect("Failed to remove tag from repo");
 }
 
 #[test]
@@ -191,7 +195,7 @@ url = \"git://example.org/test_url\"\
 	let git = FakeGit::new().boxed();
 	let gitopolis = Gitopolis::new(storage, git);
 
-	let result = gitopolis.tags().expect("TODO: panic message");
+	let result = gitopolis.tags().expect("Failed to get tags");
 	assert_eq!(3, result.len());
 	assert_eq!("another_tag", result[0]);
 	assert_eq!("more_tags", result[1]);
@@ -364,7 +368,7 @@ url = \"git://example.org/test_url\"\
 
 	gitopolis
 		.remove(&["test_repo/".to_string()])
-		.expect("TODO: panic message");
+		.expect("Failed to remove repo");
 }
 
 #[test]
