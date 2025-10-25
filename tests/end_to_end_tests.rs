@@ -2254,15 +2254,12 @@ fn exec_with_multiple_tag_groups() {
 	);
 	add_a_repo_with_tags(&temp, "repo3", "git://example.org/repo3", vec!["foo"]);
 
-	let expected_stdout = "
-🏢 repo1> echo hello
-hello
-
-
-🏢 repo2> echo hello
-hello
-
-";
+	// Windows cmd.exe echo outputs CRLF line endings
+	let expected_stdout = if cfg!(windows) {
+		"\n🏢 repo1> echo hello\nhello\r\n\n\n🏢 repo2> echo hello\nhello\r\n\n"
+	} else {
+		"\n🏢 repo1> echo hello\nhello\n\n\n🏢 repo2> echo hello\nhello\n\n"
+	};
 
 	gitopolis_executable()
 		.current_dir(&temp)
