@@ -2,6 +2,7 @@ use crate::git::Git;
 use crate::gitopolis::GitopolisError::*;
 use crate::repos::{Repo, RepoInfo, Repos};
 use crate::storage::Storage;
+use crate::tag_filter::TagFilter;
 use log::info;
 use std::collections::BTreeMap;
 use std::io;
@@ -71,16 +72,16 @@ impl Gitopolis {
 		repos.remove_tag(tag_name, normalize_folders(repo_folders))?;
 		self.save(repos)
 	}
-	pub fn list(&self, tag_name: &Option<String>) -> Result<Vec<Repo>, GitopolisError> {
+	/// Filter repos by tag filter with AND/OR logic.
+	pub fn list(&self, filter: &TagFilter) -> Result<Vec<Repo>, GitopolisError> {
 		let repos = self.load()?;
-		let mut result = match tag_name {
-			None => repos.into_vec(),
-			Some(tag) => repos
-				.into_vec()
-				.into_iter()
-				.filter(|r| r.tags.contains(&tag.to_string()))
-				.collect(),
-		};
+
+		let mut result: Vec<Repo> = repos
+			.into_vec()
+			.into_iter()
+			.filter(|repo| filter.matches(&repo.tags))
+			.collect();
+
 		result.sort_by(|a, b| a.path.to_lowercase().cmp(&b.path.to_lowercase()));
 		Ok(result)
 	}
@@ -137,9 +138,9 @@ impl Gitopolis {
 		Ok(flat)
 	}
 
-	pub fn sync_read_remotes(&mut self, tag_name: &Option<String>) -> Result<(), GitopolisError> {
+	pub fn sync_read_remotes(&mut self, filter: &TagFilter) -> Result<(), GitopolisError> {
 		let mut repos = self.load()?;
-		let repo_list = self.list(tag_name)?;
+		let repo_list = self.list(filter)?;
 		let mut error_count = 0;
 
 		for repo in repo_list {
@@ -171,8 +172,8 @@ impl Gitopolis {
 		Ok(())
 	}
 
-	pub fn sync_write_remotes(&self, tag_name: &Option<String>) -> Result<(), GitopolisError> {
-		let repo_list = self.list(tag_name)?;
+	pub fn sync_write_remotes(&self, filter: &TagFilter) -> Result<(), GitopolisError> {
+		let repo_list = self.list(filter)?;
 		let mut error_count = 0;
 
 		for repo in repo_list {
