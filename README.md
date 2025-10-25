@@ -90,6 +90,28 @@ gitopolis tag some_tag repo1 repo2
 gitopolis exec -t some_tag -- git pull
 ```
 
+#### Advanced tag filtering with AND/OR logic
+
+You can use multiple tags with powerful AND/OR logic to precisely filter repositories:
+
+- **Comma-separated tags** (within a single `--tag` flag) use **AND logic**: all tags must match
+- **Multiple `--tag` flags** use **OR logic**: at least one tag group must match
+
+Examples:
+
+```sh
+# Match repos with BOTH 'backend' AND 'rust'
+gitopolis list --tag backend,rust
+
+# Match repos with (backend AND rust) OR (frontend AND typescript)
+gitopolis exec --tag backend,rust --tag frontend,typescript -- git pull
+
+# Clone repos with (production AND critical) OR (staging AND critical)
+gitopolis clone --tag production,critical --tag staging,critical
+```
+
+This allows for flexible repository filtering based on combinations of characteristics.
+
 ### Viewing repository information
 
 Show the recorded information about a specific repository:

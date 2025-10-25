@@ -5,3 +5,4 @@ pub mod git;
 pub mod gitopolis;
 pub mod repos;
 pub mod storage;
+pub mod tag_filter;

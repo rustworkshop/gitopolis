@@ -2202,3 +2202,345 @@ url = \"git://example.org/test_url\"
 ";
 	assert_eq!(expected_toml, actual_toml);
 }
+
+#[test]
+fn list_with_multiple_tag_groups() {
+	// Test --tag foo,bar --tag baz,boz matches (foo AND bar) OR (baz AND boz)
+	let temp = temp_folder();
+	add_a_repo_with_tags(
+		&temp,
+		"repo1",
+		"git://example.org/repo1",
+		vec!["foo", "bar"],
+	);
+	add_a_repo_with_tags(
+		&temp,
+		"repo2",
+		"git://example.org/repo2",
+		vec!["baz", "boz"],
+	);
+	add_a_repo_with_tags(&temp, "repo3", "git://example.org/repo3", vec!["foo"]);
+	add_a_repo_with_tags(&temp, "repo4", "git://example.org/repo4", vec!["baz"]);
+	add_a_repo_with_tags(
+		&temp,
+		"repo5",
+		"git://example.org/repo5",
+		vec!["foo", "bar", "baz", "boz"],
+	);
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["list", "--tag", "foo,bar", "--tag", "baz,boz"])
+		.assert()
+		.success()
+		.stdout("repo1\nrepo2\nrepo5\n");
+}
+
+#[test]
+fn exec_with_multiple_tag_groups() {
+	// Test --tag foo,bar --tag baz,boz matches (foo AND bar) OR (baz AND boz)
+	let temp = temp_folder();
+	add_a_repo_with_tags(
+		&temp,
+		"repo1",
+		"git://example.org/repo1",
+		vec!["foo", "bar"],
+	);
+	add_a_repo_with_tags(
+		&temp,
+		"repo2",
+		"git://example.org/repo2",
+		vec!["baz", "boz"],
+	);
+	add_a_repo_with_tags(&temp, "repo3", "git://example.org/repo3", vec!["foo"]);
+
+	// Windows cmd.exe echo outputs CRLF line endings
+	let expected_stdout = if cfg!(windows) {
+		"\n🏢 repo1> echo hello\nhello\r\n\n\n🏢 repo2> echo hello\nhello\r\n\n"
+	} else {
+		"\n🏢 repo1> echo hello\nhello\n\n\n🏢 repo2> echo hello\nhello\n\n"
+	};
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec![
+			"exec", "--tag", "foo,bar", "--tag", "baz,boz", "--", "echo", "hello",
+		])
+		.assert()
+		.success()
+		.stdout(expected_stdout);
+}
+
+#[test]
+fn clone_with_multiple_tag_groups() {
+	// Test --tag foo,bar --tag baz,boz clones repos matching (foo AND bar) OR (baz AND boz)
+	let temp = temp_folder();
+	create_local_repo(&temp, "source1");
+	create_local_repo(&temp, "source2");
+	create_local_repo(&temp, "source3");
+
+	let initial_state_toml = "[[repos]]
+path = \"repo1\"
+tags = [\"foo\", \"bar\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"source1\"
+
+[[repos]]
+path = \"repo2\"
+tags = [\"baz\", \"boz\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"source2\"
+
+[[repos]]
+path = \"repo3\"
+tags = [\"foo\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"source3\"
+";
+	write_gitopolis_state_toml(&temp, initial_state_toml);
+
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec!["clone", "--tag", "foo,bar", "--tag", "baz,boz"])
+		.assert()
+		.success()
+		.stdout(predicate::str::contains("🏢 repo1> Cloning source1"))
+		.stdout(predicate::str::contains("🏢 repo2> Cloning source2"))
+		.stdout(predicate::str::contains("🏢 repo3> Cloning").not());
+
+	// Verify only repo1 and repo2 were cloned
+	assert!(temp.path().join("repo1").exists());
+	assert!(temp.path().join("repo2").exists());
+	assert!(!temp.path().join("repo3").exists());
+}
+
+#[test]
+fn sync_read_remotes_with_multiple_tag_groups() {
+	// Test --tag foo,bar --tag baz,boz syncs repos matching (foo AND bar) OR (baz AND boz)
+	let temp = temp_folder();
+
+	// Create first repo with tags foo,bar
+	let path1 = &temp.path().join("repo1");
+	fs::create_dir_all(path1).expect("create repo dir failed");
+	Command::new("git")
+		.current_dir(path1)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+	Command::new("git")
+		.current_dir(path1)
+		.args(vec![
+			"remote",
+			"add",
+			"origin",
+			"git://example.org/repo1_url",
+		])
+		.output()
+		.expect("git remote add failed");
+
+	// Create second repo with tags baz,boz
+	let path2 = &temp.path().join("repo2");
+	fs::create_dir_all(path2).expect("create repo dir failed");
+	Command::new("git")
+		.current_dir(path2)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+	Command::new("git")
+		.current_dir(path2)
+		.args(vec![
+			"remote",
+			"add",
+			"origin",
+			"git://example.org/repo2_url",
+		])
+		.output()
+		.expect("git remote add failed");
+
+	// Create third repo with only tag foo (should not be synced)
+	let path3 = &temp.path().join("repo3");
+	fs::create_dir_all(path3).expect("create repo dir failed");
+	Command::new("git")
+		.current_dir(path3)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+	Command::new("git")
+		.current_dir(path3)
+		.args(vec![
+			"remote",
+			"add",
+			"origin",
+			"git://example.org/repo3_url",
+		])
+		.output()
+		.expect("git remote add failed");
+
+	// Create initial state with tags but no remotes
+	let initial_state_toml = "[[repos]]
+path = \"repo1\"
+tags = [\"foo\", \"bar\"]
+
+[repos.remotes]
+
+[[repos]]
+path = \"repo2\"
+tags = [\"baz\", \"boz\"]
+
+[repos.remotes]
+
+[[repos]]
+path = \"repo3\"
+tags = [\"foo\"]
+
+[repos.remotes]
+";
+	write_gitopolis_state_toml(&temp, initial_state_toml);
+
+	// Run sync --read-remotes with multiple tag groups
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec![
+			"sync",
+			"--read-remotes",
+			"--tag",
+			"foo,bar",
+			"--tag",
+			"baz,boz",
+		])
+		.assert()
+		.success()
+		.stderr(predicate::str::contains(
+			"Updated repo1 with remotes from git",
+		))
+		.stderr(predicate::str::contains(
+			"Updated repo2 with remotes from git",
+		))
+		.stderr(predicate::str::contains("repo3").not());
+
+	// Verify only repo1 and repo2 were updated
+	let toml = read_gitopolis_state_toml(&temp);
+	assert!(toml.contains("git://example.org/repo1_url"));
+	assert!(toml.contains("git://example.org/repo2_url"));
+	assert!(!toml.contains("git://example.org/repo3_url"));
+}
+
+#[test]
+fn sync_write_remotes_with_multiple_tag_groups() {
+	// Test --tag foo,bar --tag baz,boz syncs repos matching (foo AND bar) OR (baz AND boz)
+	let temp = temp_folder();
+
+	// Create first repo with tags foo,bar
+	let path1 = &temp.path().join("repo1");
+	fs::create_dir_all(path1).expect("create repo dir failed");
+	Command::new("git")
+		.current_dir(path1)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+
+	// Create second repo with tags baz,boz
+	let path2 = &temp.path().join("repo2");
+	fs::create_dir_all(path2).expect("create repo dir failed");
+	Command::new("git")
+		.current_dir(path2)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+
+	// Create third repo with only tag foo (should not be synced)
+	let path3 = &temp.path().join("repo3");
+	fs::create_dir_all(path3).expect("create repo dir failed");
+	Command::new("git")
+		.current_dir(path3)
+		.args(vec!["init", "--initial-branch", "main"])
+		.output()
+		.expect("git init failed");
+
+	// Create state with remotes to add
+	let initial_state_toml = "[[repos]]
+path = \"repo1\"
+tags = [\"foo\", \"bar\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/repo1_origin\"
+
+[repos.remotes.upstream]
+name = \"upstream\"
+url = \"git://example.org/repo1_upstream\"
+
+[[repos]]
+path = \"repo2\"
+tags = [\"baz\", \"boz\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/repo2_origin\"
+
+[repos.remotes.fork]
+name = \"fork\"
+url = \"git://example.org/repo2_fork\"
+
+[[repos]]
+path = \"repo3\"
+tags = [\"foo\"]
+
+[repos.remotes.origin]
+name = \"origin\"
+url = \"git://example.org/repo3_origin\"
+";
+	write_gitopolis_state_toml(&temp, initial_state_toml);
+
+	// Run sync --write-remotes with multiple tag groups
+	gitopolis_executable()
+		.current_dir(&temp)
+		.args(vec![
+			"sync",
+			"--write-remotes",
+			"--tag",
+			"foo,bar",
+			"--tag",
+			"baz,boz",
+		])
+		.assert()
+		.success()
+		.stderr(predicate::str::contains("Added remote origin to repo1"))
+		.stderr(predicate::str::contains("Added remote upstream to repo1"))
+		.stderr(predicate::str::contains("Added remote origin to repo2"))
+		.stderr(predicate::str::contains("Added remote fork to repo2"))
+		.stderr(predicate::str::contains("repo3").not());
+
+	// Verify only repo1 and repo2 got remotes
+	let output1 = Command::new("git")
+		.current_dir(path1)
+		.args(vec!["remote", "-v"])
+		.output()
+		.expect("git remote failed");
+	let remotes1 = String::from_utf8(output1.stdout).expect("utf8 conversion failed");
+	assert!(remotes1.contains("origin"));
+	assert!(remotes1.contains("upstream"));
+
+	let output2 = Command::new("git")
+		.current_dir(path2)
+		.args(vec!["remote", "-v"])
+		.output()
+		.expect("git remote failed");
+	let remotes2 = String::from_utf8(output2.stdout).expect("utf8 conversion failed");
+	assert!(remotes2.contains("origin"));
+	assert!(remotes2.contains("fork"));
+
+	let output3 = Command::new("git")
+		.current_dir(path3)
+		.args(vec!["remote", "-v"])
+		.output()
+		.expect("git remote failed");
+	let remotes3 = String::from_utf8(output3.stdout).expect("utf8 conversion failed");
+	assert!(remotes3.is_empty());
+}

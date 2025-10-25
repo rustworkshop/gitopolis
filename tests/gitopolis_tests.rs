@@ -1,6 +1,7 @@
 use gitopolis::git::Git;
 use gitopolis::gitopolis::{Gitopolis, GitopolisError};
 use gitopolis::storage::Storage;
+use gitopolis::tag_filter::TagFilter;
 
 #[test]
 fn add() {
@@ -38,8 +39,8 @@ url = \"git://example.org/test_url\"\
 
 	let git = FakeGit::new().boxed();
 	let gitopolis = Gitopolis::new(storage, git);
-	let tag = &None;
-	let actual_repos = gitopolis.list(tag).expect("TODO: panic message");
+	let filter = TagFilter::all();
+	let actual_repos = gitopolis.list(&filter).expect("TODO: panic message");
 
 	let expected_repos = 1;
 	assert_eq!(expected_repos, actual_repos.len())
@@ -62,8 +63,8 @@ url = \"git://example.org/test_url\"\
 
 	let git = FakeGit::new().boxed();
 	let gitopolis = Gitopolis::new(storage, git);
-	let tag = &None;
-	let repos_result = gitopolis.list(tag);
+	let filter = TagFilter::all();
+	let repos_result = gitopolis.list(&filter);
 	let actual_error = repos_result.expect_err("should error");
 	let expected_error = "Failed to parse state data as valid TOML. TOML parse error at line 1, column 1\n  |\n1 | [[NOT_A_repos]]\n  | ^^^^^^^^^^^^^^^\nmissing field `remotes`\n";
 	assert_eq!(expected_error, actual_error.message())
@@ -95,8 +96,8 @@ url = \"git://example.org/test_url\"\
 
 	let gitopolis = Gitopolis::new(storage, git);
 
-	let tag = &None;
-	gitopolis.clone(gitopolis.list(tag).expect("TODO: panic message"));
+	let filter = TagFilter::all();
+	gitopolis.clone(gitopolis.list(&filter).expect("TODO: panic message"));
 }
 
 #[test]
@@ -231,7 +232,8 @@ url = \"git://example.org/alpha\"\
 	let git = FakeGit::new().boxed();
 	let gitopolis = Gitopolis::new(storage, git);
 
-	let repos = gitopolis.list(&None).expect("Failed to list repos");
+	let filter = TagFilter::all();
+	let repos = gitopolis.list(&filter).expect("Failed to list repos");
 
 	// Verify case-insensitive sorting: alpha < Beta < zebra
 	assert_eq!(3, repos.len());
@@ -282,9 +284,8 @@ url = \"git://example.org/alpha\"\
 	let git = FakeGit::new().boxed();
 	let gitopolis = Gitopolis::new(storage, git);
 
-	let repos = gitopolis
-		.list(&Some("backend".to_string()))
-		.expect("Failed to list repos");
+	let filter = TagFilter::from_cli_args(&["backend".to_string()]);
+	let repos = gitopolis.list(&filter).expect("Failed to list repos");
 
 	// Verify case-insensitive sorting: alpha < Beta < zebra
 	assert_eq!(3, repos.len());
@@ -331,9 +332,8 @@ url = \"git://example.org/alpha\"\
 	assert_eq!(1, tags.len());
 	assert_eq!("backend", tags[0]);
 
-	let repos = gitopolis
-		.list(&Some("backend".to_string()))
-		.expect("Failed to list repos");
+	let filter = TagFilter::from_cli_args(&["backend".to_string()]);
+	let repos = gitopolis.list(&filter).expect("Failed to list repos");
 	// Verify case-insensitive sorting: alpha < Beta < zebra
 	assert_eq!(3, repos.len());
 	assert_eq!("alpha_repo", repos[0].path);
