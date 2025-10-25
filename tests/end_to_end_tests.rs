@@ -1927,8 +1927,12 @@ fn exec_with_special_chars() {
 	// Windows cmd.exe echo outputs escaped quotes for the outer quotes
 	// Note: BufReader::lines() normalizes line endings to LF on all platforms
 	let expected_stdout = if cfg!(windows) {
-		// Output now normalized to LF-only line endings by BufReader::lines()
-		"\n🏢 repo_a> echo \"test \\\" ' | & ; < > ( ) $ ` \\\\ * ? [ ] { } ! # chars\"\n\\\"test \\\"\\\" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars\\\"\n\n".to_string()
+		r#"
+🏢 repo_a> echo "test \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars"
+\"test \"\" ' | & ; < > ( ) $ ` \ * ? [ ] { } ! # chars\"
+
+"#
+		.to_string()
 	} else {
 		r#"
 🏢 repo_a> echo "test \" ' | & ; < > ( ) $ ` \\ * ? [ ] { } ! # chars"
@@ -2255,7 +2259,15 @@ fn exec_with_multiple_tag_groups() {
 	add_a_repo_with_tags(&temp, "repo3", "git://example.org/repo3", vec!["foo"]);
 
 	// Note: BufReader::lines() normalizes line endings to LF on all platforms
-	let expected_stdout = "\n🏢 repo1> echo hello\nhello\n\n\n🏢 repo2> echo hello\nhello\n\n";
+	let expected_stdout = r#"
+🏢 repo1> echo hello
+hello
+
+
+🏢 repo2> echo hello
+hello
+
+"#;
 
 	gitopolis_executable()
 		.current_dir(&temp)
