@@ -21,9 +21,6 @@ trim = true
 conventional_commits = true
 filter_unconventional = true # ignore commits with "prefix:"
 split_commits = false
-commit_preprocessors = [
-    { pattern = '\((\w+\s)?#([0-9]+)\)', replace = ""},
-]
 commit_parsers = [
     { message = "^security", group = "<!--0-->Security"},
     { message = "^feat", group = "<!--1-->Features"},
