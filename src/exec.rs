@@ -155,8 +155,14 @@ fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
 	};
 
 	// Stream stdout and stderr in real-time using threads
-	let stdout = child_process.stdout.take().expect("Failed to capture stdout");
-	let stderr = child_process.stderr.take().expect("Failed to capture stderr");
+	let stdout = child_process
+		.stdout
+		.take()
+		.expect("Failed to capture stdout");
+	let stderr = child_process
+		.stderr
+		.take()
+		.expect("Failed to capture stderr");
 
 	let stdout_thread = thread::spawn(move || {
 		let reader = BufReader::new(stdout);
