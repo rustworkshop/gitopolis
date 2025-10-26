@@ -8,6 +8,8 @@ Manage multiple git repositories with ease.
 * 🤓 -> Easy to remember and use command list (`add`, `exec`, `clone`, `tag` etc.).
 * 🤓 -> A-GPL v3 licensed labour of love ❤️.
 
+To get an idea what a real use might look like take a look at this blog post: ["Using Gitopolis to Manage Multiple Git Repositories"](https://0x5.uk/2025/10/25/using-gitopolis-to-manage-multiple-git-repositories/)
+
 ## Installation
 
 1. Grab the [latest release](https://github.com/timabell/gitopolis/releases/latest),
