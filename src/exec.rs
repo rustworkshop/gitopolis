@@ -166,19 +166,15 @@ fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
 
 	let stdout_thread = thread::spawn(move || {
 		let reader = BufReader::new(stdout);
-		for line in reader.lines() {
-			if let Ok(line) = line {
-				println!("{}", line);
-			}
+		for line in reader.lines().map_while(Result::ok) {
+			println!("{}", line);
 		}
 	});
 
 	let stderr_thread = thread::spawn(move || {
 		let reader = BufReader::new(stderr);
-		for line in reader.lines() {
-			if let Ok(line) = line {
-				eprintln!("{}", line);
-			}
+		for line in reader.lines().map_while(Result::ok) {
+			eprintln!("{}", line);
 		}
 	});
 
