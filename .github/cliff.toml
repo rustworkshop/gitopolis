@@ -25,15 +25,13 @@ commit_preprocessors = [
     { pattern = '\((\w+\s)?#([0-9]+)\)', replace = ""},
 ]
 commit_parsers = [
-    { message = "^feat", group = "Features"},
-    { message = "^fix", group = "Bug Fixes"},
-    { message = "^refactor", group = "Refactor"},
-    { message = "^chore", group = "Chores"},
-    { message = "^doc", group = "Documentation"},
-    { message = "^perf", group = "Performance"},
-    { message = "^style", group = "Styling"},
-    { message = "^security", group = "Security"},
-    { body = ".*security", group = "Security"},
+    { message = "^security", group = "<!--0-->Security"},
+    { message = "^feat", group = "<!--1-->Features"},
+    { message = "^fix", group = "<!--2-->Bug Fixes"},
+    { message = "^perf", group = "<!--3-->Performance"},
+    { message = "^chore", group = "<!--4-->Chores"},
+    { message = "^refactor", group = "<!--5-->Refactor"},
+    { message = "^doc", group = "<!--6-->Documentation"},
 ]
 protect_breaking_commits = false
 filter_commits = true # ignore prefixes not listed above
