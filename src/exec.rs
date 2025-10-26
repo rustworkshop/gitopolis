@@ -70,16 +70,39 @@ fn needs_quoting(arg: &str) -> bool {
 	})
 }
 
+/// Formats command arguments for display with intelligent quoting.
+///
+/// This function reconstructs a shell command string from parsed arguments,
+/// adding quotes where needed to make the output readable and copy-pasteable.
+///
+/// # Why We Need Heuristics
+///
+/// By the time we receive the arguments here, the shell has already parsed
+/// the user's input and consumed the original quotes. For example:
+/// - User types: `gitopolis exec -- git log --since="One Week"`
+/// - Shell parses this into separate args: `["git", "log", "--since=One Week"]`
+/// - We receive: The value "One Week" with no information about original quoting
+///
+/// Since we've lost the original quoting style, we use heuristics to reconstruct
+/// a readable command that would execute correctly if copy-pasted.
+///
+/// # Strategy
+///
+/// - Arguments without special chars: display as-is
+/// - Arguments with spaces/special chars: wrap in single quotes
+/// - Arguments matching `--flag=value` pattern: quote only the value portion
+///   for better readability (e.g., `--since='One Week'` vs `'--since=One Week'`)
+/// - Values containing single quotes: use double quotes with escaping
 fn format_args_for_display(args: &[String]) -> String {
 	args.iter()
 		.map(|arg| {
 			if needs_quoting(arg) {
-				// Use single quotes for simplicity, escape any single quotes in the string
-				if arg.contains('\'') {
-					// For strings containing single quotes, use double quotes and escape
-					format!("\"{}\"", arg.replace('\\', "\\\\").replace('"', "\\\""))
+				// Check if this is a --flag=value or -flag=value pattern
+				if arg.starts_with('-') && arg.contains('=') {
+					format_key_value_for_display(arg)
 				} else {
-					format!("'{}'", arg)
+					// Not a flag=value pattern, quote the whole thing
+					quote_arg(arg)
 				}
 			} else {
 				arg.clone()
@@ -87,6 +110,42 @@ fn format_args_for_display(args: &[String]) -> String {
 		})
 		.collect::<Vec<_>>()
 		.join(" ")
+}
+
+/// Formats a --key=value argument, quoting only the value portion if needed.
+///
+/// For example: `--since=One Week` becomes `--since='One Week'`
+fn format_key_value_for_display(arg: &str) -> String {
+	let eq_pos = arg.find('=').expect("arg must contain '='");
+	let (key, value) = arg.split_at(eq_pos);
+	let value = &value[1..]; // Skip the '=' character
+
+	// Quote only the value portion if it needs quoting
+	if needs_quoting(value) {
+		if value.contains('\'') {
+			// For values containing single quotes, use double quotes and escape
+			format!(
+				"{}=\"{}\"",
+				key,
+				value.replace('\\', "\\\\").replace('"', "\\\"")
+			)
+		} else {
+			format!("{}='{}'", key, value)
+		}
+	} else {
+		// Value doesn't need quoting, return as-is
+		arg.to_string()
+	}
+}
+
+fn quote_arg(arg: &str) -> String {
+	// Use single quotes for simplicity, escape any single quotes in the string
+	if arg.contains('\'') {
+		// For strings containing single quotes, use double quotes and escape
+		format!("\"{}\"", arg.replace('\\', "\\\\").replace('"', "\\\""))
+	} else {
+		format!("'{}'", arg)
+	}
 }
 
 fn repo_exec(path: &str, exec_args: &[String]) -> Result<ExitStatus, Error> {
@@ -289,5 +348,94 @@ fn repo_exec_oneline(path: &str, exec_args: &[String]) -> Result<(Option<String>
 		Ok((None, success))
 	} else {
 		Ok((Some(output), success))
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_format_args_no_quoting_needed() {
+		let args = vec!["git".to_string(), "status".to_string()];
+		assert_eq!(format_args_for_display(&args), "git status");
+	}
+
+	#[test]
+	fn test_format_args_simple_quoting() {
+		let args = vec!["echo".to_string(), "hello world".to_string()];
+		assert_eq!(format_args_for_display(&args), "echo 'hello world'");
+	}
+
+	#[test]
+	fn test_format_args_flag_with_value() {
+		let args = vec![
+			"git".to_string(),
+			"log".to_string(),
+			"-n".to_string(),
+			"5".to_string(),
+			"--since=One Week".to_string(),
+		];
+		assert_eq!(
+			format_args_for_display(&args),
+			"git log -n 5 --since='One Week'"
+		);
+	}
+
+	#[test]
+	fn test_format_args_flag_with_value_containing_single_quote() {
+		let args = vec![
+			"git".to_string(),
+			"commit".to_string(),
+			"-m=Don't panic".to_string(),
+		];
+		assert_eq!(
+			format_args_for_display(&args),
+			"git commit -m=\"Don't panic\""
+		);
+	}
+
+	#[test]
+	fn test_format_args_non_flag_key_value() {
+		// If it doesn't start with -, quote the whole thing
+		let args = vec!["foo=bar baz".to_string()];
+		assert_eq!(format_args_for_display(&args), "'foo=bar baz'");
+	}
+
+	#[test]
+	fn test_format_args_flag_with_no_spaces() {
+		let args = vec!["--since=yesterday".to_string()];
+		assert_eq!(format_args_for_display(&args), "--since=yesterday");
+	}
+
+	#[test]
+	fn test_format_args_mixed() {
+		let args = vec![
+			"git".to_string(),
+			"log".to_string(),
+			"--author=John Doe".to_string(),
+			"--format=%H".to_string(),
+			"-n".to_string(),
+			"10".to_string(),
+		];
+		assert_eq!(
+			format_args_for_display(&args),
+			"git log --author='John Doe' --format=%H -n 10"
+		);
+	}
+
+	#[test]
+	fn test_format_args_with_special_chars() {
+		let args = vec!["echo".to_string(), "hello|world".to_string()];
+		assert_eq!(format_args_for_display(&args), "echo 'hello|world'");
+	}
+
+	#[test]
+	fn test_format_args_double_dash_flag() {
+		let args = vec!["grep".to_string(), "--exclude=*.tmp files".to_string()];
+		assert_eq!(
+			format_args_for_display(&args),
+			"grep --exclude='*.tmp files'"
+		);
 	}
 }
