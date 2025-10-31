@@ -12,11 +12,25 @@ To get an idea what a real use might look like take a look at this blog post: ["
 
 ## Installation
 
+### Download binary release from github
+
 1. Grab the [latest release](https://github.com/timabell/gitopolis/releases/latest),
 2. unzip it
 3. put the binary somewhere in your `PATH`.
 
 I suggest adding a shorter shell alias to save typing. Perhaps `gm` for git many or `gop`.
+
+### From crates.io
+
+If you're a rust user, you can install from crates.io:
+
+<https://crates.io/crates/gitopolis>
+
+```sh
+cargo install gitopolis
+```
+
+This will download the latest release crates.io, build and install it to `~/.cargo/bin/`.
 
 ## Built in help
 
