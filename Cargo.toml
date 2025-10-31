@@ -2,6 +2,14 @@
 name = "gitopolis"
 version = "0.0.0-git"
 edition = "2021"
+authors = ["Tim Abell <t@0x5.uk>"]
+description = "Manage multiple git repositories - CLI tool - run commands, clone, and organize repos with tags"
+homepage = "https://github.com/timabell/gitopolis"
+repository = "https://github.com/timabell/gitopolis"
+readme = "README.md"
+license = "AGPL-3.0-only"
+keywords = ["git", "cli", "multi-repo", "microservices"]
+categories = ["command-line-utilities", "development-tools"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
