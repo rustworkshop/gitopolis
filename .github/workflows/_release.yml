@@ -6,6 +6,10 @@ on:
         description: 'The release tag (e.g. v1.0.0)'
         required: true
         type: string
+    secrets:
+      CARGO_REGISTRY_TOKEN:
+        description: 'Token for publishing to crates.io'
+        required: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -55,3 +59,16 @@ jobs:
           gitopolis-windows-x86_64.zip
           gitopolis-macos-x86_64.tar.gz
           SHA256SUMS.txt
+
+    - name: Update Version for crates.io
+      run: |
+        VERSION="${{ inputs.release_tag }}"
+        # Strip the 'v' prefix if present
+        VERSION="${VERSION#v}"
+        sed -i "s/0\\.0\\.0-git/$VERSION/" Cargo.toml
+        sed -i "s/0\\.0\\.0-git/$VERSION/" Cargo.lock
+
+    - name: Publish to crates.io
+      # --no-verify skips the verification build since CI already built and tested
+      # --allow-dirty allows publishing with modified Cargo.toml/Cargo.lock (version update)
+      run: cargo publish --no-verify --allow-dirty --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
