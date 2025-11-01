@@ -32,6 +32,20 @@ cargo install gitopolis
 
 This will download the latest release crates.io, build and install it to `~/.cargo/bin/`.
 
+### Arch linux
+
+[Gitopolis is in the AUR](https://aur.archlinux.org/packages/gitopolis), so you can install it with `paru` or `yay` or your AUR helper of choice.
+
+```sh
+paru -S gitopolis
+```
+
+or
+
+```sh
+yay -S gitopolis
+```
+
 ## Built in help
 
 gitopolis has a fully documented command system, so use `-h` to get help for each command:
